@@ -1,0 +1,61 @@
+import Link from 'next/link'
+import type { Metadata } from 'next'
+import { SCENES, CATEGORY_LABELS, sceneToWorkspaceUrl, sceneToEmbedUrl } from '@/lib/scenes'
+import type { SceneCategory } from '@/lib/scenes'
+import { SceneGrid } from './SceneGrid'
+
+export const metadata: Metadata = {
+  title: 'Scene Gallery — Lofi Ambient Vibes | LofiSpace',
+  description: 'Khám phá 15+ cảnh ambient được tuyển chọn: Tokyo Café Rain, Midnight Coding, Cozy Cabin... 1 click để nhúng vào Notion.',
+  keywords: ['lofi scene', 'ambient widget', 'notion widget aesthetic', 'study vibes', 'lofi backgrounds'],
+  openGraph: {
+    title: 'LofiSpace Scene Gallery — Find Your Vibe',
+    description: '15+ pre-made ambient scenes. One click to embed in Notion.',
+  },
+}
+
+export default function ScenesPage() {
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-12">
+
+      {/* Hero */}
+      <div className="mb-12 text-center">
+        <span className="inline-block rounded-full bg-violet-900/30 px-4 py-1 text-sm text-violet-300 ring-1 ring-violet-500/20 mb-4">
+          ✨ 15 scenes · Miễn phí hoàn toàn
+        </span>
+        <h1 className="text-4xl font-bold text-white sm:text-5xl">
+          Chọn <span className="text-violet-400">Vibe</span> của bạn
+        </h1>
+        <p className="mt-3 text-white/50 max-w-xl mx-auto">
+          Mỗi scene là một bầu không khí hoàn chỉnh — nhạc, âm thanh, hình nền.
+          Một click để dùng ngay, nhúng thẳng vào Notion.
+        </p>
+      </div>
+
+      {/* AdSense */}
+      <div className="mb-8 flex h-16 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
+        Google AdSense — 728×90
+      </div>
+
+      {/* Scene grid với filter (client component) */}
+      <SceneGrid scenes={SCENES} />
+
+      {/* Bottom CTA */}
+      <div className="mt-16 rounded-2xl bg-gradient-to-r from-violet-900/30 to-violet-800/10 border border-violet-500/20 p-8 text-center">
+        <h2 className="text-xl font-bold text-white mb-2">Muốn tạo scene riêng?</h2>
+        <p className="text-white/50 text-sm mb-5">
+          Vào Workspace để mix âm thanh, chọn GIF, tùy chỉnh màu sắc theo ý muốn.
+        </p>
+        <Link href="/workspace"
+          className="inline-block rounded-full bg-violet-600 px-8 py-2.5 font-semibold text-white hover:bg-violet-500 transition-colors">
+          Tạo Scene của bạn →
+        </Link>
+      </div>
+
+      {/* AdSense bottom */}
+      <div className="mt-8 flex h-16 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
+        Google AdSense — 728×90
+      </div>
+    </div>
+  )
+}

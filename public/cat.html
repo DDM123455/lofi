@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Cat</title>
+<style>
+/* ─── Reset & Page ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: #fec;
+}
+
+/* ─── Cat ───────────────────────────────────────────────────────────── */
+article {
+  --fur:      #222;
+  --fur-dark: #111;
+  --skin:     pink;
+
+  font-size: 0.6vmin;
+  width: 80em;
+  aspect-ratio: 1;
+  position: relative;
+  cursor: pointer;
+
+  /* Idle gentle float */
+  animation: catFloat 4s ease-in-out infinite;
+
+  *, *::before, *::after {
+    position: absolute;
+    box-sizing: border-box;
+  }
+
+  #alt {
+    width: 1px; height: 1px; overflow: hidden;
+  }
+
+  /* ── Shadow ─────────────────────────────────────────────────────── */
+  .shadow {
+    width: 80%;
+    height: 5%;
+    background: #0002;
+    border-radius: 50% / 0 0 100% 100%;
+    top: 99%;
+    left: 50%;
+    translate: -50%;
+    /* counter-move + shrink as cat rises */
+    animation: shadowSync 4s ease-in-out infinite;
+  }
+
+  /* ── Tail ────────────────────────────────────────────────────────── */
+  .tail {
+    width: 50%;
+    height: 50%;
+    border-radius: 50%;
+    border: 7em solid #0000;
+    border-top-color:  var(--fur-dark);
+    border-left-color: var(--fur-dark);
+    clip-path: polygon(100% 0, 100% 100%, 0 30%, 0 0);
+    top: 75%;
+    left: 52%;
+    /* pivot from tail base where it meets the body */
+    transform-origin: 12% 88%;
+    animation: tailSway 2s ease-in-out infinite;
+
+    &::before {
+      content: "";
+      width: 7em;
+      aspect-ratio: 1;
+      background: var(--fur-dark);
+      border-radius: 50%;
+      left: 81%;
+      top: -9%;
+    }
+  }
+
+  /* ── Body ────────────────────────────────────────────────────────── */
+  .body {
+    left: 50%;
+    translate: -50%;
+    bottom: 0;
+    width: 35%;
+    height: 40%;
+    background:
+      radial-gradient(100% 80% at 50% 0, var(--fur-dark) 50%, #0000 0),
+      var(--fur);
+    border-radius: 100% / 200% 200% 20% 20%;
+    /* breathe from the ground up */
+    transform-origin: bottom center;
+    animation: bodyBreathe 4s ease-in-out infinite;
+
+    .leg {
+      width: 165%;
+      height: 38%;
+      background: var(--fur);
+      bottom: 0;
+      left: 50%;
+      translate: -50%;
+      border-radius: 8em 8em 100% 100% / 10em 10em 16em 16em;
+      scale: 1 -1;
+    }
+
+    .paw {
+      width: 35%;
+      height: 49%;
+      border: 0.75em solid #fff;
+      border-top: 0;
+      border-radius: 0 0 5em 5em;
+      border-bottom: 1em solid #fff;
+      top: 48%;
+      rotate: -10deg;
+      left: 10%;
+      clip-path: polygon(0 20%, 100% 30%, 100% 100%, 0 100%);
+      animation: pawBopL 6s ease-in-out infinite;
+
+      & + & {
+        right: 7%;
+        height: 50%;
+        left: auto;
+        rotate: 13deg;
+        scale: -1 1;
+        clip-path: polygon(0 25%, 100% 15%, 100% 100%, 0 100%);
+        animation: pawBopR 6s 0.9s ease-in-out infinite;
+      }
+    }
+  }
+
+  /* ── Ears ────────────────────────────────────────────────────────── */
+  .ear {
+    width: 40%;
+    aspect-ratio: 1;
+    border: 4em solid var(--fur);
+    border-radius: 5% 90% 10% 80%;
+    background: var(--skin);
+    transform-origin: right bottom;
+    transition: transform 0.35s ease;
+    animation: earTwitchL 7s ease-in-out infinite;
+
+    & + & {
+      scale: -1 1;
+      right: 0;
+      transform-origin: left bottom;
+      animation: earTwitchR 7s 2.3s ease-in-out infinite;
+    }
+  }
+
+  /* ── Head ────────────────────────────────────────────────────────── */
+  .head {
+    width: 80%;
+    aspect-ratio: 1.1;
+    background:
+      linear-gradient(#0003, #0000 50%),
+      var(--fur);
+    left: 50%;
+    translate: -50%;
+    border-radius: 100% / 125% 125% 80% 75%;
+    transform-origin: bottom center;
+    animation: headWobble 9s ease-in-out infinite;
+
+    /* ── Whiskers ───────────────────────────────────────────────── */
+    .whisker {
+      width: 30%;
+      height: 30%;
+      border-radius: 50%;
+      border: 2em solid #0000;
+      border-top-color:  var(--fur);
+      border-left-color: var(--fur);
+      clip-path: polygon(100% 0, 100% 100%, 0 30%, 0 0);
+      animation: whiskerQuiver 5s ease-in-out infinite;
+
+      &:nth-child(1) { top: 70%; translate: -65%;                          }
+      &:nth-child(2) { top: 80%; translate: -40%; rotate: -20deg; animation-delay: 0.08s; }
+      &:nth-child(3) { top: 70%; translate:  65%; rotate:  10deg; right: 0; animation-delay: 0.04s; }
+      &:nth-child(4) { top: 80%; translate:  40%; rotate:  24deg; right: 0; animation-delay: 0.12s; }
+    }
+
+    /* ── Nose ───────────────────────────────────────────────────── */
+    .nose {
+      width: 10%;
+      height: 7%;
+      background: var(--skin);
+      border-radius: 50%;
+      left: 50%;
+      translate: -50% -50%;
+      top: 78%;
+    }
+
+    /* ── Eyes ───────────────────────────────────────────────────── */
+    .eye {
+      --pos: 25%;
+      --x1: 50%;
+      --x2: 42%;
+      width: 35%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background:
+        radial-gradient(50% 50% at var(--x1) 47%, #fff 25%, #0000 0),
+        radial-gradient(50% 50% at var(--x2) 65%, #fff 12%, #0000 0),
+        radial-gradient(circle at 60% 55%, #000 35%, #0000 0),
+        white;
+      left: var(--pos);
+      translate: -50% -50%;
+      top: 63%;
+      transition: clip-path 0.25s ease;
+      animation: eyeBlink 5s ease-in-out infinite;
+
+      & + & {
+        --x1: 70%;
+        --x2: 78%;
+        left: calc(100% - var(--pos));
+        scale: -1 1;
+        /* same keyframe works — scale(-1,1) * scaleY(0) = scale(-1,0) */
+        animation: eyeBlinkR 5s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+/* ─── Hover ─────────────────────────────────────────────────────────── */
+article:hover {
+
+  /* Happy crescent eyes ≧◡≦ */
+  .eye {
+    clip-path: ellipse(50% 38% at 50% 64%);
+    & + & { clip-path: ellipse(50% 38% at 50% 64%); }
+  }
+
+  /* Ears perk inward */
+  .ear       { transform: rotate(10deg);  }
+  .ear + .ear { transform: rotate(-10deg); }
+
+  /* Tail wags faster */
+  .tail { animation-duration: 0.7s; }
+}
+
+/* ─── Click / Active ────────────────────────────────────────────────── */
+article:active {
+  .head { animation: headNod 0.22s ease-in-out 2; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   KEYFRAMES
+════════════════════════════════════════════════════════════════════ */
+
+/* 🐱 Gentle float */
+@keyframes catFloat {
+  0%, 100% { transform: translateY(0);     }
+  50%       { transform: translateY(-2.5em); }
+}
+
+/* 🌑 Shadow: counter-move + shrink when cat rises */
+@keyframes shadowSync {
+  0%, 100% {
+    transform: translateY(0) scaleX(1);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translateY(2.5em) scaleX(0.55);
+    opacity: 0.05;
+  }
+}
+
+/* 🐈 Tail pendulum */
+@keyframes tailSway {
+  0%   { rotate:   0deg; }
+  25%  { rotate:  14deg; }
+  75%  { rotate:  -9deg; }
+  100% { rotate:   0deg; }
+}
+
+/* 💨 Body breathe */
+@keyframes bodyBreathe {
+  0%, 100% { transform: scaleY(1);    }
+  50%       { transform: scaleY(1.04); }
+}
+
+/* 🙂 Head subtle look-around */
+@keyframes headWobble {
+  0%,  100% { rotate:    0deg; }
+  20%        { rotate:   -3deg; }
+  55%        { rotate:    2deg; }
+  80%        { rotate:    0deg; }
+}
+
+/* 😵 Quick nod on click */
+@keyframes headNod {
+  0%,  100% { transform: rotateX(0deg);    }
+  50%        { transform: rotateX(-15deg);  }
+}
+
+/* 👁 Blink — left eye */
+@keyframes eyeBlink {
+  0%, 78%, 94%, 100% { transform: scaleY(1);    }
+  82%, 90%            { transform: scaleY(0.05); }
+}
+
+/* 👁 Blink — right eye (preserves existing -1 X scale) */
+@keyframes eyeBlinkR {
+  0%, 78%, 94%, 100% { transform: scale(-1,  1   ); }
+  82%, 90%            { transform: scale(-1,  0.05); }
+}
+
+/* 👂 Left ear twitch */
+@keyframes earTwitchL {
+  0%, 74%, 90%, 100% { rotate:  0deg;  }
+  77%                 { rotate: -13deg; }
+  82%                 { rotate:   5deg; }
+  86%                 { rotate:  -3deg; }
+  89%                 { rotate:   0deg; }
+}
+
+/* 👂 Right ear twitch */
+@keyframes earTwitchR {
+  0%, 59%, 76%, 100% { rotate:  0deg;  }
+  62%                 { rotate: -13deg; }
+  67%                 { rotate:   5deg; }
+  71%                 { rotate:  -3deg; }
+  75%                 { rotate:   0deg; }
+}
+
+/* ～ Whisker quiver */
+@keyframes whiskerQuiver {
+  0%, 68%, 84%, 100% { transform: rotate(0deg);  }
+  71%                 { transform: rotate(-4deg); }
+  75%                 { transform: rotate( 3deg); }
+  79%                 { transform: rotate(-2deg); }
+  83%                 { transform: rotate( 0deg); }
+}
+
+/* 🐾 Left paw bop */
+@keyframes pawBopL {
+  0%, 58%, 78%, 100% { transform: translateY(0);                   }
+  63%                 { transform: translateY(-3.5em) rotate(-6deg); }
+  70%                 { transform: translateY(-2em)   rotate(-3deg); }
+  76%                 { transform: translateY(0);                    }
+}
+
+/* 🐾 Right paw bop */
+@keyframes pawBopR {
+  0%, 58%, 78%, 100% { transform: translateY(0);                  }
+  63%                 { transform: translateY(-3.5em) rotate(6deg); }
+  70%                 { transform: translateY(-2em)   rotate(3deg); }
+  76%                 { transform: translateY(0);                   }
+}
+
+
+/* ─── Optional: YouTube button ──────────────────────────────────────── */
+#youtube {
+  z-index: 2;
+  display: block;
+  width: 100px;
+  height: 70px;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: red;
+  border-radius: 50% / 11%;
+  transition: transform 0.5s;
+}
+#youtube:hover, #youtube:focus { transform: scale(1.1); }
+#youtube::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 7.5%; left: -6%;
+  width: 112%; height: 85%;
+  background: red;
+  border-radius: 9% / 50%;
+}
+#youtube::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 20px; left: 40px;
+  width: 45px; height: 30px;
+  border: 15px solid transparent;
+  box-sizing: border-box;
+  border-left: 30px solid white;
+}
+#youtube span { font-size: 0; position: absolute; width: 0; height: 0; overflow: hidden; }
+</style>
+</head>
+<body>
+
+<article role="img" aria-labelledby="alt">
+  <div id="alt">Cartoon of a black cat drawn in cute/kawaii style</div>
+  <div class="shadow"></div>
+  <div class="tail"></div>
+  <div class="body">
+    <div class="leg"></div>
+    <div class="leg"></div>
+    <div class="paw"></div>
+    <div class="paw"></div>
+  </div>
+  <div class="ear"></div>
+  <div class="ear"></div>
+  <div class="head">
+    <div class="whisker"></div>
+    <div class="whisker"></div>
+    <div class="whisker"></div>
+    <div class="whisker"></div>
+    <div class="eye"></div>
+    <div class="eye"></div>
+    <div class="nose"></div>
+  </div>
+</article>
+
+<a id="youtube" href="https://www.youtube.com/watch?v=4B-yudjkXRY" target="_blank">
+  <span>Watch how this component was coded</span>
+</a>
+
+</body>
+</html>

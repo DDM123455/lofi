@@ -274,12 +274,14 @@ export function EmbedClient() {
     let tid: ReturnType<typeof setTimeout>
     const tryPre=()=>{
       if(!ytRef.current||ytPlayer.current)return
-      ytPlayer.current=new(window as any).YT.Player(ytRef.current,{
+      const container=document.createElement('div')
+      ytRef.current.appendChild(container)
+      ytPlayer.current=new(window as any).YT.Player(container,{
         height:'1',width:'1',videoId:activeYtId,
-        playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1,origin:window.location.origin},
+        playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
         events:{
           onReady:(e:any)=>{e.target.setVolume(0);setYtStatus('ready')},
-          onError:()=>setYtStatus('blocked'),
+          onError:()=>{ /* pre-init fail is silent, initYT will retry on play */ },
         },
       })
     }
@@ -337,17 +339,23 @@ export function EmbedClient() {
 
   const initYT = useCallback((ytId:string,vol:number)=>{
     if(!ytRef.current)return
+    // Destroy existing player and reset container before creating new one
+    try{ytPlayer.current?.destroy()}catch(_){}
+    ytPlayer.current=null
+    ytRef.current.innerHTML=''
+    const container=document.createElement('div')
+    ytRef.current.appendChild(container)
     setYtStatus('loading')
     if(ytTimer.current)clearTimeout(ytTimer.current)
-    ytTimer.current=setTimeout(()=>setYtStatus('blocked'),10000)
+    ytTimer.current=setTimeout(()=>setYtStatus('blocked'),18000)
     const create=()=>{
-      if(!ytRef.current)return
-      ytPlayer.current=new(window as any).YT.Player(ytRef.current,{
+      if(!container)return
+      ytPlayer.current=new(window as any).YT.Player(container,{
         height:'1',width:'1',videoId:ytId,
-        playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1,origin:window.location.origin},
+        playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
         events:{
           onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);setYtStatus('ready');e.target.setVolume(vol);e.target.playVideo()},
-          onError:()=>{if(ytTimer.current)clearTimeout(ytTimer.current);setYtStatus('blocked')},
+          onError:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);console.warn('YT error code:',e.data);setYtStatus('blocked')},
         },
       })
     }

@@ -49,6 +49,7 @@ function CopyButton({ text }: { text: string }) {
 
 export function SupportModal({ open, onClose }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null)
+  const [qrZoom, setQrZoom] = useState(false)
 
   useEffect(() => {
     if (!open) return
@@ -64,6 +65,35 @@ export function SupportModal({ open, onClose }: Props) {
   }, [open, onClose])
 
   if (!open) return null
+
+  /* ── QR lightbox ── */
+  if (qrZoom) return (
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-6"
+      style={{ background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(12px)' }}
+      onClick={() => setQrZoom(false)}
+    >
+      <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
+        <Image
+          src="/qr.png"
+          alt="QR chuyển khoản Agribank"
+          width={300}
+          height={300}
+          className="rounded-2xl shadow-2xl"
+        />
+        <div className="text-center">
+          <p className="text-sm font-semibold text-white">{BANK_NAME} · {BANK_ACCOUNT}</p>
+          <p className="mt-1 text-xs text-white/50">Nhấp ra ngoài để đóng</p>
+        </div>
+        <button
+          onClick={() => setQrZoom(false)}
+          className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+        >
+          Đóng
+        </button>
+      </div>
+    </div>
+  )
 
   function handleMethod(id: string, href: string, copyText?: string) {
     analytics.donationMethodClick(id)
@@ -125,15 +155,24 @@ export function SupportModal({ open, onClose }: Props) {
             🇻🇳 Vietnam — Chuyển khoản ngân hàng
           </p>
           <div className="flex gap-4 rounded-2xl border border-white/8 bg-white/5 p-4">
-            {/* QR */}
+            {/* QR — click to zoom */}
             <div className="flex-shrink-0">
-              <Image
-                src="/qr.png"
-                alt="QR chuyển khoản"
-                width={110}
-                height={110}
-                className="rounded-xl"
-              />
+              <button
+                onClick={() => setQrZoom(true)}
+                className="group relative block rounded-xl ring-0 transition-all hover:ring-2 hover:ring-violet-400/60 focus:outline-none"
+                title="Nhấp để phóng to"
+              >
+                <Image
+                  src="/qr.png"
+                  alt="QR chuyển khoản"
+                  width={110}
+                  height={110}
+                  className="rounded-xl"
+                />
+                <span className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/0 transition-all group-hover:bg-black/30">
+                  <svg className="opacity-0 transition-opacity group-hover:opacity-100" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </span>
+              </button>
             </div>
             {/* Info */}
             <div className="flex flex-col justify-center gap-2 min-w-0">

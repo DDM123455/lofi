@@ -1404,7 +1404,7 @@ export function EmbedClient() {
 
       {/* ── Onboarding tip (first visit only) ── */}
       {showOnboard&&(
-        <div onClick={dismissOnboard} style={{position:'absolute',bottom:mob?76:96,left:'50%',transform:'translateX(-50%)',zIndex:30,cursor:'pointer',animation:'xpFloat 0.4s ease forwards',pointerEvents:'all'}}>
+        <div onClick={dismissOnboard} style={{position:'absolute',bottom:mob?76:96,left:'50%',zIndex:30,cursor:'pointer',animation:'onboardIn 0.35s ease forwards',pointerEvents:'all'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderRadius:14,background:'rgba(20,17,40,0.92)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:`1px solid ${accent}55`,boxShadow:`0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${accent}22`,whiteSpace:'nowrap',maxWidth:'calc(100vw - 32px)'}}>
             <span style={{fontSize:18,flexShrink:0}}>🎵</span>
             <div style={{minWidth:0}}>
@@ -1449,6 +1449,7 @@ export function EmbedClient() {
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes dnFade{0%{opacity:1}70%{opacity:1}100%{opacity:0;pointer-events:none}}
         @keyframes xpFloat{0%{opacity:0;transform:translate(-50%,0) scale(.7)}15%{opacity:1;transform:translate(-50%,-8px) scale(1)}80%{opacity:1;transform:translate(-50%,-24px) scale(1)}100%{opacity:0;transform:translate(-50%,-36px) scale(.9)}}
+        @keyframes onboardIn{0%{opacity:0;transform:translateX(-50%) translateY(10px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
         *{box-sizing:border-box}
         input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer;background:var(--track,rgba(255,255,255,.1))}
         input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;cursor:pointer;background:var(--accent,#a78bfa)}

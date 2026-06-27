@@ -5,6 +5,8 @@ import { ClarityScript } from '@/components/analytics/ClarityScript'
 import { Providers } from '@/components/providers/Providers'
 import './globals.css'
 
+const GA_ID = process.env.NEXT_PUBLIC_GA4_ID
+
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -71,32 +73,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-[#0d0d14] text-white">
-        <Providers>
-        {/* ── Google Analytics 4 ──────────────────────────────────── */}
-        {process.env.NEXT_PUBLIC_GA4_ID && (
+      <head>
+        {/* ── Google Analytics 4 — must be in <head> for Search Console GA verification ── */}
+        {GA_ID && (
           <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA4_ID}`}
-              strategy="afterInteractive"
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
             />
-            <Script
-              id="ga4-init"
-              strategy="afterInteractive"
+            <script
               dangerouslySetInnerHTML={{
-                __html: `
-                  window.dataLayer=window.dataLayer||[];
-                  function gtag(){dataLayer.push(arguments);}
-                  gtag('js',new Date());
-                  gtag('config','${process.env.NEXT_PUBLIC_GA4_ID}',{
-                    page_path:window.location.pathname,
-                    send_page_view:true
-                  });
-                `,
+                __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}',{page_path:window.location.pathname,send_page_view:true});`,
               }}
             />
           </>
         )}
+      </head>
+      <body className="min-h-screen bg-[#0d0d14] text-white">
+        <Providers>
 
         {/* ── Microsoft Clarity ───────────────────────────────────── */}
         {process.env.NEXT_PUBLIC_CLARITY_ID && (

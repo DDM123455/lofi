@@ -220,7 +220,8 @@ export function EmbedClient() {
   const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
   const [copied,      setCopied]      = useState(false)
   const [vw,          setVw]          = useState(1280)
-  const [showSupport, setShowSupport] = useState(false)
+  const [showSupport,  setShowSupport]  = useState(false)
+  const [showOnboard,  setShowOnboard]  = useState(false)
 
   // Refs
   const ctxRef    = useRef<AudioContext|null>(null)
@@ -271,6 +272,14 @@ export function EmbedClient() {
     const s=document.createElement('script');s.id='yt-api';s.src='https://www.youtube.com/iframe_api';s.async=true
     document.head.appendChild(s)
   },[])
+  // Show onboarding tip on first visit, auto-dismiss after 6s
+  useEffect(()=>{
+    if(localStorage.getItem('lofispace-onboarded'))return
+    const show=setTimeout(()=>setShowOnboard(true),1800)
+    const hide=setTimeout(()=>{setShowOnboard(false);localStorage.setItem('lofispace-onboarded','1')},7800)
+    return()=>{clearTimeout(show);clearTimeout(hide)}
+  },[])
+
   // Pre-init YT player silently so first-play is instant
   useEffect(()=>{
     let tid: ReturnType<typeof setTimeout>
@@ -365,7 +374,7 @@ export function EmbedClient() {
     else{const prev=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{prev?.();create()}}
   },[])
 
-  const activeYtId = lofiId==='custom' ? customLofiId : (LOFI_STREAMS.find(s=>s.id===lofiId)?.youtubeId??'jfKfPfyJRdk')
+  const activeYtId = lofiId==='custom' ? customLofiId : (LOFI_STREAMS.find(s=>s.id===lofiId)?.youtubeId??'7NOSDKb0HlU')
 
   const doStart = useCallback(()=>{
     if(started)return
@@ -399,13 +408,17 @@ export function EmbedClient() {
   const handleLofiVol=(v:number)=>{setLofiVol(v);if(started)try{ytPlayer.current?.setVolume(v)}catch(_){}}
   const handleLofiChange=(id:string)=>{
     setLofiId(id);try{ytPlayer.current?.destroy()}catch(_){}; ytPlayer.current=null
-    if(started&&playing){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'jfKfPfyJRdk');setTimeout(()=>initYT(ytId,lofiVol),80)}
+    if(started&&playing){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'7NOSDKb0HlU');setTimeout(()=>initYT(ytId,lofiVol),80)}
   }
   const applyCustomLofi=()=>{
     const id=parseYtId(customLofiInput);if(!id)return
     setCustomLofiId(id);setLofiId('custom')
     try{ytPlayer.current?.destroy()}catch(_){};ytPlayer.current=null
     if(started&&playing)setTimeout(()=>initYT(id,lofiVol),80)
+  }
+  const dismissOnboard=()=>{
+    setShowOnboard(false)
+    localStorage.setItem('lofispace-onboarded','1')
   }
   const toggleAmbient=(id:string)=>{
     if(ambVols[id]!==undefined){if(started)stopAmbient(id);setAmbVols(prev=>{const n={...prev};delete n[id];return n})}
@@ -1388,6 +1401,24 @@ export function EmbedClient() {
 
       {/* ── Hidden YT player — off-screen (opacity:0 causes Chrome to pause media) ── */}
       <div style={{position:'fixed',left:'-400px',top:0,width:'320px',height:'180px',pointerEvents:'none'}}><div ref={ytRef}/></div>
+
+      {/* ── Onboarding tip (first visit only) ── */}
+      {showOnboard&&(
+        <div onClick={dismissOnboard} style={{position:'absolute',bottom:mob?76:96,left:'50%',transform:'translateX(-50%)',zIndex:30,cursor:'pointer',animation:'xpFloat 0.4s ease forwards',pointerEvents:'all'}}>
+          <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderRadius:14,background:'rgba(20,17,40,0.92)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:`1px solid ${accent}55`,boxShadow:`0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${accent}22`,whiteSpace:'nowrap',maxWidth:'calc(100vw - 32px)'}}>
+            <span style={{fontSize:18,flexShrink:0}}>🎵</span>
+            <div style={{minWidth:0}}>
+              <p style={{margin:0,fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.3}}>Dán link YouTube bạn muốn nghe</p>
+              <p style={{margin:'2px 0 0',fontSize:11,color:'var(--dim)',lineHeight:1.3}}>Nhấn nút nhạc → dán URL vào ô Custom YouTube</p>
+            </div>
+            <div style={{flexShrink:0,width:20,height:20,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'var(--dim)'}}>✕</div>
+          </div>
+          {/* Arrow pointing down to dock */}
+          <div style={{display:'flex',justifyContent:'center',marginTop:4}}>
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none"><path d="M6 8L0 0h12L6 8z" fill={`${accent}88`}/></svg>
+          </div>
+        </div>
+      )}
 
       {/* ── Support modal ── */}
       <SupportModal open={showSupport} onClose={()=>setShowSupport(false)} />

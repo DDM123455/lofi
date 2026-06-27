@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Image from 'next/image'
 import { analytics } from '@/lib/analytics'
 
 interface Props {
@@ -8,25 +9,9 @@ interface Props {
   onClose: () => void
 }
 
-const VIETNAM_METHODS = [
-  {
-    id: 'vietqr',
-    label: 'VietQR',
-    icon: '🏦',
-    desc: 'Scan QR với bất kỳ app ngân hàng',
-    action: 'Xem QR',
-    href: '#',
-  },
-  {
-    id: 'bank-transfer',
-    label: 'Chuyển khoản',
-    icon: '💳',
-    desc: 'MB Bank · 1234 5678 · Nguyễn Văn A',
-    action: 'Copy số TK',
-    href: '#',
-    copyText: '1234567890',
-  },
-]
+const BANK_ACCOUNT = '5303205160929'
+const BANK_NAME = 'Agribank'
+const ACCOUNT_NAME = 'NGUYEN VAN A' // ← đổi thành tên thật của bạn
 
 const INTL_METHODS = [
   {
@@ -44,6 +29,23 @@ const AMOUNTS = [
   { label: '🍜 Late-night coding meal', value: '$10' },
   { label: '🚀 Help build new features', value: '$20' },
 ]
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false)
+  const copy = () => {
+    navigator.clipboard.writeText(text).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button
+      onClick={copy}
+      className="mt-1 rounded-lg border border-violet-500/30 bg-violet-900/20 px-3 py-1.5 text-xs font-semibold text-violet-300 transition-all hover:bg-violet-900/40 active:scale-95"
+    >
+      {copied ? '✓ Đã copy!' : '📋 Copy số TK'}
+    </button>
+  )
+}
 
 export function SupportModal({ open, onClose }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -119,22 +121,36 @@ export function SupportModal({ open, onClose }: Props) {
 
         {/* Vietnam */}
         <div className="mb-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/30">
-            🇻🇳 Vietnam
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/30">
+            🇻🇳 Vietnam — Chuyển khoản ngân hàng
           </p>
-          <div className="grid grid-cols-2 gap-2">
-            {VIETNAM_METHODS.map(m => (
-              <button
-                key={m.id}
-                onClick={() => handleMethod(m.id, m.href, m.copyText)}
-                className="flex flex-col gap-1 rounded-xl border border-white/8 bg-white/5 p-4 text-left transition-all hover:border-violet-500/40 hover:bg-white/10"
-              >
-                <span className="text-xl">{m.icon}</span>
-                <span className="text-sm font-semibold text-white">{m.label}</span>
-                <span className="text-xs text-white/40 leading-snug">{m.desc}</span>
-                <span className="mt-1 text-xs font-medium text-violet-400">{m.action}</span>
-              </button>
-            ))}
+          <div className="flex gap-4 rounded-2xl border border-white/8 bg-white/5 p-4">
+            {/* QR */}
+            <div className="flex-shrink-0">
+              <Image
+                src="/qr.png"
+                alt="QR chuyển khoản"
+                width={110}
+                height={110}
+                className="rounded-xl"
+              />
+            </div>
+            {/* Info */}
+            <div className="flex flex-col justify-center gap-2 min-w-0">
+              <div>
+                <p className="text-xs text-white/40 mb-0.5">Ngân hàng</p>
+                <p className="text-sm font-semibold text-white">{BANK_NAME}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-0.5">Số tài khoản</p>
+                <p className="text-sm font-mono font-semibold text-white tracking-wide">{BANK_ACCOUNT}</p>
+              </div>
+              <div>
+                <p className="text-xs text-white/40 mb-0.5">Chủ tài khoản</p>
+                <p className="text-sm font-semibold text-white">{ACCOUNT_NAME}</p>
+              </div>
+              <CopyButton text={BANK_ACCOUNT} />
+            </div>
           </div>
         </div>
 

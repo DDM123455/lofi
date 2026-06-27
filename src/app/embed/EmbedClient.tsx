@@ -276,7 +276,7 @@ export function EmbedClient() {
       if(!ytRef.current||ytPlayer.current)return
       ytPlayer.current=new(window as any).YT.Player(ytRef.current,{
         height:'1',width:'1',videoId:activeYtId,
-        playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1},
+        playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1,origin:window.location.origin},
         events:{
           onReady:(e:any)=>{e.target.setVolume(0);setYtStatus('ready')},
           onError:()=>setYtStatus('blocked'),
@@ -344,7 +344,7 @@ export function EmbedClient() {
       if(!ytRef.current)return
       ytPlayer.current=new(window as any).YT.Player(ytRef.current,{
         height:'1',width:'1',videoId:ytId,
-        playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1},
+        playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1,origin:window.location.origin},
         events:{
           onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);setYtStatus('ready');e.target.setVolume(vol);e.target.playVideo()},
           onError:()=>{if(ytTimer.current)clearTimeout(ytTimer.current);setYtStatus('blocked')},

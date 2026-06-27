@@ -8,7 +8,7 @@ export interface LofiStream {
 export const LOFI_STREAMS: LofiStream[] = [
   { id: 'lofi1', label: 'Lofi Girl – Study',  youtubeId: 'jfKfPfyJRdk' },
   { id: 'lofi2', label: 'Synthwave Chill',    youtubeId: '4xDzrJKXOOY' },
-  { id: 'lofi3', label: 'Jazz Lofi Sleep',    youtubeId: 'Na0w3Mz46GA' },
+  { id: 'lofi3', label: 'Jazz Lofi Sleep',    youtubeId: 'HuFYqnbVbzY' },
   { id: 'lofi4', label: 'Chillhop Radio',     youtubeId: '7NOSDKb0HlU' },
   { id: 'lofi5', label: 'Tokyo Night Lofi',   youtubeId: 'lTRiuFIWV54' },
 ]

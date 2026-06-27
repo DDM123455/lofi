@@ -10,6 +10,7 @@ import { CodingCatVariant, CAT_VARIANT_META, type CatVariant } from '@/component
 import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
 import { analytics } from '@/lib/analytics'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { SupportModal } from '@/components/support/SupportModal'
 
 type ClockStyle = 'digital'|'minimal'|'bold'|'analog'
 type BgType = 'gif'|'youtube'
@@ -219,6 +220,7 @@ export function EmbedClient() {
   const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
   const [copied,      setCopied]      = useState(false)
   const [vw,          setVw]          = useState(1280)
+  const [showSupport, setShowSupport] = useState(false)
 
   // Refs
   const ctxRef    = useRef<AudioContext|null>(null)
@@ -277,7 +279,7 @@ export function EmbedClient() {
       const container=document.createElement('div')
       ytRef.current.appendChild(container)
       ytPlayer.current=new(window as any).YT.Player(container,{
-        height:'1',width:'1',videoId:activeYtId,
+        height:'180',width:'320',videoId:activeYtId,
         playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
         events:{
           onReady:(e:any)=>{e.target.setVolume(0);setYtStatus('ready')},
@@ -351,7 +353,7 @@ export function EmbedClient() {
     const create=()=>{
       if(!container)return
       ytPlayer.current=new(window as any).YT.Player(container,{
-        height:'1',width:'1',videoId:ytId,
+        height:'180',width:'320',videoId:ytId,
         playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
         events:{
           onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);setYtStatus('ready');e.target.setVolume(vol);e.target.playVideo()},
@@ -1371,6 +1373,11 @@ export function EmbedClient() {
             </button>
           ))}
         </div>
+        {/* Support */}
+        <div style={divider}/>
+        <button onClick={()=>setShowSupport(true)} style={{...dockBtn(false),flexShrink:0,color:'#f472b6'}} title="Support LofiSpace 💜">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
       </div>{/* end inner flex */}
       </div>{/* end dock */}
 
@@ -1379,8 +1386,11 @@ export function EmbedClient() {
         Powered by LofiSpace
       </a>
 
-      {/* ── Hidden YT player ── */}
-      <div style={{position:'fixed',bottom:0,right:0,width:1,height:1,opacity:0,overflow:'hidden'}}><div ref={ytRef}/></div>
+      {/* ── Hidden YT player — off-screen (opacity:0 causes Chrome to pause media) ── */}
+      <div style={{position:'fixed',left:'-400px',top:0,width:'320px',height:'180px',pointerEvents:'none'}}><div ref={ytRef}/></div>
+
+      {/* ── Support modal ── */}
+      <SupportModal open={showSupport} onClose={()=>setShowSupport(false)} />
 
       {/* ── XP toast ── */}
       {xpToast&&(

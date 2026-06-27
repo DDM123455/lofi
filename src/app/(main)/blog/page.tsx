@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
+import { AdBanner } from '@/components/ads/AdBanner'
 
 export const metadata: Metadata = {
   title: 'Blog — Lofi, Notion Tips & Productivity | LofiSpace',
@@ -22,9 +23,9 @@ export default function BlogPage() {
         </p>
       </div>
 
-      {/* AdSense top banner */}
-      <div className="mb-10 flex h-20 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
-        Google AdSense — 728×90
+      {/* AdSense — Top */}
+      <div className="mb-10">
+        <AdBanner slot={process.env.NEXT_PUBLIC_AD_SLOT_BLOG_TOP ?? ''} format="horizontal" style={{ minHeight: 72 }} />
       </div>
 
       {/* Category filter — visual only for now */}
@@ -100,9 +101,9 @@ export default function BlogPage() {
         ))}
       </div>
 
-      {/* AdSense bottom */}
-      <div className="mt-12 flex h-20 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
-        Google AdSense — 728×90
+      {/* AdSense — Bottom */}
+      <div className="mt-12">
+        <AdBanner slot={process.env.NEXT_PUBLIC_AD_SLOT_BLOG_BOT ?? ''} format="auto" style={{ minHeight: 72 }} />
       </div>
     </div>
   )

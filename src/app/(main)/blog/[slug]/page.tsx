@@ -94,10 +94,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <h3 className="text-lg font-bold text-white mb-2">Tạo Widget Lofi của bạn</h3>
         <p className="text-sm text-white/60 mb-4">Mix nhạc lofi + ambient sound + hình nền GIF. Nhúng vào Notion chỉ trong 30 giây.</p>
         <Link
-          href="/workspace"
+          href="/"
           className="inline-block rounded-full bg-violet-600 px-6 py-2 text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
         >
-          Tạo Widget ngay →
+          Mở Widget ngay →
         </Link>
       </div>
 

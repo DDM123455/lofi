@@ -12,20 +12,32 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'i.giphy.com' },
     ],
   },
-  // Allow Notion and common embed platforms to iframe the /embed route
+  async redirects() {
+    return [
+      // Phase 1: /embed → /workspace (308 permanent, preserves query params)
+      {
+        source: '/embed',
+        destination: '/workspace',
+        permanent: true,
+      },
+    ]
+  },
+  // Allow /workspace to be iframed by Notion and any embed platform
   async headers() {
     return [
       {
+        source: '/workspace',
+        headers: [
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
+        ],
+      },
+      // Keep /embed headers for the redirect response
+      {
         source: '/embed',
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'ALLOWALL',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "frame-ancestors *",
-          },
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
         ],
       },
     ]

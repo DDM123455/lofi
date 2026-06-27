@@ -6,9 +6,12 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/embed'], // no need to index embed pages
+        disallow: [
+          '/embed',      // legacy route — redirects to /workspace
+          '/api/',
+        ],
       },
     ],
-    sitemap: 'https://lofispace.app/sitemap.xml',
+    sitemap: 'https://focusworkspace.app/sitemap.xml',
   }
 }

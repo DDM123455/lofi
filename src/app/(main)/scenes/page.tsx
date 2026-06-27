@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { SCENES, CATEGORY_LABELS, sceneToWorkspaceUrl, sceneToEmbedUrl } from '@/lib/scenes'
 import type { SceneCategory } from '@/lib/scenes'
 import { SceneGrid } from './SceneGrid'
+import { AdBanner } from '@/components/ads/AdBanner'
 
 export const metadata: Metadata = {
   title: 'Scene Gallery — Lofi Ambient Vibes | LofiSpace',
@@ -32,9 +33,9 @@ export default function ScenesPage() {
         </p>
       </div>
 
-      {/* AdSense */}
-      <div className="mb-8 flex h-16 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
-        Google AdSense — 728×90
+      {/* AdSense — Top */}
+      <div className="mb-8">
+        <AdBanner slot={process.env.NEXT_PUBLIC_AD_SLOT_SCENES_TOP ?? ''} format="horizontal" style={{ minHeight: 72 }} />
       </div>
 
       {/* Scene grid với filter (client component) */}
@@ -44,17 +45,17 @@ export default function ScenesPage() {
       <div className="mt-16 rounded-2xl bg-gradient-to-r from-violet-900/30 to-violet-800/10 border border-violet-500/20 p-8 text-center">
         <h2 className="text-xl font-bold text-white mb-2">Muốn tạo scene riêng?</h2>
         <p className="text-white/50 text-sm mb-5">
-          Vào Workspace để mix âm thanh, chọn GIF, tùy chỉnh màu sắc theo ý muốn.
+          Mở widget để mix âm thanh, chọn GIF, tùy chỉnh màu sắc theo ý muốn.
         </p>
-        <Link href="/workspace"
+        <Link href="/"
           className="inline-block rounded-full bg-violet-600 px-8 py-2.5 font-semibold text-white hover:bg-violet-500 transition-colors">
-          Tạo Scene của bạn →
+          Mở Widget →
         </Link>
       </div>
 
-      {/* AdSense bottom */}
-      <div className="mt-8 flex h-16 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
-        Google AdSense — 728×90
+      {/* AdSense — Bottom */}
+      <div className="mt-8">
+        <AdBanner slot={process.env.NEXT_PUBLIC_AD_SLOT_SCENES_BOT ?? ''} format="auto" style={{ minHeight: 72 }} />
       </div>
     </div>
   )

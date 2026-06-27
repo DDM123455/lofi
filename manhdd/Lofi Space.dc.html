@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:#0e0e14;font-family:'Outfit',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+  input{font-family:inherit;}
+  @keyframes lf-pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.45;transform:scale(.82);}}
+  @keyframes lf-bob{0%,100%{transform:translateY(0) rotate(-1deg);}50%{transform:translateY(-5px) rotate(1deg);}}
+  @keyframes lf-type{0%,60%,100%{transform:translateY(0);opacity:.4;}30%{transform:translateY(-3px);opacity:1;}}
+  @keyframes lf-blink{0%,92%,100%{transform:scaleY(1);}96%{transform:scaleY(.1);}}
+  @keyframes lf-flame{0%,100%{transform:scale(1) rotate(-2deg);}50%{transform:scale(1.12) rotate(2deg);}}
+  @keyframes cat-bob{0%,100%{transform:translateY(0);}50%{transform:translateY(-2.5px);}}
+  @keyframes cat-tail{0%,100%{transform:rotate(9deg);}50%{transform:rotate(-15deg);}}
+  @keyframes cat-ear{0%,90%,100%{transform:rotate(0);}95%{transform:rotate(-9deg);}}
+  @keyframes cat-blink{0%,93%,100%{transform:scaleY(1);}96.5%{transform:scaleY(.1);}}
+  @keyframes cat-pawL{0%,100%{transform:translateY(0);}28%{transform:translateY(-4.5px);}}
+  @keyframes cat-pawR{0%,28%,100%{transform:translateY(0);}64%{transform:translateY(-4.5px);}}
+  @keyframes cat-code{0%{transform:translateY(0);}100%{transform:translateY(-76px);}}
+  @keyframes cat-glow{0%,100%{opacity:.38;}50%{opacity:.72;}}
+  input[type=range]{accent-color:var(--accent,#a78bfa);}
+  .lf-scroll::-webkit-scrollbar{width:6px;}
+  .lf-scroll::-webkit-scrollbar-thumb{background:var(--track,rgba(255,255,255,.18));border-radius:3px;}
+</style>
+</helmet>
+
+<div style="position:fixed;inset:0;overflow:hidden;font-family:'Outfit',sans-serif;color:var(--text,#f3f3f8);user-select:none; {{ themeVars }}">
+
+  <!-- background + scene overlay -->
+  <div style="position:absolute;inset:0;background-image:url('uploads/backgroud.png');background-size:cover;background-position:center;image-rendering:pixelated;z-index:0;"></div>
+  <div style="position:absolute;inset:0;z-index:1;pointer-events:none;transition:background .6s ease; {{ overlayStyle }}"></div>
+
+  <!-- ===== CLOCK ===== -->
+  <div style="position:absolute;top:30px;left:36px;z-index:5;">
+    <div style="display:flex;align-items:baseline;gap:8px;">
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:74px;line-height:.9;letter-spacing:-2px;text-shadow:0 3px 22px rgba(0,0,0,.45);">{{ timeStr }}</span>
+      <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:24px;color:var(--accent,#a78bfa);text-shadow:0 2px 14px rgba(0,0,0,.4);">{{ secStr }}</span>
+    </div>
+    <div style="margin-top:4px;font-size:14px;font-weight:500;letter-spacing:.3px;color:var(--text,#fff);opacity:.92;text-shadow:0 2px 10px rgba(0,0,0,.5);text-transform:capitalize;">{{ dateStr }}</div>
+  </div>
+
+  <!-- ===== WEATHER ===== -->
+  <sc-if value="{{ weatherOpen }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;top:120px;left:36px;z-index:5;width:216px;padding:14px 16px;background:var(--panel,rgba(18,20,32,.6));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(20px) saturate(135%);-webkit-backdrop-filter:blur(20px) saturate(135%);border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.34);">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:11px;min-width:0;">
+        <span style="font-size:34px;line-height:1;">{{ wIcon }}</span>
+        <div style="min-width:0;">
+          <div style="font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ wCity }}</div>
+          <div style="font-size:12px;color:var(--dim,rgba(255,255,255,.6));">{{ wTempLine }}</div>
+        </div>
+      </div>
+      <button onClick="{{ closeWeather }}" style="display:flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center;border:none;background:transparent;color:var(--dim2,rgba(255,255,255,.4));border-radius:6px;cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.1));color:var(--text,#fff);">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;gap:14px;margin-top:12px;padding-top:11px;border-top:1px solid var(--border,rgba(255,255,255,.1));font-size:11.5px;color:var(--dim,rgba(255,255,255,.62));">
+      <span style="display:flex;align-items:center;gap:4px;">🌡️ {{ wFeels }}°</span>
+      <span style="display:flex;align-items:center;gap:4px;">💧 {{ wHum }}%</span>
+      <span style="display:flex;align-items:center;gap:4px;">🍃 {{ wWind }}km/h</span>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== STREAK CHAIN ===== -->
+  <div style="position:absolute;top:226px;left:36px;z-index:5;width:216px;padding:15px 16px;background:var(--panel,rgba(18,20,32,.6));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(20px) saturate(135%);-webkit-backdrop-filter:blur(20px) saturate(135%);border-radius:18px;box-shadow:0 14px 40px rgba(0,0,0,.34);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:9px;">
+        <span style="font-size:26px;line-height:1;animation:lf-flame 1.6s ease-in-out infinite;">🔥</span>
+        <div>
+          <div style="display:flex;align-items:baseline;gap:5px;">
+            <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:24px;line-height:1;">{{ streakCount }}</span>
+            <span style="font-size:12px;font-weight:500;color:var(--dim,rgba(255,255,255,.6));">ngày</span>
+          </div>
+          <div style="font-size:10.5px;color:var(--dim2,rgba(255,255,255,.45));">Chuỗi học liên tục</div>
+        </div>
+      </div>
+      <span style="font-size:10px;font-weight:600;letter-spacing:.4px;padding:4px 8px;border-radius:8px;background:var(--accentSoft);color:var(--accent);">Kỷ lục {{ streakBest }}</span>
+    </div>
+    <div style="display:flex;gap:5px;">
+      <sc-for list="{{ streakDays }}" as="day" hint-placeholder-count="7">
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="{{ day.dotStyle }}">{{ day.mark }}</div>
+          <span style="font-size:9px;font-weight:600;color:var(--dim2,rgba(255,255,255,.4));">{{ day.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- ===== THEME SWITCH ===== -->
+  <div style="position:absolute;top:30px;left:50%;transform:translateX(-50%);z-index:6;display:flex;gap:4px;padding:5px;border-radius:999px;background:var(--panel,rgba(18,20,32,.6));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(18px) saturate(135%);-webkit-backdrop-filter:blur(18px) saturate(135%);box-shadow:0 10px 30px rgba(0,0,0,.35);">
+    <button onClick="{{ pickGlass }}" style="{{ glassBtnStyle }}">Glass</button>
+    <button onClick="{{ pickWarm }}" style="{{ warmBtnStyle }}">Warm</button>
+  </div>
+
+  <!-- ===== POMODORO ===== -->
+  <sc-if value="{{ pomoOpen }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;top:96px;right:32px;z-index:5;width:236px;padding:20px 20px 22px;background:var(--panel,rgba(18,20,32,.6));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(22px) saturate(135%);-webkit-backdrop-filter:blur(22px) saturate(135%);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.38);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+      <span style="font-size:11px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--dim,rgba(255,255,255,.55));">Pomodoro</span>
+      <button onClick="{{ closePomo }}" style="display:flex;width:24px;height:24px;align-items:center;justify-content:center;border:none;background:transparent;color:var(--dim,rgba(255,255,255,.5));border-radius:7px;cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.08));color:var(--text,#fff);">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="display:flex;gap:5px;margin-bottom:16px;">
+      <button onClick="{{ setFocus }}" style="{{ focusBtnStyle }}">Tập trung</button>
+      <button onClick="{{ setBreak }}" style="{{ breakBtnStyle }}">Nghỉ</button>
+    </div>
+    <div style="position:relative;width:148px;height:148px;margin:0 auto 16px;">
+      <svg width="148" height="148" viewBox="0 0 148 148" style="transform:rotate(-90deg);">
+        <circle cx="74" cy="74" r="62" fill="none" stroke="var(--track,rgba(255,255,255,.1))" stroke-width="9"/>
+        <circle cx="74" cy="74" r="62" fill="none" stroke="var(--accent,#a78bfa)" stroke-width="9" stroke-linecap="round" stroke-dasharray="{{ pomoCirc }}" stroke-dashoffset="{{ pomoDash }}" style="transition:stroke-dashoffset 1s linear;filter:drop-shadow(0 0 6px var(--accentGlow,rgba(167,139,250,.5)));"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:36px;letter-spacing:-1px;">{{ pomoTime }}</span>
+        <span style="font-size:11px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--dim,rgba(255,255,255,.5));">{{ pomoLabel }}</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onClick="{{ togglePomo }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border:none;border-radius:12px;background:var(--accent,#a78bfa);color:#16121f;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 6px 18px var(--accentGlow,rgba(167,139,250,.4));" style-hover="filter:brightness(1.08);">
+        <sc-if value="{{ pomoRunning }}" hint-placeholder-val="{{ false }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+        <sc-if value="{{ pomoStopped }}" hint-placeholder-val="{{ true }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg></sc-if>
+        <span>{{ pomoBtnLabel }}</span>
+      </button>
+      <button onClick="{{ resetPomo }}" style="display:flex;width:42px;align-items:center;justify-content:center;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:12px;background:var(--input,rgba(255,255,255,.06));color:var(--text,#fff);cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.1));">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== MAIN PLAYER PANEL ===== -->
+  <sc-if value="{{ panelOpen }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;left:50%;bottom:118px;transform:translateX(-50%);z-index:5;width:472px;background:var(--panel,rgba(18,20,32,.6));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);border-radius:22px;box-shadow:0 22px 60px rgba(0,0,0,.42);overflow:hidden;">
+
+    <!-- header tabs -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border,rgba(255,255,255,.1));">
+      <div style="display:flex;gap:4px;">
+        <button onClick="{{ tabMusic }}" style="{{ tabMusicStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></button>
+        <button onClick="{{ tabSounds }}" style="{{ tabSoundsStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 13c1.5 0 1.5-4 3-4s1.5 8 3 8 1.5-10 3-10 1.5 6 3 6 1.5-3 3-3"/></svg></button>
+        <button onClick="{{ tabScene }}" style="{{ tabSceneStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-4.5-4.5L7 21"/></svg></button>
+        <button onClick="{{ tabLinks }}" style="{{ tabLinksStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg></button>
+      </div>
+      <button onClick="{{ closePanel }}" style="display:flex;width:30px;height:30px;align-items:center;justify-content:center;border:none;background:transparent;color:var(--dim,rgba(255,255,255,.5));border-radius:9px;cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.08));color:var(--text,#fff);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- body -->
+    <div style="padding:14px 16px;min-height:248px;">
+
+      <!-- MUSIC -->
+      <sc-if value="{{ isMusic }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <sc-for list="{{ stations }}" as="st" hint-placeholder-count="5">
+            <div onClick="{{ st.onSelect }}" style="{{ st.rowStyle }}" style-hover="background:var(--track,rgba(255,255,255,.07));">
+              <div style="display:flex;align-items:center;gap:11px;min-width:0;">
+                <span style="{{ st.dotStyle }}"></span>
+                <span style="{{ st.nameStyle }}">{{ st.name }}</span>
+              </div>
+              <sc-if value="{{ st.live }}" hint-placeholder-val="{{ false }}">
+                <span style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--accent2,#6ee7d7);">
+                  <span style="width:6px;height:6px;border-radius:50%;background:var(--accent2,#6ee7d7);animation:lf-pulse 1.4s ease-in-out infinite;"></span>LIVE
+                </span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border,rgba(255,255,255,.08));">
+          <div style="font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim2,rgba(255,255,255,.4));margin-bottom:8px;">YouTube tùy chỉnh</div>
+          <div style="display:flex;gap:8px;">
+            <input value="{{ customUrl }}" onInput="{{ onCustomInput }}" placeholder="Dán URL hoặc video ID…" style="flex:1;padding:10px 12px;border:1px solid var(--border,rgba(255,255,255,.12));background:var(--input,rgba(255,255,255,.05));color:var(--text,#fff);border-radius:11px;font-size:13px;outline:none;" />
+            <button onClick="{{ playCustom }}" style="padding:0 18px;border:none;border-radius:11px;background:var(--accent,#a78bfa);color:#16121f;font-weight:600;font-size:13px;cursor:pointer;" style-hover="filter:brightness(1.08);">Phát</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- SOUNDS -->
+      <sc-if value="{{ isSounds }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim2,rgba(255,255,255,.4));margin-bottom:10px;">Âm thanh nền — trộn theo ý bạn</div>
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <sc-for list="{{ sounds }}" as="sd" hint-placeholder-count="5">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button onClick="{{ sd.onToggle }}" style="{{ sd.iconStyle }}">{{ sd.emoji }}</button>
+              <div style="flex:1;min-width:0;">
+                <div style="{{ sd.nameStyle }}">{{ sd.name }}</div>
+                <input type="range" min="0" max="100" value="{{ sd.vol }}" onInput="{{ sd.onVol }}" disabled="{{ sd.disabled }}" style="{{ sd.sliderStyle }}" />
+              </div>
+              <button onClick="{{ sd.onToggle }}" style="{{ sd.switchStyle }}"><span style="{{ sd.knobStyle }}"></span></button>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- SCENE -->
+      <sc-if value="{{ isScene }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim2,rgba(255,255,255,.4));margin-bottom:10px;">Không khí — chỉnh ánh sáng cảnh nền</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <sc-for list="{{ scenes }}" as="sc" hint-placeholder-count="4">
+            <button onClick="{{ sc.onSelect }}" style="{{ sc.cardStyle }}">
+              <span style="font-size:22px;line-height:1;">{{ sc.emoji }}</span>
+              <span style="font-size:13px;font-weight:600;">{{ sc.label }}</span>
+              <span style="font-size:11px;color:var(--dim,rgba(255,255,255,.5));">{{ sc.note }}</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- LINKS -->
+      <sc-if value="{{ isLinks }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim2,rgba(255,255,255,.4));margin-bottom:10px;">Lối tắt nhanh</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+          <sc-for list="{{ links }}" as="lk" hint-placeholder-count="6">
+            <a href="{{ lk.url }}" target="_blank" rel="noopener" style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 8px;border:1px solid var(--border,rgba(255,255,255,.1));border-radius:14px;background:var(--input,rgba(255,255,255,.04));text-decoration:none;cursor:pointer;transition:all .16s ease;" style-hover="background:var(--track,rgba(255,255,255,.09));transform:translateY(-2px);">
+              <span style="{{ lk.tileStyle }}">{{ lk.letter }}</span>
+              <span style="font-size:12px;font-weight:500;color:var(--text,#fff);">{{ lk.label }}</span>
+            </a>
+          </sc-for>
+        </div>
+      </sc-if>
+
+    </div>
+
+    <!-- footer player -->
+    <div style="display:flex;align-items:center;gap:13px;padding:13px 16px;border-top:1px solid var(--border,rgba(255,255,255,.1));background:var(--panel2,rgba(0,0,0,.14));">
+      <button onClick="{{ togglePlay }}" style="display:flex;width:42px;height:42px;flex:none;align-items:center;justify-content:center;border:none;border-radius:50%;background:var(--accent,#a78bfa);color:#16121f;cursor:pointer;box-shadow:0 6px 18px var(--accentGlow,rgba(167,139,250,.4));" style-hover="filter:brightness(1.08);transform:scale(1.05);">
+        <sc-if value="{{ playing }}" hint-placeholder-val="{{ true }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+        <sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg></sc-if>
+      </button>
+      <div style="min-width:0;width:128px;">
+        <div style="font-size:10px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--dim2,rgba(255,255,255,.42));">{{ nowLabel }}</div>
+        <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ nowName }}</div>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;gap:9px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--dim,rgba(255,255,255,.55))" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+        <input type="range" min="0" max="100" value="{{ volume }}" onInput="{{ onVolume }}" style="flex:1;height:4px;cursor:pointer;" />
+        <span style="font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--dim,rgba(255,255,255,.6));width:34px;text-align:right;">{{ volume }}%</span>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== NOTES ===== -->
+  <sc-if value="{{ notesOpen }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;right:32px;bottom:118px;z-index:5;width:264px;background:var(--panel,rgba(18,20,32,.6));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(22px) saturate(135%);-webkit-backdrop-filter:blur(22px) saturate(135%);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,.38);overflow:hidden;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--border,rgba(255,255,255,.1));">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent,#a78bfa)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span style="font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim,rgba(255,255,255,.62));">Việc cần làm</span>
+      </div>
+      <span style="font-size:12px;font-weight:600;color:var(--accent,#a78bfa);font-variant-numeric:tabular-nums;">{{ noteCount }}</span>
+    </div>
+    <div class="lf-scroll" style="max-height:188px;overflow-y:auto;padding:8px 8px 4px;">
+      <sc-if value="{{ noNotes }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:26px 12px;text-align:center;font-size:13px;color:var(--dim2,rgba(255,255,255,.4));">Chưa có mục nào</div>
+      </sc-if>
+      <sc-for list="{{ notes }}" as="nt" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:10px;" style-hover="background:var(--track,rgba(255,255,255,.06));">
+          <button onClick="{{ nt.onToggle }}" style="{{ nt.checkStyle }}">
+            <sc-if value="{{ nt.done }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16121f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></sc-if>
+          </button>
+          <span style="{{ nt.textStyle }}">{{ nt.text }}</span>
+          <button onClick="{{ nt.onDelete }}" style="display:flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center;border:none;background:transparent;color:var(--dim2,rgba(255,255,255,.35));border-radius:6px;cursor:pointer;opacity:.5;transition:all .16s ease;" style-hover="background:var(--track,rgba(255,255,255,.1));color:#ef6b7b;opacity:1;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+          </button>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:8px;padding:11px 12px;border-top:1px solid var(--border,rgba(255,255,255,.1));">
+      <input value="{{ noteInput }}" onInput="{{ onNoteInput }}" onKeyDown="{{ onNoteKey }}" placeholder="Thêm mục…" style="flex:1;padding:9px 11px;border:1px solid var(--border,rgba(255,255,255,.12));background:var(--input,rgba(255,255,255,.05));color:var(--text,#fff);border-radius:10px;font-size:13px;outline:none;" />
+      <button onClick="{{ addNote }}" style="display:flex;width:36px;flex:none;align-items:center;justify-content:center;border:none;border-radius:10px;background:var(--accent,#a78bfa);color:#16121f;cursor:pointer;" style-hover="filter:brightness(1.08);">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== CODING CAT ===== -->
+  <div style="position:absolute;left:32px;bottom:30px;z-index:5;display:flex;flex-direction:column;align-items:flex-start;gap:8px;">
+    <div style="position:relative;max-width:208px;padding:10px 14px;background:var(--panel,rgba(18,20,32,.72));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:14px 14px 14px 4px;box-shadow:0 10px 28px rgba(0,0,0,.32);font-size:12.5px;font-weight:500;line-height:1.35;">
+      {{ catMsg }}
+      <sc-if value="{{ pomoRunning }}" hint-placeholder-val="{{ false }}">
+        <span style="display:inline-flex;gap:3px;margin-left:5px;vertical-align:middle;">
+          <span style="width:4px;height:4px;border-radius:50%;background:var(--accent,#a78bfa);animation:lf-type 1.1s ease-in-out infinite;"></span>
+          <span style="width:4px;height:4px;border-radius:50%;background:var(--accent,#a78bfa);animation:lf-type 1.1s ease-in-out .18s infinite;"></span>
+          <span style="width:4px;height:4px;border-radius:50%;background:var(--accent,#a78bfa);animation:lf-type 1.1s ease-in-out .36s infinite;"></span>
+        </span>
+      </sc-if>
+    </div>
+    <svg width="158" height="124" viewBox="0 0 240 188" style="overflow:visible;margin-left:4px;filter:drop-shadow(0 12px 14px rgba(0,0,0,.42));">
+      <!-- screen glow on the floor -->
+      <ellipse cx="120" cy="159" rx="62" ry="17" fill="var(--accent,#a78bfa)" style="filter:blur(13px);animation:cat-glow 2.6s ease-in-out infinite;"></ellipse>
+
+      <!-- TAIL -->
+      <path d="M182 132 q42 2 40 -40 q-2 -22 -20 -24" fill="none" stroke="#cf8a4c" stroke-width="14" stroke-linecap="round" style="transform-box:fill-box;transform-origin:4px 132px;animation:cat-tail 2.8s ease-in-out infinite;"></path>
+
+      <!-- CAT (gentle bob) -->
+      <g style="transform-box:fill-box;transform-origin:center;animation:cat-bob 3.4s ease-in-out infinite;">
+        <!-- arms down the sides -->
+        <path d="M94 96 C74 112 66 132 70 150" fill="none" stroke="#e3a767" stroke-width="19" stroke-linecap="round"></path>
+        <path d="M146 96 C166 112 174 132 170 150" fill="none" stroke="#e3a767" stroke-width="19" stroke-linecap="round"></path>
+
+        <!-- ears -->
+        <path d="M88 36 L80 4 L116 28 Z" fill="#e3a767" style="transform-box:fill-box;transform-origin:bottom right;animation:cat-ear 4.2s ease-in-out infinite;"></path>
+        <path d="M152 36 L160 4 L124 28 Z" fill="#e3a767" style="transform-box:fill-box;transform-origin:bottom left;animation:cat-ear 4.2s ease-in-out .6s infinite;"></path>
+        <path d="M92 32 L88 14 L108 28 Z" fill="#ec9da0"></path>
+        <path d="M148 32 L152 14 L132 28 Z" fill="#ec9da0"></path>
+
+        <!-- head -->
+        <circle cx="120" cy="60" r="40" fill="#e3a767"></circle>
+        <!-- forehead stripes -->
+        <path d="M120 22 V40 M104 26 l5 15 M136 26 l-5 15" stroke="#cf8a4c" stroke-width="5" stroke-linecap="round" fill="none"></path>
+        <!-- muzzle patch -->
+        <ellipse cx="120" cy="72" rx="26" ry="22" fill="#f7e9d4"></ellipse>
+
+        <!-- eyes -->
+        <g style="transform-box:fill-box;transform-origin:center;animation:cat-blink 4.6s ease-in-out infinite;">
+          <ellipse cx="106" cy="64" rx="6.6" ry="8.4" fill="#33323d"></ellipse>
+          <ellipse cx="134" cy="64" rx="6.6" ry="8.4" fill="#33323d"></ellipse>
+          <circle cx="103.6" cy="61" r="2.1" fill="#fff"></circle>
+          <circle cx="131.6" cy="61" r="2.1" fill="#fff"></circle>
+        </g>
+
+        <!-- nose + mouth -->
+        <path d="M116 75 h8 l-4 4.5 z" fill="#e2807f"></path>
+        <path d="M120 79.5 V83 M120 83 q-5 4 -9 1.6 M120 83 q5 4 9 1.6" stroke="#cf8a4c" stroke-width="2" fill="none" stroke-linecap="round"></path>
+        <!-- whiskers -->
+        <path d="M94 70 l-22 -5 M94 76 l-23 3 M146 70 l22 -5 M146 76 l23 3" stroke="#e9d8bd" stroke-width="2" stroke-linecap="round"></path>
+      </g>
+
+      <!-- LAPTOP -->
+      <!-- glow halo behind screen -->
+      <rect x="58" y="96" width="124" height="62" rx="12" fill="var(--accent,#a78bfa)" opacity=".22" style="filter:blur(7px);"></rect>
+      <!-- screen bezel -->
+      <rect x="62" y="98" width="116" height="56" rx="11" fill="#1d212c"></rect>
+      <rect x="62" y="98" width="116" height="56" rx="11" fill="none" stroke="#2f3545" stroke-width="1.5"></rect>
+      <!-- screen inner + scrolling code -->
+      <clipPath id="catScreen"><rect x="70" y="106" width="100" height="40" rx="4"></rect></clipPath>
+      <rect x="70" y="106" width="100" height="40" rx="4" fill="#0f131c"></rect>
+      <g clip-path="url(#catScreen)">
+        <g transform="translate(78,111)" style="animation:cat-code 5s linear infinite;">
+          <!-- block A -->
+          <rect x="0"  y="0"  width="15" height="3.2" rx="1.6" fill="var(--accent,#a78bfa)"></rect>
+          <rect x="19" y="0"  width="40" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <rect x="8"  y="9"  width="22" height="3.2" rx="1.6" fill="#7fd4c4"></rect>
+          <rect x="34" y="9"  width="26" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <rect x="8"  y="18" width="34" height="3.2" rx="1.6" fill="#e8c07d"></rect>
+          <rect x="16" y="27" width="20" height="3.2" rx="1.6" fill="var(--accent,#a78bfa)"></rect>
+          <rect x="40" y="27" width="22" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <rect x="16" y="36" width="30" height="3.2" rx="1.6" fill="#7fd4c4"></rect>
+          <rect x="8"  y="45" width="18" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <rect x="30" y="45" width="28" height="3.2" rx="1.6" fill="#ec9da0"></rect>
+          <rect x="0"  y="54" width="24" height="3.2" rx="1.6" fill="var(--accent,#a78bfa)"></rect>
+          <rect x="8"  y="63" width="40" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <!-- block B (duplicate, +76) -->
+          <rect x="0"  y="76"  width="15" height="3.2" rx="1.6" fill="var(--accent,#a78bfa)"></rect>
+          <rect x="19" y="76"  width="40" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <rect x="8"  y="85"  width="22" height="3.2" rx="1.6" fill="#7fd4c4"></rect>
+          <rect x="34" y="85"  width="26" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <rect x="8"  y="94"  width="34" height="3.2" rx="1.6" fill="#e8c07d"></rect>
+          <rect x="16" y="103" width="20" height="3.2" rx="1.6" fill="var(--accent,#a78bfa)"></rect>
+          <rect x="40" y="103" width="22" height="3.2" rx="1.6" fill="#cdd6e6"></rect>
+          <rect x="16" y="112" width="30" height="3.2" rx="1.6" fill="#7fd4c4"></rect>
+        </g>
+      </g>
+      <!-- camera dot + base lip -->
+      <circle cx="120" cy="102.5" r="1.4" fill="#3a4152"></circle>
+      <rect x="50" y="153" width="140" height="9" rx="4.5" fill="#262b38"></rect>
+      <rect x="50" y="153" width="140" height="3" rx="1.5" fill="#333a4a"></rect>
+
+      <!-- PAWS gripping the laptop -->
+      <g style="transform-box:fill-box;transform-origin:center;animation:cat-pawL 1.1s ease-in-out infinite;">
+        <ellipse cx="72" cy="150" rx="15" ry="11" fill="#f0dcc2"></ellipse>
+        <path d="M66 150 v5 M72 151 v5 M78 150 v5" stroke="#d9bf9f" stroke-width="1.6" stroke-linecap="round"></path>
+      </g>
+      <g style="transform-box:fill-box;transform-origin:center;animation:cat-pawR 1.1s ease-in-out infinite;">
+        <ellipse cx="168" cy="150" rx="15" ry="11" fill="#f0dcc2"></ellipse>
+        <path d="M162 150 v5 M168 151 v5 M174 150 v5" stroke="#d9bf9f" stroke-width="1.6" stroke-linecap="round"></path>
+      </g>
+    </svg>
+  </div>
+
+  <!-- ===== CALENDAR MODAL ===== -->
+  <sc-if value="{{ calOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeCal }}" style="position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.42);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);">
+    <div onClick="{{ stop }}" style="display:flex;width:660px;max-width:92vw;background:var(--panel,rgba(20,22,34,.82));border:1px solid var(--border,rgba(255,255,255,.13));backdrop-filter:blur(26px) saturate(140%);-webkit-backdrop-filter:blur(26px) saturate(140%);border-radius:24px;box-shadow:0 30px 80px rgba(0,0,0,.5);overflow:hidden;">
+
+      <!-- calendar grid side -->
+      <div style="flex:1;padding:22px 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:19px;text-transform:capitalize;">{{ calMonthLabel }}</span>
+          <div style="display:flex;gap:6px;">
+            <button onClick="{{ prevMonth }}" style="display:flex;width:32px;height:32px;align-items:center;justify-content:center;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:9px;background:var(--input,rgba(255,255,255,.05));color:var(--text,#fff);cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.1));">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button onClick="{{ goToday }}" style="padding:0 12px;height:32px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:9px;background:var(--input,rgba(255,255,255,.05));color:var(--text,#fff);cursor:pointer;font-size:12px;font-weight:600;" style-hover="background:var(--track,rgba(255,255,255,.1));">Hôm nay</button>
+            <button onClick="{{ nextMonth }}" style="display:flex;width:32px;height:32px;align-items:center;justify-content:center;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:9px;background:var(--input,rgba(255,255,255,.05));color:var(--text,#fff);cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.1));">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">
+          <sc-for list="{{ weekdays }}" as="wd" hint-placeholder-count="7">
+            <div style="text-align:center;font-size:10.5px;font-weight:600;letter-spacing:.4px;color:var(--dim2,rgba(255,255,255,.42));padding:4px 0;">{{ wd }}</div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">
+          <sc-for list="{{ calCells }}" as="c" hint-placeholder-count="35">
+            <button onClick="{{ c.onClick }}" style="{{ c.style }}">
+              <span>{{ c.day }}</span>
+              <span style="{{ c.dotStyle }}"></span>
+            </button>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- day notes side -->
+      <div style="width:266px;flex:none;display:flex;flex-direction:column;border-left:1px solid var(--border,rgba(255,255,255,.1));background:var(--panel2,rgba(0,0,0,.18));">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;">
+          <div>
+            <div style="font-size:10px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--dim2,rgba(255,255,255,.42));">Ghi chú ngày</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:17px;margin-top:2px;">{{ calSelLabel }}</div>
+          </div>
+          <button onClick="{{ closeCal }}" style="display:flex;width:28px;height:28px;align-items:center;justify-content:center;border:none;background:transparent;color:var(--dim,rgba(255,255,255,.5));border-radius:8px;cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.1));color:var(--text,#fff);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="lf-scroll" style="flex:1;max-height:300px;overflow-y:auto;padding:0 12px;">
+          <sc-if value="{{ noDayNotes }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:30px 14px;text-align:center;font-size:12.5px;color:var(--dim2,rgba(255,255,255,.4));">Chưa có ghi chú cho ngày này</div>
+          </sc-if>
+          <sc-for list="{{ dayNotes }}" as="dn" hint-placeholder-count="0">
+            <div style="display:flex;align-items:flex-start;gap:9px;padding:9px 10px;margin-bottom:6px;border-radius:11px;background:var(--input,rgba(255,255,255,.05));border:1px solid var(--border,rgba(255,255,255,.08));" style-hover="background:var(--track,rgba(255,255,255,.08));">
+              <span style="flex:none;width:6px;height:6px;margin-top:6px;border-radius:50%;background:var(--accent,#a78bfa);"></span>
+              <span style="flex:1;font-size:13px;line-height:1.4;word-break:break-word;">{{ dn.text }}</span>
+              <button onClick="{{ dn.onDelete }}" style="display:flex;width:20px;height:20px;flex:none;align-items:center;justify-content:center;border:none;background:transparent;color:var(--dim2,rgba(255,255,255,.35));border-radius:6px;cursor:pointer;" style-hover="color:#ef6b7b;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+              </button>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:8px;padding:12px;border-top:1px solid var(--border,rgba(255,255,255,.1));">
+          <input value="{{ calInput }}" onInput="{{ onCalInput }}" onKeyDown="{{ onCalKey }}" placeholder="Ghi chú cho ngày này…" style="flex:1;padding:9px 11px;border:1px solid var(--border,rgba(255,255,255,.12));background:var(--input,rgba(255,255,255,.05));color:var(--text,#fff);border-radius:10px;font-size:13px;outline:none;" />
+          <button onClick="{{ addCalNote }}" style="display:flex;width:36px;flex:none;align-items:center;justify-content:center;border:none;border-radius:10px;background:var(--accent,#a78bfa);color:#16121f;cursor:pointer;" style-hover="filter:brightness(1.08);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===== DOCK ===== -->
+  <div style="position:absolute;left:50%;bottom:28px;transform:translateX(-50%);z-index:7;display:flex;align-items:center;gap:7px;padding:8px;border-radius:999px;background:var(--panel,rgba(18,20,32,.62));border:1px solid var(--border,rgba(255,255,255,.12));backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);box-shadow:0 16px 44px rgba(0,0,0,.4);">
+    <button onClick="{{ togglePlay }}" style="display:flex;width:46px;height:46px;align-items:center;justify-content:center;border:none;border-radius:50%;background:var(--accent,#a78bfa);color:#16121f;cursor:pointer;box-shadow:0 6px 18px var(--accentGlow,rgba(167,139,250,.45));" style-hover="filter:brightness(1.08);transform:scale(1.05);">
+      <sc-if value="{{ playing }}" hint-placeholder-val="{{ true }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></sc-if>
+      <sc-if value="{{ paused }}" hint-placeholder-val="{{ false }}"><svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg></sc-if>
+    </button>
+    <div style="width:1px;height:26px;background:var(--border,rgba(255,255,255,.12));margin:0 2px;"></div>
+    <button onClick="{{ togglePanelBtn }}" style="{{ dockPanelStyle }}" title="Trình phát nhạc">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    </button>
+    <button onClick="{{ togglePomoBtn }}" style="{{ dockPomoStyle }}" title="Pomodoro">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+    </button>
+    <button onClick="{{ toggleNotesBtn }}" style="{{ dockNotesStyle }}" title="Ghi chú">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    </button>
+    <button onClick="{{ toggleCalBtn }}" style="{{ dockCalStyle }}" title="Lịch & ghi chú">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>
+    </button>
+    <button onClick="{{ toggleWeatherBtn }}" style="{{ dockWeatherStyle }}" title="Thời tiết">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.5 2A4 4 0 0 0 6.5 19z"/></svg>
+    </button>
+    <div style="width:1px;height:26px;background:var(--border,rgba(255,255,255,.12));margin:0 2px;"></div>
+    <button onClick="{{ toggleTheme }}" style="display:flex;width:40px;height:40px;align-items:center;justify-content:center;border:none;border-radius:50%;background:var(--input,rgba(255,255,255,.06));color:var(--text,#fff);cursor:pointer;" style-hover="background:var(--track,rgba(255,255,255,.12));" title="Đổi giao diện">
+      <sc-if value="{{ isGlass }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></sc-if>
+      <sc-if value="{{ isWarm }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg></sc-if>
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;glass&quot;,&quot;warm&quot;],&quot;default&quot;:&quot;glass&quot;,&quot;tsType&quot;:&quot;'glass'|'warm'&quot;},&quot;accentGlass&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#a78bfa&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;accentWarm&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#f0a868&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;weatherCity&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Thành phố Thủ Đức&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;weatherIcon&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;☀️&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;weatherTemp&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:30,&quot;tsType&quot;:&quot;number&quot;},&quot;weatherCond&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Trời quang&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;weatherFeels&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:36,&quot;tsType&quot;:&quot;number&quot;},&quot;weatherHum&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:78,&quot;tsType&quot;:&quot;number&quot;},&quot;weatherWind&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:2,&quot;tsType&quot;:&quot;number&quot;}}">
+class Component extends DCLogic {
+  state = {
+    theme: 'glass', tab: 'music', playing: true,
+    activeStation: 'synth', volume: 62, customUrl: '',
+    sounds: [
+      { id:'rain',   name:'Mưa rơi',     emoji:'🌧️', on:true,  vol:55 },
+      { id:'waves',  name:'Sóng biển',   emoji:'🌊', on:false, vol:42 },
+      { id:'fire',   name:'Lửa tí tách', emoji:'🔥', on:false, vol:60 },
+      { id:'cafe',   name:'Quán cà phê', emoji:'☕', on:false, vol:48 },
+      { id:'forest', name:'Rừng cây',    emoji:'🌲', on:false, vol:50 },
+    ],
+    scene: 'day',
+    panelOpen: true, pomoOpen: true, notesOpen: true,
+    weatherOpen: true, calOpen: false,
+    pomoMode: 'focus', pomoSeconds: 1500, pomoRunning: false,
+    notes: [
+      { id:1, text:'Đọc xong chương 3', done:true },
+      { id:2, text:'Ôn 20 từ vựng',     done:false },
+      { id:3, text:'Viết nhật ký học tập', done:false },
+    ],
+    noteInput: '',
+    now: new Date(),
+    streak: { count: 1, best: 1, last: '' },
+    calMonth: { y: new Date().getFullYear(), m: new Date().getMonth() },
+    calSelected: '',
+    calNotes: {},
+    calInput: '',
+    _themed: false,
+  };
+
+  stations = [
+    { id:'lofigirl', name:'Lofi Girl – Study' },
+    { id:'synth',    name:'Synthwave Chill' },
+    { id:'jazz',     name:'Jazz Lofi Sleep' },
+    { id:'chillhop', name:'Chillhop Radio' },
+    { id:'tokyo',    name:'Tokyo Night Lofi' },
+  ];
+
+  sceneDefs = [
+    { id:'day',   emoji:'🌸', label:'Ban ngày',  note:'Tươi sáng' },
+    { id:'dusk',  emoji:'🌇', label:'Hoàng hôn', note:'Ấm áp' },
+    { id:'night', emoji:'🌙', label:'Ban đêm',   note:'Trầm tĩnh' },
+    { id:'dim',   emoji:'🌑', label:'Tập trung', note:'Tối, ít sao nhãng' },
+  ];
+
+  links = [
+    { label:'Notion',  letter:'N', url:'https://notion.so' },
+    { label:'Drive',   letter:'D', url:'https://drive.google.com' },
+    { label:'Lịch',    letter:'L', url:'https://calendar.google.com' },
+    { label:'Gmail',   letter:'G', url:'https://mail.google.com' },
+    { label:'To-Do',   letter:'T', url:'https://todoist.com' },
+    { label:'Spotify', letter:'S', url:'https://open.spotify.com' },
+  ];
+
+  catFocus = ['Đang code, đừng làm phiền mình nhé 🤫','Tập trung nào, mình code cùng bạn!','Mỗi dòng code là một bước tiến 🐾','Giữ nhịp đi, bạn làm tốt lắm!'];
+  catBreak = ['Nghỉ tay tí nha, vươn vai nào 🧘','Uống ngụm nước đi bạn ☕','Mèo cũng đang duỗi chân đây~','Thư giãn 5 phút rồi quay lại nhé'];
+  catIdle  = ['Bấm Bắt đầu để mình code cùng nha!','Hôm nay học gì thế? 🐱','Sẵn sàng tập trung chưa nào?','Meo~ chọn một bản nhạc đi bạn 🎵'];
+
+  ymd(d) { return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`; }
+
+  componentDidMount() {
+    const patch = {};
+    if (!this.state._themed && this.props && this.props.defaultTheme) {
+      patch.theme = this.props.defaultTheme; patch._themed = true;
+    }
+    // streak
+    try {
+      const today = new Date(), tkey = this.ymd(today);
+      const ykey = this.ymd(new Date(Date.now() - 86400000));
+      let st = JSON.parse(localStorage.getItem('lofi.streak') || 'null');
+      if (!st || typeof st.count !== 'number') st = { count: 1, best: 1, last: tkey };
+      else if (st.last === tkey) { /* same day */ }
+      else if (st.last === ykey) { st.count += 1; st.last = tkey; }
+      else { st.count = 1; st.last = tkey; }
+      st.best = Math.max(st.best || 1, st.count);
+      localStorage.setItem('lofi.streak', JSON.stringify(st));
+      patch.streak = st;
+    } catch (e) {}
+    // calendar notes
+    try {
+      const cn = JSON.parse(localStorage.getItem('lofi.calNotes') || '{}');
+      if (cn && typeof cn === 'object') patch.calNotes = cn;
+    } catch (e) {}
+    patch.calSelected = this.ymd(new Date());
+    this.setState(patch);
+
+    this.timer = setInterval(() => {
+      this.setState(s => {
+        const next = { now: new Date() };
+        if (s.pomoRunning) {
+          let sec = s.pomoSeconds - 1;
+          if (sec < 0) {
+            const mode = s.pomoMode === 'focus' ? 'break' : 'focus';
+            next.pomoMode = mode; next.pomoRunning = false;
+            sec = mode === 'focus' ? 1500 : 300;
+          }
+          next.pomoSeconds = sec;
+        }
+        return next;
+      });
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+
+  hexToRgba(hex, a) {
+    let h = (hex || '').replace('#','');
+    if (h.length === 3) h = h.split('').map(c => c+c).join('');
+    const n = parseInt(h || 'a78bfa', 16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+  }
+
+  saveCal(obj) { try { localStorage.setItem('lofi.calNotes', JSON.stringify(obj)); } catch (e) {} }
+
+  renderVals() {
+    const s = this.state, p = this.props || {};
+    const isGlass = s.theme === 'glass';
+    const accent = isGlass ? (p.accentGlass || '#a78bfa') : (p.accentWarm || '#f0a868');
+    const accent2 = isGlass ? '#6ee7d7' : '#e8849e';
+    const accentSoft = this.hexToRgba(accent, 0.16);
+    const accentGlow = this.hexToRgba(accent, 0.45);
+
+    const themeVars = isGlass
+      ? `--text:#f3f3f8;--dim:rgba(243,243,248,.58);--dim2:rgba(243,243,248,.4);--panel:rgba(18,20,32,.6);--panel2:rgba(0,0,0,.16);--border:rgba(255,255,255,.12);--input:rgba(255,255,255,.05);--track:rgba(255,255,255,.08);--accent:${accent};--accent2:${accent2};--accentSoft:${accentSoft};--accentGlow:${accentGlow};`
+      : `--text:#fbf2ea;--dim:rgba(251,242,234,.6);--dim2:rgba(251,242,234,.42);--panel:rgba(36,25,25,.6);--panel2:rgba(0,0,0,.14);--border:rgba(255,224,206,.15);--input:rgba(255,240,230,.06);--track:rgba(255,240,230,.1);--accent:${accent};--accent2:${accent2};--accentSoft:${accentSoft};--accentGlow:${accentGlow};`;
+
+    const overlayMap = {
+      day:   'background:linear-gradient(rgba(255,250,245,.04),rgba(255,235,245,.07));',
+      dusk:  'background:linear-gradient(180deg,rgba(70,25,35,.28),rgba(130,55,30,.34));',
+      night: 'background:linear-gradient(180deg,rgba(8,10,28,.5),rgba(18,18,46,.56));',
+      dim:   'background:rgba(0,0,0,.5);',
+    };
+
+    // clock
+    const d = s.now, pad = n => String(n).padStart(2,'0');
+    const timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const secStr = pad(d.getSeconds());
+    const days = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+    const dateStr = `${days[d.getDay()]}, ${d.getDate()} tháng ${d.getMonth()+1}`;
+
+    // pomodoro
+    const total = s.pomoMode === 'focus' ? 1500 : 300;
+    const pm = Math.floor(s.pomoSeconds/60), ps = s.pomoSeconds%60;
+    const pomoTime = `${pad(pm)}:${pad(ps)}`;
+    const circ = 2 * Math.PI * 62;
+    const pomoDash = circ * (1 - s.pomoSeconds/total);
+
+    const seg = (a) => `flex:1;padding:8px 0;border:none;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .16s ease;${a ? 'background:var(--accent);color:#16121f;' : 'background:var(--input,rgba(255,255,255,.05));color:var(--dim,rgba(255,255,255,.55));'}`;
+    const themeBtn = (a) => `padding:7px 18px;border:none;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;transition:all .16s ease;${a ? 'background:var(--accent);color:#16121f;box-shadow:0 4px 14px var(--accentGlow);' : 'background:transparent;color:var(--dim,rgba(255,255,255,.6));'}`;
+    const tabBtn = (a) => `display:flex;width:38px;height:38px;align-items:center;justify-content:center;border:none;border-radius:11px;cursor:pointer;transition:all .16s ease;${a ? 'background:var(--accentSoft);color:var(--accent);' : 'background:transparent;color:var(--dim,rgba(255,255,255,.5));'}`;
+    const dockBtn = (a) => `display:flex;width:40px;height:40px;align-items:center;justify-content:center;border:none;border-radius:50%;cursor:pointer;transition:all .16s ease;${a ? 'background:var(--accentSoft);color:var(--accent);' : 'background:transparent;color:var(--dim,rgba(255,255,255,.55));'}`;
+
+    // streak chain (7 visual segments)
+    const wdShort = ['CN','T2','T3','T4','T5','T6','T7'];
+    const todayDow = d.getDay();
+    const filled = Math.min(s.streak.count, 7);
+    const streakDays = [];
+    for (let i = 6; i >= 0; i--) {
+      const dow = (todayDow - i + 7) % 7;
+      const active = i < filled;
+      streakDays.push({
+        label: wdShort[dow],
+        mark: active ? '🔥' : '',
+        dotStyle: `display:flex;width:100%;height:28px;align-items:center;justify-content:center;border-radius:9px;font-size:12px;line-height:1;overflow:hidden;${active ? 'background:var(--accentSoft);border:1px solid var(--accent);' : 'background:var(--input,rgba(255,255,255,.04));border:1px solid var(--border,rgba(255,255,255,.08));'}`,
+      });
+    }
+
+    // stations
+    const stations = this.stations.map(st => {
+      const active = st.id === s.activeStation, live = active && s.playing;
+      return { ...st, live,
+        onSelect: () => this.setState({ activeStation: st.id, playing: true }),
+        rowStyle: `display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 13px;border-radius:12px;cursor:pointer;transition:all .16s ease;border:1px solid ${active ? 'var(--accentSoft)' : 'transparent'};${active ? 'background:var(--accentSoft);' : ''}`,
+        dotStyle: `flex:none;width:8px;height:8px;border-radius:50%;${active ? 'background:var(--accent2,#6ee7d7);box-shadow:0 0 8px var(--accent2,#6ee7d7);' : 'border:1.5px solid var(--dim2,rgba(255,255,255,.35));'}`,
+        nameStyle: `font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:${active ? '600' : '500'};color:${active ? 'var(--text,#fff)' : 'var(--dim,rgba(255,255,255,.7))'};`,
+      };
+    });
+
+    const sounds = s.sounds.map(sd => ({ ...sd, disabled: !sd.on,
+      onToggle: () => this.setState(st => ({ sounds: st.sounds.map(x => x.id===sd.id ? {...x, on:!x.on} : x) })),
+      onVol: (e) => { const v = +e.target.value; this.setState(st => ({ sounds: st.sounds.map(x => x.id===sd.id ? {...x, vol:v, on:true} : x) })); },
+      iconStyle: `display:flex;width:38px;height:38px;flex:none;align-items:center;justify-content:center;border:1px solid var(--border,rgba(255,255,255,.1));border-radius:11px;font-size:17px;cursor:pointer;transition:all .16s ease;${sd.on ? 'background:var(--accentSoft);' : 'background:var(--input,rgba(255,255,255,.04));filter:grayscale(.6);opacity:.7;'}`,
+      nameStyle: `font-size:13.5px;font-weight:500;margin-bottom:5px;color:${sd.on ? 'var(--text,#fff)' : 'var(--dim,rgba(255,255,255,.55))'};`,
+      sliderStyle: `width:100%;height:4px;cursor:pointer;${sd.on ? '' : 'opacity:.4;pointer-events:none;'}`,
+      switchStyle: `display:flex;flex:none;width:40px;height:23px;padding:2px;border:none;border-radius:999px;cursor:pointer;transition:all .18s ease;justify-content:${sd.on ? 'flex-end' : 'flex-start'};${sd.on ? 'background:var(--accent);' : 'background:var(--track,rgba(255,255,255,.14));'}`,
+      knobStyle: `width:19px;height:19px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);`,
+    }));
+
+    const scenes = this.sceneDefs.map(sc => { const active = sc.id === s.scene; return { ...sc,
+      onSelect: () => this.setState({ scene: sc.id }),
+      cardStyle: `display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:14px;border-radius:14px;cursor:pointer;text-align:left;transition:all .16s ease;border:1px solid ${active ? 'var(--accent)' : 'var(--border,rgba(255,255,255,.1))'};${active ? 'background:var(--accentSoft);' : 'background:var(--input,rgba(255,255,255,.04));'}`,
+    }; });
+
+    const links = this.links.map(lk => ({ ...lk,
+      tileStyle: `display:flex;width:38px;height:38px;align-items:center;justify-content:center;border-radius:11px;background:var(--accentSoft);color:var(--accent);font-weight:700;font-size:16px;font-family:'Space Grotesk',sans-serif;`,
+    }));
+
+    const notes = s.notes.map(nt => ({ ...nt,
+      onToggle: () => this.setState(st => ({ notes: st.notes.map(x => x.id===nt.id ? {...x, done:!x.done} : x) })),
+      onDelete: () => this.setState(st => ({ notes: st.notes.filter(x => x.id!==nt.id) })),
+      checkStyle: `display:flex;width:20px;height:20px;flex:none;align-items:center;justify-content:center;border-radius:6px;cursor:pointer;transition:all .16s ease;${nt.done ? 'background:var(--accent);border:1px solid var(--accent);' : 'background:transparent;border:1.5px solid var(--dim2,rgba(255,255,255,.4));'}`,
+      textStyle: `flex:1;font-size:13.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${nt.done ? 'color:var(--dim2,rgba(255,255,255,.4));text-decoration:line-through;' : 'color:var(--text,#fff);'}`,
+    }));
+
+    const doneCount = s.notes.filter(n => n.done).length;
+    const activeName = (this.stations.find(x => x.id === s.activeStation) || {}).name || '—';
+
+    // cat message
+    const idx = Math.floor(Date.now() / 5000);
+    let catArr = s.pomoRunning ? (s.pomoMode === 'focus' ? this.catFocus : this.catBreak) : this.catIdle;
+    const catMsg = catArr[idx % catArr.length];
+
+    // calendar
+    const monthNames = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+    const cm = s.calMonth;
+    const calMonthLabel = `${monthNames[cm.m]}, ${cm.y}`;
+    const firstDow = new Date(cm.y, cm.m, 1).getDay();
+    const daysInMonth = new Date(cm.y, cm.m + 1, 0).getDate();
+    const todayKey = this.ymd(new Date());
+    const calCells = [];
+    for (let i = 0; i < firstDow; i++) {
+      calCells.push({ day:'', dotStyle:'display:none;', onClick:()=>{}, style:'visibility:hidden;height:38px;' });
+    }
+    for (let dd = 1; dd <= daysInMonth; dd++) {
+      const key = `${cm.y}-${cm.m}-${dd}`;
+      const has = !!(s.calNotes[key] && s.calNotes[key].length);
+      const isToday = key === todayKey;
+      const isSel = key === s.calSelected;
+      let bg = 'transparent', bd = '1px solid transparent', col = 'var(--text,#fff)', fw = '500';
+      if (isSel) { bg = 'var(--accent)'; col = '#16121f'; fw = '700'; }
+      else if (isToday) { bd = '1px solid var(--accent)'; col = 'var(--accent)'; fw = '700'; }
+      calCells.push({
+        day: String(dd),
+        onClick: () => this.setState({ calSelected: key }),
+        style: `position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;height:38px;border:${bd};border-radius:10px;background:${bg};color:${col};font-size:13px;font-weight:${fw};cursor:pointer;transition:all .14s ease;`,
+        dotStyle: has ? `position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:${isSel ? '#16121f' : 'var(--accent2,#6ee7d7)'};` : 'display:none;',
+      });
+    }
+
+    const selDate = (() => { const [y,m,dd] = s.calSelected.split('-').map(Number); return new Date(y, m, dd); })();
+    const calSelLabel = isNaN(selDate) ? '—' : `${selDate.getDate()} thg ${selDate.getMonth()+1}`;
+    const dayList = (s.calNotes[s.calSelected] || []).map(it => ({ ...it,
+      onDelete: () => { const arr = (this.state.calNotes[this.state.calSelected] || []).filter(x => x.id !== it.id);
+        const cn = { ...this.state.calNotes, [this.state.calSelected]: arr };
+        if (!arr.length) delete cn[this.state.calSelected];
+        this.saveCal(cn); this.setState({ calNotes: cn }); },
+    }));
+
+    // weather
+    const wIcon = p.weatherIcon || '☀️';
+
+    return {
+      themeVars, overlayStyle: overlayMap[s.scene] || overlayMap.day,
+      timeStr, secStr, dateStr,
+      isGlass, isWarm: !isGlass,
+
+      // weather
+      weatherOpen: s.weatherOpen,
+      closeWeather: () => this.setState({ weatherOpen:false }),
+      wIcon, wCity: p.weatherCity || 'Thành phố Thủ Đức',
+      wTempLine: `${p.weatherTemp ?? 30}°C · ${p.weatherCond || 'Trời quang'}`,
+      wFeels: p.weatherFeels ?? 36, wHum: p.weatherHum ?? 78, wWind: p.weatherWind ?? 2,
+
+      // streak
+      streakCount: s.streak.count, streakBest: s.streak.best, streakDays,
+
+      // theme
+      glassBtnStyle: themeBtn(isGlass), warmBtnStyle: themeBtn(!isGlass),
+      pickGlass: () => this.setState({ theme:'glass' }),
+      pickWarm: () => this.setState({ theme:'warm' }),
+      toggleTheme: () => this.setState(st => ({ theme: st.theme==='glass' ? 'warm' : 'glass' })),
+
+      // pomodoro
+      pomoOpen: s.pomoOpen, closePomo: () => this.setState({ pomoOpen:false }),
+      pomoTime, pomoCirc: circ, pomoDash,
+      pomoLabel: s.pomoMode==='focus' ? 'Tập trung' : 'Giải lao',
+      pomoRunning: s.pomoRunning, pomoStopped: !s.pomoRunning,
+      pomoBtnLabel: s.pomoRunning ? 'Tạm dừng' : 'Bắt đầu',
+      focusBtnStyle: seg(s.pomoMode==='focus'), breakBtnStyle: seg(s.pomoMode==='break'),
+      setFocus: () => this.setState({ pomoMode:'focus', pomoSeconds:1500, pomoRunning:false }),
+      setBreak: () => this.setState({ pomoMode:'break', pomoSeconds:300, pomoRunning:false }),
+      togglePomo: () => this.setState(st => ({ pomoRunning: !st.pomoRunning })),
+      resetPomo: () => this.setState(st => ({ pomoSeconds: st.pomoMode==='focus' ? 1500 : 300, pomoRunning:false })),
+
+      // panel + tabs
+      panelOpen: s.panelOpen, closePanel: () => this.setState({ panelOpen:false }),
+      isMusic: s.tab==='music', isSounds: s.tab==='sounds', isScene: s.tab==='scene', isLinks: s.tab==='links',
+      tabMusic: () => this.setState({ tab:'music' }), tabSounds: () => this.setState({ tab:'sounds' }),
+      tabScene: () => this.setState({ tab:'scene' }), tabLinks: () => this.setState({ tab:'links' }),
+      tabMusicStyle: tabBtn(s.tab==='music'), tabSoundsStyle: tabBtn(s.tab==='sounds'),
+      tabSceneStyle: tabBtn(s.tab==='scene'), tabLinksStyle: tabBtn(s.tab==='links'),
+      stations, sounds, scenes, links,
+
+      customUrl: s.customUrl,
+      onCustomInput: (e) => this.setState({ customUrl: e.target.value }),
+      playCustom: () => { if (s.customUrl.trim()) this.setState({ activeStation:'custom', playing:true }); },
+
+      playing: s.playing, paused: !s.playing,
+      togglePlay: () => this.setState(st => ({ playing: !st.playing })),
+      volume: s.volume, onVolume: (e) => this.setState({ volume: +e.target.value }),
+      nowLabel: s.playing ? 'Đang phát' : 'Tạm dừng',
+      nowName: s.activeStation==='custom' ? 'YouTube tùy chỉnh' : activeName,
+
+      // notes
+      notesOpen: s.notesOpen, notes, noNotes: s.notes.length===0,
+      noteCount: `${doneCount}/${s.notes.length}`, noteInput: s.noteInput,
+      onNoteInput: (e) => this.setState({ noteInput: e.target.value }),
+      onNoteKey: (e) => { if (e.key==='Enter') this.addNoteFn(); },
+      addNote: () => this.addNoteFn(),
+
+      // cat
+      catMsg,
+
+      // calendar
+      calOpen: s.calOpen,
+      closeCal: () => this.setState({ calOpen:false }),
+      stop: (e) => e.stopPropagation(),
+      calMonthLabel, weekdays: wdShort, calCells,
+      prevMonth: () => this.setState(st => { const m = st.calMonth.m-1; return { calMonth: m<0 ? {y:st.calMonth.y-1,m:11} : {y:st.calMonth.y,m} }; }),
+      nextMonth: () => this.setState(st => { const m = st.calMonth.m+1; return { calMonth: m>11 ? {y:st.calMonth.y+1,m:0} : {y:st.calMonth.y,m} }; }),
+      goToday: () => { const t = new Date(); this.setState({ calMonth:{y:t.getFullYear(),m:t.getMonth()}, calSelected:this.ymd(t) }); },
+      calSelLabel, dayNotes: dayList, noDayNotes: dayList.length===0,
+      calInput: s.calInput,
+      onCalInput: (e) => this.setState({ calInput: e.target.value }),
+      onCalKey: (e) => { if (e.key==='Enter') this.addCalNoteFn(); },
+      addCalNote: () => this.addCalNoteFn(),
+
+      // dock
+      dockPanelStyle: dockBtn(s.panelOpen), dockPomoStyle: dockBtn(s.pomoOpen),
+      dockNotesStyle: dockBtn(s.notesOpen), dockCalStyle: dockBtn(s.calOpen), dockWeatherStyle: dockBtn(s.weatherOpen),
+      togglePanelBtn: () => this.setState(st => ({ panelOpen: !st.panelOpen })),
+      togglePomoBtn: () => this.setState(st => ({ pomoOpen: !st.pomoOpen })),
+      toggleNotesBtn: () => this.setState(st => ({ notesOpen: !st.notesOpen })),
+      toggleCalBtn: () => this.setState(st => ({ calOpen: !st.calOpen })),
+      toggleWeatherBtn: () => this.setState(st => ({ weatherOpen: !st.weatherOpen })),
+    };
+  }
+
+  addNoteFn() {
+    const t = this.state.noteInput.trim(); if (!t) return;
+    this.setState(st => ({ notes: [...st.notes, { id: Date.now(), text: t, done: false }], noteInput: '' }));
+  }
+
+  addCalNoteFn() {
+    const t = this.state.calInput.trim(); if (!t) return;
+    const key = this.state.calSelected;
+    const arr = [...(this.state.calNotes[key] || []), { id: Date.now(), text: t }];
+    const cn = { ...this.state.calNotes, [key]: arr };
+    this.saveCal(cn);
+    this.setState({ calNotes: cn, calInput: '' });
+  }
+}
+</script>
+</body>
+</html>

@@ -28,7 +28,7 @@ export const BLOG_POSTS: BlogPost[] = [
 
 <h2>Bước 1: Tạo widget tại LofiSpace</h2>
 <ol>
-  <li>Truy cập <a href="/workspace">LofiSpace Workspace</a></li>
+  <li>Truy cập <a href="/">LofiSpace Workspace</a></li>
   <li>Chọn luồng nhạc Lofi yêu thích</li>
   <li>Bật các âm thanh môi trường: thử kết hợp Mưa + Cafe để có hiệu quả tập trung tốt nhất</li>
   <li>Chọn hình nền GIF aesthetic</li>
@@ -91,7 +91,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <h2>Kết hợp nhạc Lofi với Ambient Sound</h2>
 <p>Bí quyết của các productivity guru: đừng chỉ dùng nhạc lofi đơn thuần. Hãy kết hợp với <strong>ambient sound mixer</strong> để tạo ra môi trường âm thanh hoàn chỉnh.</p>
 <p>Công thức được khuyến nghị: <em>Lofi volume 60% + Rain 40% + Cafe murmur 25%</em></p>
-<p>Thử ngay với <a href="/workspace">LofiSpace Sound Mixer</a> miễn phí!</p>
+<p>Thử ngay với <a href="/">LofiSpace Sound Mixer</a> miễn phí!</p>
     `.trim(),
   },
   {
@@ -130,7 +130,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <ul>
   <li>Dùng loa nhỏ chất lượng tốt thay vì tai nghe suốt ngày</li>
   <li>Kết hợp nhạc lofi với ambient sound mixer</li>
-  <li>Nhúng <a href="/workspace">LofiSpace Widget</a> vào Notion để có âm thanh ngay khi mở trang làm việc</li>
+  <li>Nhúng <a href="/">LofiSpace Widget</a> vào Notion để có âm thanh ngay khi mở trang làm việc</li>
 </ul>
 
 <h2>5. Sắp xếp và cabling</h2>
@@ -184,7 +184,7 @@ export const BLOG_POSTS: BlogPost[] = [
   <li>Âm thanh ambient tự động đóng vai trò white noise trong suốt session</li>
   <li>Nhúng toàn bộ vào Notion để có một trang học bài hoàn chỉnh</li>
 </ul>
-<p>Thử ngay: <a href="/workspace">Tạo Widget Pomodoro miễn phí</a></p>
+<p>Thử ngay: <a href="/">Tạo Widget Pomodoro miễn phí</a></p>
     `.trim(),
   },
 ]

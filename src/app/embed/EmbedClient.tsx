@@ -3,25 +3,21 @@
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { getDayNightConfig } from '@/hooks/useDayNight'
-import { KawaiiCat, CatSVG } from '@/components/widget/KawaiiCat'
 import { LOFI_STREAMS, AMBIENT_SOUNDS } from '@/lib/lofiStreams'
 import { BG_PRESETS } from '@/lib/backgrounds'
+import { useGameStore, xpProgress, ACHIEVEMENT_DEFS } from '@/lib/gameStore'
+import { CodingCatVariant, CAT_VARIANT_META, type CatVariant } from '@/components/companion/CodingCatVariants'
+import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
+import { analytics } from '@/lib/analytics'
+import { useLanguage } from '@/contexts/LanguageContext'
 
-const WMO: Record<number,string> = {
-  0:'Trời quang',1:'Ít mây',2:'Có mây',3:'Nhiều mây',
-  45:'Sương mù',48:'Sương đá',51:'Mưa phùn nhẹ',53:'Mưa phùn',55:'Mưa phùn nặng',
-  61:'Mưa nhẹ',63:'Mưa vừa',65:'Mưa to',71:'Tuyết nhẹ',73:'Tuyết vừa',75:'Tuyết to',
-  80:'Mưa rào nhẹ',81:'Mưa rào',82:'Mưa rào nặng',95:'Giông bão',96:'Giông mưa đá',99:'Giông to',
-}
-
-// ─── Types ─────────────────────────────────────────────────────────────
 type ClockStyle = 'digital'|'minimal'|'bold'|'analog'
 type BgType = 'gif'|'youtube'
-type PanelTab = 'lofi'|'ambient'|'bg'|'widgets'|'weather'|'share'|'pet'
+type PanelTab = 'music'|'sounds'|'scene'|'more'
+type MoreTab = 'widgets'|'weather'|'pet'|'progress'|'share'
 interface Todo { id:string; text:string; done:boolean }
 interface WxData { city:string; temp:number; code:number; desc:string; emoji:string; feels:number|null; humidity:number|null; wind:number|null }
 
-// ─── Utilities ─────────────────────────────────────────────────────────
 function parseYtId(s:string):string|null {
   const m = s.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/)
   if (m) return m[1]
@@ -35,39 +31,30 @@ function wxEmoji(code:number) {
   return '☀️'
 }
 
-// ─── useDraggable ──────────────────────────────────────────────────────
 function useDraggable() {
   const [pos, setPos] = useState<{x:number;y:number}|null>(null)
   const posRef = useRef<{x:number;y:number}|null>(null)
   const d = useRef({on:false,ox:0,oy:0,sx:0,sy:0})
-
   useEffect(()=>{ posRef.current=pos },[pos])
-
   const onPointerDown = useCallback((e:React.PointerEvent)=>{
     const el = e.currentTarget as HTMLElement
     const rect = el.getBoundingClientRect()
     const cx = posRef.current?.x ?? rect.left
     const cy = posRef.current?.y ?? rect.top
-    d.current = {on:true, ox:e.clientX-cx, oy:e.clientY-cy, sx:e.clientX, sy:e.clientY}
-    if (!posRef.current) setPos({x:rect.left, y:rect.top})
-    el.setPointerCapture(e.pointerId)
-    e.stopPropagation()
+    d.current = {on:true,ox:e.clientX-cx,oy:e.clientY-cy,sx:e.clientX,sy:e.clientY}
+    if (!posRef.current) setPos({x:rect.left,y:rect.top})
+    el.setPointerCapture(e.pointerId); e.stopPropagation()
   },[])
-
   const onPointerMove = useCallback((e:React.PointerEvent)=>{
     if (!d.current.on) return
     if (Math.abs(e.clientX-d.current.sx)+Math.abs(e.clientY-d.current.sy)<4) return
-    setPos({x:e.clientX-d.current.ox, y:e.clientY-d.current.oy})
-    e.stopPropagation()
+    setPos({x:e.clientX-d.current.ox,y:e.clientY-d.current.oy}); e.stopPropagation()
   },[])
-
   const onPointerUp = useCallback(()=>{ d.current.on=false },[])
   const reset = useCallback(()=>{ setPos(null); posRef.current=null },[])
-
   return { pos, reset, dp:{onPointerDown,onPointerMove,onPointerUp} }
 }
 
-// ─── Pink Noise ─────────────────────────────────────────────────────────
 function makePinkBuffer(ctx:AudioContext,secs=8):AudioBuffer {
   const n=Math.floor(ctx.sampleRate*secs),buf=ctx.createBuffer(2,n,ctx.sampleRate)
   for(let ch=0;ch<2;ch++){
@@ -81,6 +68,7 @@ function makePinkBuffer(ctx:AudioContext,secs=8):AudioBuffer {
   }
   return buf
 }
+
 type SynthNode={gain:GainNode;stop:()=>void}
 function buildSynthGraph(ctx:AudioContext,id:string):SynthNode {
   const master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination)
@@ -100,7 +88,6 @@ function buildSynthGraph(ctx:AudioContext,id:string):SynthNode {
   return{gain:master,stop:()=>stops.forEach(f=>f())}
 }
 
-// ─── Pomodoro ──────────────────────────────────────────────────────────
 function usePomodoro(){
   const[phase,setPhase]=useState<'work'|'break'>('work')
   const[secs,setSecs]=useState(25*60)
@@ -108,13 +95,23 @@ function usePomodoro(){
   const total=phase==='work'?25*60:5*60
   useEffect(()=>{
     if(!on)return
-    const id=setInterval(()=>setSecs(s=>{if(s<=1){setPhase(p=>p==='work'?'break':'work');return phase==='work'?5*60:25*60}return s-1}),1000)
+    const id=setInterval(()=>setSecs(s=>{
+      if(s<=1){setPhase(p=>p==='work'?'break':'work');return phase==='work'?5*60:25*60}
+      return s-1
+    }),1000)
     return()=>clearInterval(id)
   },[on,phase])
-  return{mm:String(Math.floor(secs/60)).padStart(2,'0'),ss:String(secs%60).padStart(2,'0'),on,toggle:()=>setOn(v=>!v),phase,progress:secs/total,reset:()=>{setOn(false);setPhase('work');setSecs(25*60)}}
+  const setMode=(mode:'work'|'break')=>{setOn(false);setPhase(mode);setSecs(mode==='work'?25*60:5*60)}
+  return{
+    mm:String(Math.floor(secs/60)).padStart(2,'0'),
+    ss:String(secs%60).padStart(2,'0'),
+    on,toggle:()=>setOn(v=>!v),phase,
+    progress:secs/total,
+    reset:()=>{setOn(false);setPhase('work');setSecs(25*60)},
+    setMode,
+  }
 }
 
-// ─── Analog Clock ──────────────────────────────────────────────────────
 function AnalogClock({now,size=100,accent}:{now:Date;size?:number;accent:string}){
   const cx=size/2,cy=size/2,r=size/2-4
   const h=(now.getHours()%12+now.getMinutes()/60)/12*2*Math.PI-Math.PI/2
@@ -132,120 +129,139 @@ function AnalogClock({now,size=100,accent}:{now:Date;size?:number;accent:string}
   )
 }
 
-// ─── Clock Renderer ────────────────────────────────────────────────────
-function ClockWidget({now,style,mounted,accent}:{now:Date;style:ClockStyle;mounted:boolean;accent:string}){
-  const hm=mounted?now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}):'--:--'
-  const date=mounted?now.toLocaleDateString('vi-VN',{weekday:'short',day:'numeric',month:'short'}):''
-  if(style==='analog') return <AnalogClock now={now} size={100} accent={accent}/>
-  if(style==='minimal') return(
-    <div style={{fontFamily:"'SF Mono',monospace",fontWeight:200,fontSize:'clamp(15px,3.5vw,24px)',letterSpacing:'0.12em',opacity:0.8,textShadow:'0 1px 10px rgba(0,0,0,0.9)'}}>
-      {hm}
-    </div>
-  )
-  if(style==='bold') return(
-    <div style={{fontFamily:"system-ui,sans-serif",fontWeight:900,fontSize:'clamp(46px,12vw,90px)',lineHeight:0.9,letterSpacing:'-0.03em',textShadow:'0 4px 28px rgba(0,0,0,0.5)'}}>
-      {hm}
-    </div>
-  )
-  return(
-    <div style={{textShadow:'0 2px 18px rgba(0,0,0,0.8)'}}>
-      <div style={{fontFamily:"'SF Mono',monospace",fontWeight:300,fontSize:'clamp(28px,7vw,50px)',letterSpacing:'0.03em',lineHeight:1}}>{hm}</div>
-      {date&&<div style={{fontSize:'clamp(10px,1.8vw,13px)',color:'rgba(255,255,255,0.38)',marginTop:3,letterSpacing:'0.07em'}}>{date}</div>}
-    </div>
-  )
-}
-
-// ─── Main Component ────────────────────────────────────────────────────
 export function EmbedClient() {
   const sp = useSearchParams()
-
-  // Day/Night auto-config (used as defaults when no URL params)
   const dn = getDayNightConfig()
+  const { lang, setLang, t } = useLanguage()
   const hasBgParam = sp.has('bgv')
 
-  // URL initial values — fall back to day/night defaults when freshly opened
-  const initBgUrl  = hasBgParam
-    ? decodeURIComponent(sp.get('bgv')!)
-    : dn.bgUrl
+  const initBgUrl  = hasBgParam ? decodeURIComponent(sp.get('bgv')!) : BG_PRESETS[0].url
   const initBgOp   = Math.min(90, Math.max(0, parseInt(sp.get('bgo') ?? String(dn.overlay))))
   const initBlur   = Math.min(20, Math.max(0, parseInt(sp.get('bl') ?? '0')))
-  const accent     = '#' + (sp.get('ac') ?? dn.accent.replace('#', ''))
+  const urlAccent  = '#' + (sp.get('ac') ?? dn.accent.replace('#',''))
   const urlWx:WxData|null = (sp.get('city')&&sp.get('temp'))
     ? {city:sp.get('city')!,temp:parseInt(sp.get('temp')!),code:0,desc:sp.get('wdesc')??'',emoji:sp.get('wemoji')??'🌤️',feels:null,humidity:null,wind:null}
     : null
 
+  // Theme
+  const [theme,       setTheme]       = useState<'glass'|'warm'>('glass')
+
   // Background
-  const [bgType,    setBgType]    = useState<BgType>('gif')
-  const [bgUrl,     setBgUrl]     = useState(initBgUrl)
-  const [bgOpacity, setBgOpacity] = useState(initBgOp)
-  const [bgBlur,    setBgBlur]    = useState(initBlur)
-  const [bgYtInput, setBgYtInput] = useState('')
-  const [bgYtId,    setBgYtId]    = useState('')
+  const [bgType,      setBgType]      = useState<BgType>('gif')
+  const [bgUrl,       setBgUrl]       = useState(initBgUrl)
+  const [bgOpacity,   setBgOpacity]   = useState(initBgOp)
+  const [bgBlur,      setBgBlur]      = useState(initBlur)
+  const [bgYtInput,   setBgYtInput]   = useState('')
+  const [bgYtId,      setBgYtId]      = useState('')
+  const [customBg,    setCustomBg]    = useState('')
 
   // Clock
-  const [showClock,  setShowClock]  = useState(sp.get('clk')!=='0')
-  const [clockStyle, setClockStyle] = useState<ClockStyle>('digital')
+  const [showClock,   setShowClock]   = useState(sp.get('clk')!=='0')
+  const [clockStyle,  setClockStyle]  = useState<ClockStyle>('digital')
   const clockDrag = useDraggable()
 
   // Weather
-  const [showWx,   setShowWx]   = useState(!!urlWx)
-  const [wxState,  setWxState]  = useState<'idle'|'loading'|'done'|'error'>('idle')
-  const [wxData,   setWxData]   = useState<WxData|null>(urlWx)
+  const [showWx,      setShowWx]      = useState(!!urlWx)
+  const [wxState,     setWxState]     = useState<'idle'|'loading'|'done'|'error'>('idle')
+  const [wxData,      setWxData]      = useState<WxData|null>(urlWx)
   const wxDrag = useDraggable()
 
   // Pomodoro
-  const [showPom, setShowPom] = useState(sp.get('pom')==='1')
-  const pomDrag = useDraggable()
+  const [showPom,     setShowPom]     = useState(sp.get('pom')!=='0')
   const pom = usePomodoro()
 
   // Note / Todo
-  const [showNote,   setShowNote]   = useState(false)
-  const [todos,      setTodos]      = useState<Todo[]>([])
-  const [todoInput,  setTodoInput]  = useState('')
-  const noteDrag = useDraggable()
+  const [showNote,    setShowNote]    = useState(sp.get('note')!=='0')
+  const [todos,       setTodos]       = useState<Todo[]>([])
+  const [todoInput,   setTodoInput]   = useState('')
+  const noteDrag      = useDraggable()
+  const pomDrag       = useDraggable()
+  const catDrag       = useDraggable()
+  const progressDrag  = useDraggable()
 
-  // Pixel Pet
-  const [showPet, setShowPet] = useState(false)
+  // Pet / Companion
+  const [companionType, setCompanionType] = useState<'none'|'coding'>('coding')
+  const [catVariant,    setCatVariant]    = useState<CatVariant>('typist')
+  const [catSize,       setCatSize]       = useState(160)
+  const [catHovered,    setCatHovered]    = useState(false)
+  const [showStreak,  setShowStreak]  = useState(true)
 
-  // Audio — use day/night lofi defaults when no URL param
-  const [lofiId,   setLofiId]   = useState(sp.get('ls') ?? dn.lofiId)
-  const [lofiVol,  setLofiVol]  = useState(Math.min(100, Math.max(0, parseInt(sp.get('lv') ?? '60'))))
-  const [ambVols,  setAmbVols]  = useState<Record<string,number>>(() => {
-    const at = sp.get('at') ?? ''
-    if (at) return Object.fromEntries(at.split(',').flatMap(e => { const [id,v]=e.split(':'); return id ? [[id,Math.min(100,Math.max(0,parseInt(v)||50))]] : [] }))
-    // No URL params — use day/night ambient defaults
-    if (!hasBgParam) return Object.fromEntries(Object.entries(dn.ambVols).map(([id,v])=>[id,v]))
+  // Atmosphere overlay
+  const [atmosphere,  setAtmosphere]  = useState<'none'|'day'|'dusk'|'night'|'dim'>('none')
+
+  // Calendar
+  const [showCal,     setShowCal]     = useState(false)
+  const [calMonth,    setCalMonth]    = useState({y:new Date().getFullYear(),m:new Date().getMonth()})
+  const [calSelected, setCalSelected] = useState('')
+  const [calNotes,    setCalNotes]    = useState<Record<string,{id:number;text:string}[]>>({})
+  const [calInput,    setCalInput]    = useState('')
+
+  // Audio
+  const [lofiId,      setLofiId]      = useState(sp.get('ls') ?? dn.lofiId)
+  const [lofiVol,     setLofiVol]     = useState(Math.min(100, Math.max(0, parseInt(sp.get('lv') ?? '60'))))
+  const [ambVols,     setAmbVols]     = useState<Record<string,number>>(()=>{
+    const at=sp.get('at')??''
+    if(at) return Object.fromEntries(at.split(',').flatMap(e=>{const[id,v]=e.split(':');return id?[[id,Math.min(100,Math.max(0,parseInt(v)||50))]]:[] }))
+    if(!hasBgParam) return Object.fromEntries(Object.entries(dn.ambVols).map(([id,v])=>[id,v]))
     return {}
   })
   const [customLofiInput, setCustomLofiInput] = useState('')
   const [customLofiId,    setCustomLofiId]    = useState('')
 
   // UI
-  const [started,  setStarted]  = useState(false)
-  const [playing,  setPlaying]  = useState(false)
-  const [panel,    setPanel]    = useState(false)
-  const [panelTab, setPanelTab] = useState<PanelTab>('lofi')
-  const [now,      setNow]      = useState(new Date())
-  const [mounted,  setMounted]  = useState(false)
-  const [ytStatus, setYtStatus] = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
-  const [customBg, setCustomBg] = useState('')
-  const [copied,   setCopied]   = useState(false)
+  const [started,     setStarted]     = useState(false)
+  const [playing,     setPlaying]     = useState(false)
+  const [panel,       setPanel]       = useState(false)
+  const [panelTab,    setPanelTab]    = useState<PanelTab>('music')
+  const [moreTab,     setMoreTab]     = useState<MoreTab>('widgets')
+  const [now,         setNow]         = useState(new Date())
+  const [mounted,     setMounted]     = useState(false)
+  const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
+  const [copied,      setCopied]      = useState(false)
+  const [vw,          setVw]          = useState(1280)
 
   // Refs
-  const ctxRef     = useRef<AudioContext|null>(null)
-  const synthRef   = useRef<Record<string,SynthNode>>({})
-  const html5Ref   = useRef<Record<string,HTMLAudioElement>>({})
-  const ytRef      = useRef<HTMLDivElement>(null)
-  const ytPlayer   = useRef<any>(null)
-  const ytTimer    = useRef<ReturnType<typeof setTimeout>|null>(null)
-  const noteTimer  = useRef<ReturnType<typeof setTimeout>|null>(null)
+  const ctxRef    = useRef<AudioContext|null>(null)
+  const synthRef  = useRef<Record<string,SynthNode>>({})
+  const html5Ref  = useRef<Record<string,HTMLAudioElement>>({})
+  const ytRef     = useRef<HTMLDivElement>(null)
+  const ytPlayer  = useRef<any>(null)
+  const ytTimer   = useRef<ReturnType<typeof setTimeout>|null>(null)
+  const noteTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
 
-  // Init
-  useEffect(()=>{ setMounted(true) },[])
+  // ── Game store ──────────────────────────────────────────────────────────
+  const {
+    streak, bestStreak, xp, level, coins, totalPomodoros,
+    companionMood, pendingAchievements, newLevelReached,
+    completePomodoro, checkAndUpdateStreak, dismissAchievement, dismissLevelUp,
+    unlockedAchievements,
+  } = useGameStore()
+  const pomPhaseRef = useRef<'work'|'break'>('work')
+  const [xpToast, setXpToast] = useState<{xp:number;key:number}|null>(null)
+
+  useEffect(()=>{ setMounted(true); analytics.workspaceOpen() },[])
+  useEffect(()=>{
+    const upd=()=>setVw(window.innerWidth)
+    upd(); window.addEventListener('resize',upd)
+    return()=>window.removeEventListener('resize',upd)
+  },[])
+  useEffect(()=>{ checkAndUpdateStreak() },[checkAndUpdateStreak])
+  useEffect(()=>{
+    if(pomPhaseRef.current==='work'&&pom.phase==='break'){
+      completePomodoro(25)
+      setXpToast({xp:25,key:Date.now()})
+      setTimeout(()=>setXpToast(null),2800)
+    }
+    pomPhaseRef.current=pom.phase
+  },[pom.phase,completePomodoro])
   useEffect(()=>{
     if(typeof window!=='undefined'){
       try{ const t=JSON.parse(localStorage.getItem('lofispace-todos')||'[]'); setTodos(t) }catch(_){}
     }
+  },[])
+  useEffect(()=>{
+    try{const cn=JSON.parse(localStorage.getItem('lofispace-calNotes')||'{}');if(cn&&typeof cn==='object')setCalNotes(cn)}catch(_){}
+    const t=new Date();setCalSelected(`${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`)
   },[])
   useEffect(()=>{ const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t) },[])
   useEffect(()=>{
@@ -253,8 +269,36 @@ export function EmbedClient() {
     const s=document.createElement('script');s.id='yt-api';s.src='https://www.youtube.com/iframe_api';s.async=true
     document.head.appendChild(s)
   },[])
+  // Pre-init YT player silently so first-play is instant
+  useEffect(()=>{
+    let tid: ReturnType<typeof setTimeout>
+    const tryPre=()=>{
+      if(!ytRef.current||ytPlayer.current)return
+      ytPlayer.current=new(window as any).YT.Player(ytRef.current,{
+        height:'1',width:'1',videoId:activeYtId,
+        playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1},
+        events:{
+          onReady:(e:any)=>{e.target.setVolume(0);setYtStatus('ready')},
+          onError:()=>setYtStatus('blocked'),
+        },
+      })
+    }
+    tid=setTimeout(()=>{
+      if((window as any).YT?.Player)tryPre()
+      else{const p=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{p?.();tryPre()}}
+    },500)
+    return()=>clearTimeout(tid)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
+  // Auto-detect weather on mount (skip if URL already has data)
+  useEffect(()=>{
+    if(urlWx)return
+    const t=setTimeout(()=>detectWeather(),1200)
+    return()=>clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
 
-  // Audio
+  // ── Audio ──────────────────────────────────────────────────────────────
   const ensureCtx = useCallback(()=>{
     if(!ctxRef.current) ctxRef.current=new(window.AudioContext||(window as any).webkitAudioContext)()
     return ctxRef.current
@@ -317,9 +361,14 @@ export function EmbedClient() {
     if(started)return
     const ctx=ensureCtx();ctx.resume().catch(()=>{})
     Object.entries(ambVols).forEach(([id,vol])=>startAmbient(id,vol))
-    initYT(activeYtId,lofiVol)
+    if(ytPlayer.current&&ytStatus==='ready'){
+      try{ytPlayer.current.unMute();ytPlayer.current.setVolume(lofiVol);ytPlayer.current.playVideo()}catch(_){}
+      if(ytTimer.current)clearTimeout(ytTimer.current)
+    }else{
+      initYT(activeYtId,lofiVol)
+    }
     setStarted(true);setPlaying(true)
-  },[started,ensureCtx,ambVols,lofiVol,startAmbient,initYT,activeYtId])
+  },[started,ensureCtx,ambVols,lofiVol,startAmbient,initYT,activeYtId,ytStatus])
 
   const togglePlay = useCallback(()=>{
     if(!started){doStart();return}
@@ -337,7 +386,7 @@ export function EmbedClient() {
     }
   },[started,playing,doStart,ambVols])
 
-  const handleLofiVol=(v:number)=>{setLofiVol(v);ytPlayer.current?.setVolume(v)}
+  const handleLofiVol=(v:number)=>{setLofiVol(v);if(started)try{ytPlayer.current?.setVolume(v)}catch(_){}}
   const handleLofiChange=(id:string)=>{
     setLofiId(id);try{ytPlayer.current?.destroy()}catch(_){}; ytPlayer.current=null
     if(started&&playing){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'jfKfPfyJRdk');setTimeout(()=>initYT(ytId,lofiVol),80)}
@@ -348,24 +397,37 @@ export function EmbedClient() {
     try{ytPlayer.current?.destroy()}catch(_){};ytPlayer.current=null
     if(started&&playing)setTimeout(()=>initYT(id,lofiVol),80)
   }
-
   const toggleAmbient=(id:string)=>{
     if(ambVols[id]!==undefined){if(started)stopAmbient(id);setAmbVols(prev=>{const n={...prev};delete n[id];return n})}
     else{if(started&&playing)startAmbient(id,50);setAmbVols(prev=>({...prev,[id]:50}))}
   }
   const handleAmbVol=(id:string,v:number)=>{setAmbVols(prev=>({...prev,[id]:v}));if(started)setAmbVol(id,v)}
 
-  // Todos
+  // ── Todos ──────────────────────────────────────────────────────────────
   const saveTodos=(list:Todo[])=>{
     setTodos(list)
     if(noteTimer.current)clearTimeout(noteTimer.current)
     noteTimer.current=setTimeout(()=>localStorage.setItem('lofispace-todos',JSON.stringify(list)),500)
   }
   const addTodo=()=>{if(!todoInput.trim())return;saveTodos([...todos,{id:Date.now().toString(),text:todoInput.trim(),done:false}]);setTodoInput('')}
-  const toggleTodo=(id:string)=>saveTodos(todos.map(t=>t.id===id?{...t,done:!t.done}:t))
+  const toggleTodo=(id:string)=>{
+    const todo=todos.find(t=>t.id===id);if(!todo)return
+    const newDone=!todo.done
+    saveTodos(todos.map(t=>t.id===id?{...t,done:newDone}:t))
+    // Sync to calendar: tick adds ✅ entry, untick removes it
+    const d=new Date();const calKey=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    const doneText=`✅ ${todo.text}`
+    if(newDone){
+      const arr=[...(calNotes[calKey]||[]).filter(n=>n.text!==doneText),{id:Date.now(),text:doneText}]
+      const cn={...calNotes,[calKey]:arr};saveCalFn(cn);setCalNotes(cn)
+    }else{
+      const arr=(calNotes[calKey]||[]).filter(n=>n.text!==doneText)
+      const cn={...calNotes,[calKey]:arr};if(!arr.length)delete cn[calKey];saveCalFn(cn);setCalNotes(cn)
+    }
+  }
   const removeTodo=(id:string)=>saveTodos(todos.filter(t=>t.id!==id))
 
-  // Weather
+  // ── Weather ────────────────────────────────────────────────────────────
   const detectWeather=useCallback(async()=>{
     setWxState('loading')
     try{
@@ -373,7 +435,7 @@ export function EmbedClient() {
       const{latitude:lat,longitude:lon}=pos.coords
       const[wRes,gRes]=await Promise.all([
         fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m&timezone=auto`),
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=vi`),
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=${lang}`),
       ])
       const wj=await wRes.json(),gj=await gRes.json()
       const code:number=wj.current.weather_code
@@ -381,28 +443,18 @@ export function EmbedClient() {
       const feels=Math.round(wj.current.apparent_temperature)
       const humidity=Math.round(wj.current.relative_humidity_2m)
       const wind=Math.round(wj.current.wind_speed_10m)
-      const city:string=gj.address?.city||gj.address?.town||gj.address?.state||'Vị trí của bạn'
-      setWxData({city,temp,code,desc:WMO[code]??'Thời tiết đặc biệt',emoji:wxEmoji(code),feels,humidity,wind})
+      const city:string=gj.address?.city||gj.address?.town||gj.address?.state||t.wx_location_fallback
+      setWxData({city,temp,code,desc:t.wmo[code]??t.wmo_fallback,emoji:wxEmoji(code),feels,humidity,wind})
       setWxState('done');setShowWx(true)
     }catch(_){setWxState('error')}
   },[])
 
-  // Share URL
-  const shareUrl=useMemo(()=>{
-    if(!mounted)return''
-    const p=new URLSearchParams()
-    p.set('bgv',encodeURIComponent(bgUrl));p.set('bgo',String(bgOpacity))
-    if(bgBlur>0)p.set('bl',String(bgBlur))
-    p.set('ls',lofiId);p.set('lv',String(lofiVol));p.set('ac',accent.slice(1))
-    p.set('clk',showClock?'1':'0');p.set('pom',showPom?'1':'0')
-    const at=Object.entries(ambVols).map(([id,v])=>`${id}:${v}`).join(',');if(at)p.set('at',at)
-    if(wxData){p.set('city',wxData.city);p.set('temp',String(wxData.temp));p.set('wdesc',wxData.desc);p.set('wemoji',wxData.emoji)}
-    return`${window.location.origin}/embed?${p.toString()}`
-  },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,accent,showClock,showPom,ambVols,wxData])
+  const handleShare=async()=>{try{await navigator.clipboard.writeText(shareUrl);setCopied(true);setTimeout(()=>setCopied(false),2000);analytics.shareClick()}catch(_){}}
 
-  const handleShare=async()=>{try{await navigator.clipboard.writeText(shareUrl);setCopied(true);setTimeout(()=>setCopied(false),2000)}catch(_){}}
+  const saveCalFn=(cn:Record<string,{id:number;text:string}[]>)=>{try{localStorage.setItem('lofispace-calNotes',JSON.stringify(cn))}catch(_){}}
+  const addCalNote=()=>{const t=calInput.trim();if(!t)return;const arr=[...(calNotes[calSelected]||[]),{id:Date.now(),text:t}];const cn={...calNotes,[calSelected]:arr};saveCalFn(cn);setCalNotes(cn);setCalInput('')}
+  const delCalNote=(key:string,nid:number)=>{const arr=(calNotes[key]||[]).filter(x=>x.id!==nid);const cn={...calNotes,[key]:arr};if(!arr.length)delete cn[key];saveCalFn(cn);setCalNotes(cn)}
 
-  // Cleanup
   useEffect(()=>()=>{
     Object.values(html5Ref.current).forEach(a=>{a.pause();a.src=''})
     Object.values(synthRef.current).forEach(n=>n.stop())
@@ -411,57 +463,191 @@ export function EmbedClient() {
     if(noteTimer.current)clearTimeout(noteTimer.current)
   },[])
 
-  const timeStr=mounted?now.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'}):'--:--'
-  const pomCirc=2*Math.PI*18
+  // ── Theme tokens ───────────────────────────────────────────────────────
+  const accent    = theme==='glass' ? urlAccent : '#f0a868'
+  const accent2   = theme==='glass' ? '#6ee7d7' : '#e8849e'
+  const hexToRgba = (hex:string,a:number)=>{
+    let h=hex.replace('#','')
+    if(h.length===3)h=h.split('').map(c=>c+c).join('')
+    const n=parseInt(h||'a78bfa',16)
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`
+  }
+  const accentSoft = hexToRgba(accent,0.16)
+  const accentGlow = hexToRgba(accent,0.45)
+
+  // ── Share URL ──────────────────────────────────────────────────────────
+  const shareUrl=useMemo(()=>{
+    if(!mounted)return''
+    const p=new URLSearchParams()
+    p.set('bgv',encodeURIComponent(bgUrl));p.set('bgo',String(bgOpacity))
+    if(bgBlur>0)p.set('bl',String(bgBlur))
+    p.set('ls',lofiId);p.set('lv',String(lofiVol));p.set('ac',accent.replace('#',''))
+    if(!showClock)p.set('clk','0');if(!showPom)p.set('pom','0');if(!showNote)p.set('note','0')
+    const at=Object.entries(ambVols).map(([id,v])=>`${id}:${v}`).join(',');if(at)p.set('at',at)
+    if(wxData){p.set('city',wxData.city);p.set('temp',String(wxData.temp));p.set('wdesc',wxData.desc);p.set('wemoji',wxData.emoji)}
+    return`${window.location.origin}/embed?${p.toString()}`
+  },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,theme,urlAccent,showClock,showPom,showNote,ambVols,wxData])
+
+  const atmOverlay:Record<string,string>={
+    'none':'','day':'linear-gradient(rgba(255,250,245,.04),rgba(255,235,245,.07))',
+    'dusk':'linear-gradient(180deg,rgba(70,25,35,.28),rgba(130,55,30,.34))',
+    'night':'linear-gradient(180deg,rgba(8,10,28,.5),rgba(18,18,46,.56))',
+    'dim':'rgba(0,0,0,.5)',
+  }
+
+  const cssVars:React.CSSProperties = (theme==='glass'
+    ? {'--text':'#f3f3f8','--dim':'rgba(243,243,248,.58)','--dim2':'rgba(243,243,248,.4)','--panel':'rgba(18,20,32,.62)','--panel2':'rgba(0,0,0,.16)','--border':'rgba(255,255,255,.12)','--input':'rgba(255,255,255,.05)','--track':'rgba(255,255,255,.08)'}
+    : {'--text':'#fbf2ea','--dim':'rgba(251,242,234,.6)','--dim2':'rgba(251,242,234,.42)','--panel':'rgba(36,25,25,.62)','--panel2':'rgba(0,0,0,.14)','--border':'rgba(255,224,206,.15)','--input':'rgba(255,240,230,.06)','--track':'rgba(255,240,230,.1)'}
+  ) as React.CSSProperties
+
+  // ── Computed values ────────────────────────────────────────────────────
+  const pad=(n:number)=>String(n).padStart(2,'0')
+  const timeStr=mounted?`${pad(now.getHours())}:${pad(now.getMinutes())}`:'--:--'
+  const secStr=mounted?pad(now.getSeconds()):'00'
+  const dateStr=mounted
+    ? lang==='vi'
+      ? `${t.cal_days_long[now.getDay()]}, ${now.getDate()} tháng ${now.getMonth()+1}`
+      : `${t.cal_days_long[now.getDay()]}, ${t.cal_months[now.getMonth()].slice(0,3)} ${now.getDate()}`
+    : ''
+  const pomCirc=2*Math.PI*62
+  const pomDash=pomCirc*(1-pom.progress)
   const ambCount=Object.keys(ambVols).length
   const doneTodos=todos.filter(t=>t.done).length
+  const activeName=(LOFI_STREAMS.find(x=>x.id===lofiId)||{label:'—'} as any).label
+  const xp2=xpProgress(xp,level)
+  const weekDots=Array.from({length:6},(_,i)=>i>=(6-Math.min(streak,6)))
 
-  const TABS:{id:PanelTab;icon:string}[]=[
-    {id:'lofi',icon:'🎵'},{id:'ambient',icon:'🎚️'},{id:'bg',icon:'🖼️'},
-    {id:'widgets',icon:'🧩'},{id:'weather',icon:'🌤️'},{id:'pet',icon:'🐱'},{id:'share',icon:'🔗'},
-  ]
-
-  // Draggable widget style helpers
-  const wStyle=(drag:{pos:{x:number;y:number}|null},def:React.CSSProperties):React.CSSProperties=>({
-    position:'absolute', touchAction:'none', userSelect:'none',
-    ...(drag.pos ? {left:drag.pos.x,top:drag.pos.y} : def),
+  // ── Style helpers ──────────────────────────────────────────────────────
+  const glassPanel:React.CSSProperties = {
+    background:'var(--panel)',
+    border:'1px solid var(--border)',
+    backdropFilter:'blur(24px) saturate(140%)',
+    WebkitBackdropFilter:'blur(24px) saturate(140%)',
+  }
+  const tabBtn=(active:boolean):React.CSSProperties=>({
+    display:'flex',width:38,height:38,alignItems:'center',justifyContent:'center',
+    border:'none',borderRadius:11,cursor:'pointer',transition:'all .16s ease',
+    background:active?accentSoft:'transparent',
+    color:active?accent:'var(--dim)',
   })
+  const dockBtn=(active:boolean):React.CSSProperties=>({
+    display:'flex',width:dbSz,height:dbSz,flexShrink:0,alignItems:'center',justifyContent:'center',
+    border:'none',borderRadius:'50%',cursor:'pointer',transition:'all .16s ease',
+    background:active?accentSoft:'transparent',
+    color:active?accent:'var(--dim)',
+  })
+  const wStyle=(drag:{pos:{x:number;y:number}|null},def:React.CSSProperties):React.CSSProperties=>({
+    position:'absolute',touchAction:'none',userSelect:'none',
+    ...(drag.pos?{left:drag.pos.x,top:drag.pos.y}:def),
+  })
+  const seg=(active:boolean):React.CSSProperties=>({
+    flex:1,padding:'8px 0',border:'none',borderRadius:9,fontSize:12.5,fontWeight:600,cursor:'pointer',transition:'all .16s ease',
+    background:active?accent:'var(--input)',color:active?'#16121f':'var(--dim)',
+  })
+  const mob=vw<640
+  const dbSz=mob?32:40
+  const divider:React.CSSProperties={width:1,height:26,background:'var(--border)',margin:'0 2px',flexShrink:0}
 
   return (
-    <div style={{position:'fixed',inset:0,overflow:'hidden',fontFamily:"'Inter',system-ui,sans-serif",color:'#fff'}}>
+    <div style={{position:'fixed',inset:0,overflow:'hidden',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
 
       {/* ── Background ── */}
       {bgType==='gif'
-        ? <img src={bgUrl} alt="" aria-hidden style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/> // eslint-disable-line @next/next/no-img-element
-        : <iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`}
-            style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none'}} allow="autoplay" />
+        // eslint-disable-next-line @next/next/no-img-element
+        ?<img src={bgUrl} alt="" aria-hidden style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+        :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none'}} allow="autoplay"/>
       }
       <div style={{position:'absolute',inset:0,background:'#000',opacity:bgOpacity/100}}/>
       {bgBlur>0&&<div style={{position:'absolute',inset:0,backdropFilter:`blur(${bgBlur}px)`}}/>}
+      {atmosphere!=='none'&&<div style={{position:'absolute',inset:0,background:atmOverlay[atmosphere],pointerEvents:'none'}}/>}
 
-      {/* ── Clock (draggable) ── */}
+      {/* ── Clock (draggable, top-left) ── */}
       {showClock&&(
-        <div {...clockDrag.dp} style={{...wStyle(clockDrag,{left:20,top:18}),cursor:'grab',zIndex:20}}>
-          <ClockWidget now={now} style={clockStyle} mounted={mounted} accent={accent}/>
-          <div style={{position:'absolute',top:-2,right:-18,fontSize:8,color:'rgba(255,255,255,0.2)',cursor:'grab'}}>⠿</div>
+        <div {...clockDrag.dp} style={{...wStyle(clockDrag,{left:36,top:30}),zIndex:5,cursor:'grab',position:'absolute'}}>
+          <div style={{position:'relative'}}>
+            <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowClock(false)} style={{position:'absolute',top:-8,right:-10,width:20,height:20,display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,.18)',borderRadius:'50%',background:'rgba(0,0,0,.45)',color:'rgba(255,255,255,.7)',cursor:'pointer',fontSize:11,lineHeight:1,zIndex:1,padding:0}}>×</button>
+            {clockStyle==='analog'
+              ?<AnalogClock now={now} size={110} accent={accent}/>
+              :clockStyle==='minimal'
+              ?<div style={{fontFamily:"'SF Mono',monospace",fontWeight:200,fontSize:'clamp(15px,3.5vw,24px)',letterSpacing:'0.12em',opacity:.8,textShadow:'0 1px 10px rgba(0,0,0,.9)'}}>{timeStr}</div>
+              :clockStyle==='bold'
+              ?<div style={{fontFamily:'system-ui,sans-serif',fontWeight:900,fontSize:'clamp(46px,12vw,90px)',lineHeight:.9,letterSpacing:'-0.03em',textShadow:'0 4px 28px rgba(0,0,0,.5)'}}>{timeStr}</div>
+              :<div>
+                <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:74,lineHeight:.9,letterSpacing:-2,textShadow:'0 3px 22px rgba(0,0,0,.45)'}}>{timeStr}</span>
+                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:600,fontSize:24,color:accent,textShadow:'0 2px 14px rgba(0,0,0,.4)'}}>{secStr}</span>
+                </div>
+                <div style={{marginTop:4,fontSize:14,fontWeight:500,letterSpacing:.3,opacity:.92,textShadow:'0 2px 10px rgba(0,0,0,.5)',textTransform:'capitalize'}}>{dateStr}</div>
+              </div>
+            }
+          </div>
+        </div>
+      )}
+
+      {/* ── Theme switch (top-center) ── */}
+      <div style={{position:'absolute',top:30,left:'50%',transform:'translateX(-50%)',zIndex:6,display:'flex',gap:4,padding:5,borderRadius:999,...glassPanel,boxShadow:'0 10px 30px rgba(0,0,0,.35)'}}>
+        {(['glass','warm'] as const).map(t=>(
+          <button key={t} onClick={()=>setTheme(t)} style={{padding:'7px 18px',border:'none',borderRadius:999,fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .16s ease',
+            background:theme===t?accent:'transparent',color:theme===t?'#16121f':'var(--dim)',
+            boxShadow:theme===t?`0 4px 14px ${accentGlow}`:'none'}}>
+            {t==='glass'?'Glass':'Warm'}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Pomodoro panel (draggable, top-right) ── */}
+      {showPom&&(
+        <div style={{...wStyle(pomDrag,{right:32,top:96}),zIndex:5,width:Math.min(236,vw-48),padding:'20px 20px 22px',...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)'}}>
+          <div {...pomDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,cursor:'grab'}}>
+            <span style={{fontSize:11,fontWeight:600,letterSpacing:1.4,textTransform:'uppercase',color:'var(--dim)'}}>Pomodoro</span>
+            <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPom(false)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div style={{display:'flex',gap:5,marginBottom:16}}>
+            <button onClick={()=>pom.setMode('work')} style={seg(pom.phase==='work')}>{t.pom_focus}</button>
+            <button onClick={()=>pom.setMode('break')} style={seg(pom.phase==='break')}>{t.pom_break}</button>
+          </div>
+          <div style={{position:'relative',width:148,height:148,margin:'0 auto 16px'}}>
+            <svg width="148" height="148" viewBox="0 0 148 148" style={{transform:'rotate(-90deg)'}}>
+              <circle cx="74" cy="74" r="62" fill="none" stroke="var(--track)" strokeWidth="9"/>
+              <circle cx="74" cy="74" r="62" fill="none" stroke={accent} strokeWidth="9" strokeLinecap="round"
+                strokeDasharray={pomCirc} strokeDashoffset={pomDash}
+                style={{transition:'stroke-dashoffset 1s linear',filter:`drop-shadow(0 0 6px ${accentGlow})`}}/>
+            </svg>
+            <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
+              <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:36,letterSpacing:-1}}>{pom.mm}:{pom.ss}</span>
+              <span style={{fontSize:11,fontWeight:500,letterSpacing:1,textTransform:'uppercase',color:'var(--dim)'}}>{pom.phase==='work'?t.pom_phase_focus:t.pom_phase_break}</span>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <button onClick={pom.toggle} style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:7,padding:11,border:'none',borderRadius:12,background:accent,color:'#16121f',fontWeight:600,fontSize:14,cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
+              {pom.on
+                ?<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                :<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}
+              {pom.on?t.pom_pause:t.pom_start}
+            </button>
+            <button onClick={pom.reset} style={{display:'flex',width:42,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:12,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+          </div>
         </div>
       )}
 
       {/* ── Weather (draggable) ── */}
       {showWx&&wxData&&(
-        <div {...wxDrag.dp} style={{...wStyle(wxDrag,{left:20,top:showClock?80:18}),cursor:'grab',zIndex:20,minWidth:140}}>
-          <div style={{display:'flex',flexDirection:'column',gap:3,background:'rgba(0,0,0,0.5)',backdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:'8px 12px'}}>
-            <div style={{display:'flex',alignItems:'center',gap:7}}>
-              <span style={{fontSize:22}}>{wxData.emoji}</span>
-              <div>
-                <div style={{fontSize:12,fontWeight:600}}>{wxData.city}</div>
-                <div style={{fontSize:11,color:'rgba(255,255,255,0.6)'}}>{wxData.temp}°C · {wxData.desc}</div>
+        <div {...wxDrag.dp} style={{...wStyle(wxDrag,{left:20,top:showClock&&clockStyle==='digital'?130:80}),cursor:'grab',zIndex:20,minWidth:160}}>
+          <div style={{display:'flex',flexDirection:'column',gap:4,...glassPanel,borderRadius:16,padding:'10px 14px',boxShadow:'0 10px 28px rgba(0,0,0,.3)'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:24}}>{wxData.emoji}</span>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,fontWeight:600}}>{wxData.city}</div>
+                <div style={{fontSize:11,color:'var(--dim)'}}>{wxData.temp}°C · {wxData.desc}</div>
               </div>
-              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowWx(false)}
-                style={{marginLeft:4,background:'none',border:'none',color:'rgba(255,255,255,0.3)',cursor:'pointer',fontSize:14,padding:0,lineHeight:1,flexShrink:0}}>×</button>
+              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowWx(false)} style={{background:'none',border:'none',color:'var(--dim2)',cursor:'pointer',fontSize:16,padding:0,lineHeight:1,flexShrink:0}}>×</button>
             </div>
             {(wxData.feels!==null||wxData.humidity!==null||wxData.wind!==null)&&(
-              <div style={{display:'flex',gap:8,fontSize:10,color:'rgba(255,255,255,0.45)',paddingTop:3,borderTop:'1px solid rgba(255,255,255,0.07)'}}>
+              <div style={{display:'flex',gap:8,fontSize:10,color:'var(--dim2)',paddingTop:4,borderTop:'1px solid var(--border)'}}>
                 {wxData.feels!==null&&<span>🌡 {wxData.feels}°C</span>}
                 {wxData.humidity!==null&&<span>💧 {wxData.humidity}%</span>}
                 {wxData.wind!==null&&<span>🌬 {wxData.wind}km/h</span>}
@@ -471,358 +657,756 @@ export function EmbedClient() {
         </div>
       )}
 
-      {/* ── Pomodoro (draggable) ── */}
-      {showPom&&(
-        <div {...pomDrag.dp} style={{position:'absolute',cursor:'grab',zIndex:20,touchAction:'none',userSelect:'none',...(pomDrag.pos?{left:pomDrag.pos.x,top:pomDrag.pos.y}:{right:14,top:14})}}>
-          <PomWidget pom={pom} accent={accent} pomCirc={pomCirc}/>
-        </div>
-      )}
+      {/* ── Progress card (left) ── */}
+      {showStreak&&(
+        <div style={{...wStyle(progressDrag,{left:20,top:showWx&&wxData?290:showClock&&clockStyle==='digital'?172:90}),zIndex:5,width:Math.min(244,vw-40),padding:16,borderRadius:18,background:'rgba(26,23,44,0.55)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',border:'1px solid rgba(255,255,255,0.10)',color:'#fff',boxShadow:'0 14px 40px rgba(0,0,0,.34)'}}>
+          {/* Header — drag handle */}
+          <div {...progressDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,cursor:'grab'}}>
+            <span style={{fontSize:10,fontWeight:700,letterSpacing:'0.1em',color:'rgba(255,255,255,0.5)'}}>{t.progress_title}</span>
+            <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowStreak(false)} style={{display:'flex',width:20,height:20,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'rgba(255,255,255,0.35)',borderRadius:6,cursor:'pointer',fontSize:14,lineHeight:1,padding:0}}>×</button>
+          </div>
 
-      {/* ── Note / Todo (draggable) ── */}
-      {showNote&&(
-        <div style={{position:'absolute',zIndex:60,...(noteDrag.pos?{left:noteDrag.pos.x,top:noteDrag.pos.y}:{right:14,bottom:74})}}>
-          <div style={{width:230,background:'rgba(10,11,22,0.97)',backdropFilter:'blur(16px)',border:'1px solid rgba(255,255,255,0.12)',borderRadius:14,overflow:'hidden'}}>
-            {/* Drag handle = header */}
-            <div {...noteDrag.dp} style={{cursor:'grab',display:'flex',alignItems:'center',justifyContent:'space-between',padding:'9px 12px',borderBottom:'1px solid rgba(255,255,255,0.06)',background:'rgba(255,255,255,0.03)'}}>
-              <span style={{fontSize:10,color:'rgba(255,255,255,0.4)',fontWeight:600,letterSpacing:'0.07em',textTransform:'uppercase'}}>
-                📝 Ghi chú · {doneTodos}/{todos.length}
-              </span>
-              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowNote(false)}
-                style={{background:'none',border:'none',color:'rgba(255,255,255,0.3)',cursor:'pointer',fontSize:16,padding:0,lineHeight:1}}>×</button>
+          {/* Level + XP */}
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
+            {/* Conic ring */}
+            <div style={{position:'relative',width:46,height:46,flexShrink:0}}>
+              <div style={{position:'absolute',inset:0,borderRadius:'50%',background:`conic-gradient(${accent} 0% ${xp2.pct}%, rgba(255,255,255,0.14) ${xp2.pct}% 100%)`}}/>
+              <div style={{position:'absolute',inset:3,borderRadius:'50%',background:'#2a2540',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,fontWeight:800}}>{level}</div>
             </div>
-            {/* Todo list */}
-            <div style={{padding:'8px 10px',maxHeight:220,overflowY:'auto'}}>
-              {todos.length===0&&<p style={{fontSize:11,color:'rgba(255,255,255,0.2)',textAlign:'center',padding:'8px 0',margin:0}}>Chưa có mục nào</p>}
-              {todos.map(t=>(
-                <div key={t.id} style={{display:'flex',alignItems:'center',gap:7,padding:'4px 0',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
-                  <button onPointerDown={e=>e.stopPropagation()} onClick={()=>toggleTodo(t.id)}
-                    style={{width:16,height:16,borderRadius:4,border:`1.5px solid ${t.done?'#4ade80':accent}`,background:t.done?'#4ade80':'transparent',cursor:'pointer',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9}}>
-                    {t.done?'✓':''}
-                  </button>
-                  <span style={{flex:1,fontSize:12,color:t.done?'rgba(255,255,255,0.25)':'rgba(255,255,255,0.8)',textDecoration:t.done?'line-through':'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
-                    {t.text}
-                  </span>
-                  <button onPointerDown={e=>e.stopPropagation()} onClick={()=>removeTodo(t.id)}
-                    style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.2)',fontSize:13,padding:0,lineHeight:1,flexShrink:0}}>×</button>
-                </div>
-              ))}
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:800,marginBottom:6}}>Level {level}</div>
+              <div style={{height:6,borderRadius:4,background:'rgba(255,255,255,0.14)',overflow:'hidden',marginBottom:4}}>
+                <div style={{width:`${xp2.pct}%`,height:'100%',background:`linear-gradient(90deg,${accent},${accentGlow})`,borderRadius:4,transition:'width .4s'}}/>
+              </div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.55)'}}>{xp2.current} / {xp2.max} XP</div>
             </div>
-            {/* Add input */}
-            <div style={{display:'flex',gap:5,padding:'7px 10px',borderTop:'1px solid rgba(255,255,255,0.06)'}}>
-              <input value={todoInput} onChange={e=>setTodoInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} placeholder="Thêm mục..."
-                onPointerDown={e=>e.stopPropagation()}
-                style={{flex:1,background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:6,color:'#fff',fontSize:11,padding:'5px 7px',outline:'none'}}/>
-              <button onPointerDown={e=>e.stopPropagation()} onClick={addTodo}
-                style={{width:26,height:26,borderRadius:6,border:'none',background:accent,color:'#fff',fontSize:16,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>+</button>
+          </div>
+
+          {/* Divider */}
+          <div style={{height:1,background:'rgba(255,255,255,0.08)',marginBottom:12}}/>
+
+          {/* Streak */}
+          <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:11}}>
+            <span style={{fontSize:22,display:'inline-block',animation:'lf-flame 1.6s ease-in-out infinite'}}>🔥</span>
+            <div style={{flex:1}}>
+              <div style={{fontSize:16,fontWeight:800,lineHeight:1}}>
+                {streak} <span style={{fontSize:11,fontWeight:600,color:'rgba(255,255,255,0.55)'}}>{t.progress_days}</span>
+              </div>
+              <div style={{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:2}}>{t.progress_best} {bestStreak} {t.progress_days}</div>
             </div>
-            {todos.some(t=>t.done)&&(
-              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>saveTodos(todos.filter(t=>!t.done))}
-                style={{width:'100%',fontSize:10,color:'rgba(255,255,255,0.25)',background:'none',border:'none',cursor:'pointer',padding:'4px 0 7px',borderTop:'1px solid rgba(255,255,255,0.04)'}}>
-                🗑 Xóa đã hoàn thành
-              </button>
-            )}
+          </div>
+
+          {/* 6-day dots */}
+          <div style={{display:'flex',gap:5}}>
+            {weekDots.map((active,i)=>(
+              <div key={i} style={{flex:1,height:18,borderRadius:5,background:active?'rgba(255,140,80,0.85)':'rgba(255,255,255,0.06)',transition:'background .3s'}}/>
+            ))}
           </div>
         </div>
       )}
 
-      {/* ── Pixel Pet (autonomous roaming) ── */}
-      {showPet&&<KawaiiCat pomState={pom.on ? pom.phase : null} accent={accent}/>}
+      {/* ── Notes panel (bottom-right) ── */}
+      {showNote&&(
+        <div style={{position:'absolute',zIndex:5,width:Math.min(264,vw-48),touchAction:'none',userSelect:'none',...(noteDrag.pos?{left:noteDrag.pos.x,top:noteDrag.pos.y}:{right:32,bottom:118}),...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)',overflow:'hidden'}}>
+          <div {...noteDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 15px',borderBottom:'1px solid var(--border)',cursor:'grab'}}>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <span style={{fontSize:11,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim)'}}>{t.todo_title}</span>
+            </div>
+            <span style={{fontSize:12,fontWeight:600,color:accent}}>{doneTodos}/{todos.length}</span>
+          </div>
+          <div style={{maxHeight:188,overflowY:'auto',padding:'8px 8px 4px'}}>
+            {todos.length===0&&<div style={{padding:'26px 12px',textAlign:'center',fontSize:13,color:'var(--dim2)'}}>{t.todo_empty}</div>}
+            {todos.map(t=>(
+              <div key={t.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px',borderRadius:10}}>
+                <button onPointerDown={e=>e.stopPropagation()} onClick={()=>toggleTodo(t.id)} style={{display:'flex',width:20,height:20,flexShrink:0,alignItems:'center',justifyContent:'center',borderRadius:6,cursor:'pointer',transition:'all .16s ease',border:t.done?`1px solid ${accent}`:'1.5px solid var(--dim2)',background:t.done?accent:'transparent'}}>
+                  {t.done&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16121f" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12l5 5L20 6"/></svg>}
+                </button>
+                <span style={{flex:1,fontSize:13.5,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:t.done?'var(--dim2)':'var(--text)',textDecoration:t.done?'line-through':'none'}}>{t.text}</span>
+                <button onPointerDown={e=>e.stopPropagation()} onClick={()=>removeTodo(t.id)} style={{display:'flex',width:22,height:22,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer',opacity:.5}}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                </button>
+              </div>
+            ))}
+          </div>
+          <div onPointerDown={e=>e.stopPropagation()} style={{display:'flex',gap:8,padding:'11px 12px',borderTop:'1px solid var(--border)'}}>
+            <input value={todoInput} onChange={e=>setTodoInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} placeholder={t.todo_placeholder}
+              style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+            <button onClick={addTodo} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+          </div>
+        </div>
+      )}
 
-      {/* ── Day/Night badge (top-right corner, fades after 4s) ── */}
+      {/* ── Main player panel (bottom-center) ── */}
+      {panel&&(
+        <div onClick={e=>e.stopPropagation()} style={{position:'absolute',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:5,width:'min(472px,calc(100vw - 24px))',...glassPanel,borderRadius:22,boxShadow:'0 22px 60px rgba(0,0,0,.42)',overflow:'hidden'}}>
+
+          {/* Tabs header */}
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 14px',borderBottom:'1px solid var(--border)'}}>
+            <div style={{display:'flex',gap:4}}>
+              <button onClick={()=>setPanelTab('music')} style={tabBtn(panelTab==='music')} title={t.tab_music}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              </button>
+              <button onClick={()=>setPanelTab('sounds')} style={tabBtn(panelTab==='sounds')} title={t.tab_sounds}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 13c1.5 0 1.5-4 3-4s1.5 8 3 8 1.5-10 3-10 1.5 6 3 6 1.5-3 3-3"/></svg>
+              </button>
+              <button onClick={()=>setPanelTab('scene')} style={tabBtn(panelTab==='scene')} title={t.tab_scene}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-4.5-4.5L7 21"/></svg>
+              </button>
+              <button onClick={()=>setPanelTab('more')} style={tabBtn(panelTab==='more')} title={t.tab_settings}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+              </button>
+            </div>
+            <button onClick={()=>setPanel(false)} style={{display:'flex',width:30,height:30,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:9,cursor:'pointer'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          {/* Panel body */}
+          <div style={{padding:'14px 16px',minHeight:248,maxHeight:'45vh',overflowY:'auto'}}>
+
+            {/* ── MUSIC ── */}
+            {panelTab==='music'&&(
+              <div>
+                <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                  {LOFI_STREAMS.map(s=>{
+                    const active=lofiId===s.id
+                    const live=active&&playing&&started
+                    return(
+                      <div key={s.id} onClick={()=>handleLofiChange(s.id)} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,padding:'11px 13px',borderRadius:12,cursor:'pointer',transition:'all .16s ease',border:`1px solid ${active?accentSoft:'transparent'}`,background:active?accentSoft:'transparent'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:11,minWidth:0}}>
+                          <span style={{flexShrink:0,width:8,height:8,borderRadius:'50%',background:active?accent2:'transparent',border:active?'none':'1.5px solid var(--dim2)',boxShadow:active?`0 0 8px ${accent2}`:'none'}}/>
+                          <span style={{fontSize:14,fontWeight:active?600:500,color:active?'var(--text)':'var(--dim)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{s.label}</span>
+                        </div>
+                        {live&&<span style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:600,letterSpacing:.5,color:accent2,flexShrink:0}}><span style={{width:6,height:6,borderRadius:'50%',background:accent2,animation:'lf-pulse 1.4s ease-in-out infinite'}}/>LIVE</span>}
+                        {active&&ytStatus==='loading'&&<span style={{fontSize:10,color:'var(--dim2)',flexShrink:0}}>{t.music_connecting}</span>}
+                      </div>
+                    )
+                  })}
+                  {lofiId==='custom'&&(
+                    <div style={{display:'flex',alignItems:'center',gap:11,padding:'11px 13px',borderRadius:12,border:`1px solid ${accentSoft}`,background:accentSoft}}>
+                      <span style={{width:8,height:8,borderRadius:'50%',background:accent2,flexShrink:0,boxShadow:`0 0 8px ${accent2}`}}/>
+                      <span style={{fontSize:14,fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.music_custom_yt}: {customLofiId}</span>
+                      {ytStatus==='ready'&&<span style={{fontSize:11,fontWeight:600,color:accent2}}>LIVE</span>}
+                    </div>
+                  )}
+                </div>
+                <div style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--border)'}}>
+                  <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8}}>{t.music_custom_yt}</div>
+                  <div style={{display:'flex',gap:8}}>
+                    <input value={customLofiInput} onChange={e=>setCustomLofiInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')applyCustomLofi()}} placeholder={t.music_custom_placeholder}
+                      style={{flex:1,padding:'10px 12px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+                    <button onClick={applyCustomLofi} style={{padding:'0 18px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.music_play_btn}</button>
+                  </div>
+                </div>
+                {ytStatus==='blocked'&&<p style={{fontSize:10,color:'#f97316',marginTop:8,lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'6px 8px',borderRadius:6}}>{t.music_yt_blocked}</p>}
+              </div>
+            )}
+
+            {/* ── SOUNDS ── */}
+            {panelTab==='sounds'&&(
+              <div>
+                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.sounds_title}</div>
+                <div style={{display:'flex',flexDirection:'column',gap:11}}>
+                  {AMBIENT_SOUNDS.map(s=>{
+                    const on=ambVols[s.id]!==undefined
+                    const vol=ambVols[s.id]??50
+                    return(
+                      <div key={s.id} style={{display:'flex',alignItems:'center',gap:12}}>
+                        <button onClick={()=>toggleAmbient(s.id)} style={{display:'flex',width:38,height:38,flexShrink:0,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:11,fontSize:17,cursor:'pointer',transition:'all .16s ease',background:on?accentSoft:'var(--input)',filter:on?'none':'grayscale(.6)',opacity:on?1:.7}}>{s.icon}</button>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:13.5,fontWeight:500,marginBottom:5,color:on?'var(--text)':'var(--dim)'}}>{t.ambient[s.id]||s.label}</div>
+                          <input type="range" min="0" max="100" value={vol} onChange={e=>handleAmbVol(s.id,+e.target.value)} disabled={!on} style={{width:'100%',height:4,cursor:'pointer',opacity:on?1:.4,pointerEvents:on?'auto':'none'}}/>
+                        </div>
+                        <button onClick={()=>toggleAmbient(s.id)} style={{display:'flex',flexShrink:0,width:40,height:23,padding:2,border:'none',borderRadius:999,cursor:'pointer',transition:'all .18s ease',justifyContent:on?'flex-end':'flex-start',background:on?accent:'var(--track)'}}>
+                          <span style={{width:19,height:19,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,.3)'}}/>
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── SCENE (background) ── */}
+            {panelTab==='scene'&&(
+              <div>
+                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_atm_title}</div>
+                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
+                  {([
+                    ['none','🌐',t.atm_none_label,t.atm_none_note],
+                    ['day','🌸',t.atm_day_label,t.atm_day_note],
+                    ['dusk','🌇',t.atm_dusk_label,t.atm_dusk_note],
+                    ['night','🌙',t.atm_night_label,t.atm_night_note],
+                    ['dim','🌑',t.atm_dim_label,t.atm_dim_note],
+                  ] as [string,string,string,string][]).map(([id,emoji,label,note])=>(
+                    <button key={id} onClick={()=>setAtmosphere(id as any)} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4,padding:12,border:`1px solid ${atmosphere===id?accent:'var(--border)'}`,borderRadius:12,background:atmosphere===id?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease',textAlign:'left'}}>
+                      <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:18}}>{emoji}</span><span style={{fontSize:12,fontWeight:600}}>{label}</span></div>
+                      <span style={{fontSize:10,color:'var(--dim)'}}>{note}</span>
+                    </button>
+                  ))}
+                </div>
+                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_bg_title}</div>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
+                  {BG_PRESETS.map(g=>(
+                    <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType('gif')}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'14px 8px',border:`1px solid ${bgUrl===g.url&&bgType==='gif'?accent:'var(--border)'}`,borderRadius:14,background:bgUrl===g.url&&bgType==='gif'?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease'}}>
+                      <span style={{fontSize:22,lineHeight:1}}>{g.emoji}</span>
+                      <span style={{fontSize:11,fontWeight:600}}>{g.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_gif_title}</div>
+                <div style={{display:'flex',gap:8,marginBottom:12}}>
+                  <input type="text" value={customBg} onChange={e=>setCustomBg(e.target.value)} placeholder="https://… .gif"
+                    style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+                  <button onClick={()=>{if(customBg.trim()){setBgUrl(customBg.trim());setBgType('gif')}}} style={{padding:'0 16px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_gif_use}</button>
+                </div>
+                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_yt_title}</div>
+                <div style={{display:'flex',gap:8,marginBottom:10}}>
+                  <input type="text" value={bgYtInput} onChange={e=>setBgYtInput(e.target.value)} placeholder={t.scene_yt_placeholder}
+                    style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+                  <button onClick={()=>{const id=parseYtId(bgYtInput);if(id){setBgYtId(id);setBgType('youtube')}}} style={{padding:'0 12px',border:'none',borderRadius:11,background:'#dc2626',color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_yt_btn}</button>
+                </div>
+                {bgType==='youtube'&&(
+                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,background:'rgba(220,38,38,0.1)',borderRadius:10,padding:'7px 12px',border:'1px solid rgba(220,38,38,0.3)'}}>
+                    <span style={{fontSize:11,color:'#fca5a5'}}>{t.scene_yt_active}</span>
+                    <button onClick={()=>setBgType('gif')} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.4)',fontSize:12,padding:0}}>{t.scene_yt_off}</button>
+                  </div>
+                )}
+                <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:4}}>
+                  <div>
+                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_dark_title}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{fontSize:11}}>☀️</span>
+                      <input type="range" min="0" max="90" value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                      <span style={{fontSize:11}}>🌑</span>
+                      <span style={{fontSize:10,color:'var(--dim2)',minWidth:28,textAlign:'right'}}>{bgOpacity}%</span>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_blur_title}</div>
+                    <div style={{display:'flex',alignItems:'center',gap:8}}>
+                      <input type="range" min="0" max="20" value={bgBlur} onChange={e=>setBgBlur(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                      <span style={{fontSize:10,color:'var(--dim2)',minWidth:36,textAlign:'right'}}>{bgBlur}px</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── MORE ── */}
+            {panelTab==='more'&&(
+              <div>
+                {/* Sub-tabs */}
+                <div style={{display:'flex',gap:5,marginBottom:14,overflowX:'auto',paddingBottom:2}}>
+                  {([['widgets',t.more_widgets],['weather',t.more_weather],['pet',t.more_pet],['progress',t.more_xp],['share',t.more_share]] as [MoreTab,string][]).map(([id,label])=>(
+                    <button key={id} onClick={()=>setMoreTab(id)} style={{flexShrink:0,padding:'6px 12px',borderRadius:9,border:'none',cursor:'pointer',fontSize:12,fontWeight:500,transition:'all .15s',
+                      background:moreTab===id?accentSoft:'var(--input)',color:moreTab===id?accent:'var(--dim)'}}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Widgets */}
+                {moreTab==='widgets'&&(
+                  <div>
+                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.widgets_toggle}</div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
+                      {[
+                        {key:'clock',label:t.widgets_clock,on:showClock,toggle:()=>setShowClock(v=>!v)},
+                        {key:'wx',label:t.widgets_weather,on:showWx&&!!wxData,toggle:()=>setShowWx(v=>!v)},
+                        {key:'pom',label:t.widgets_pom,on:showPom,toggle:()=>setShowPom(v=>!v)},
+                        {key:'note',label:t.widgets_notes,on:showNote,toggle:()=>setShowNote(v=>!v)},
+                        {key:'streak',label:t.widgets_progress,on:showStreak,toggle:()=>setShowStreak(v=>!v)},
+                      ].map(w=>(
+                        <button key={w.key} onClick={w.toggle} style={{padding:'10px',borderRadius:12,border:`1px solid ${w.on?accentSoft:'var(--border)'}`,background:w.on?accentSoft:'var(--input)',color:w.on?accent:'var(--dim)',fontSize:13,cursor:'pointer',textAlign:'left',transition:'all .15s'}}>
+                          {w.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.widgets_clock_style}</div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
+                      {([['digital','🔢 Digital'],['minimal','✦ Minimal'],['bold','𝗕 Bold'],['analog','⟳ Analog']] as [ClockStyle,string][]).map(([s,label])=>(
+                        <button key={s} onClick={()=>setClockStyle(s)} style={{padding:'10px',borderRadius:12,border:`1px solid ${clockStyle===s?accentSoft:'var(--border)'}`,background:clockStyle===s?accentSoft:'var(--input)',color:clockStyle===s?accent:'var(--dim)',fontSize:12,cursor:'pointer',textAlign:'left',transition:'all .15s'}}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8}}>{t.widgets_reset_pos}</div>
+                    <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                      {([['🕐',clockDrag.reset],['🌤️',wxDrag.reset],['📝',noteDrag.reset],['🍅',pomDrag.reset],['📊',progressDrag.reset]] as [string,()=>void][]).map(([icon,fn],i)=>(
+                        <button key={i} onClick={fn} style={{padding:'6px 12px',borderRadius:8,border:'1px solid var(--border)',background:'var(--input)',color:'var(--dim)',fontSize:12,cursor:'pointer'}}>{icon} {t.widgets_reset}</button>
+                      ))}
+                    </div>
+                    <div style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--border)'}}>
+                      <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8}}>{t.widgets_music_vol}</div>
+                      <div style={{display:'flex',alignItems:'center',gap:10}}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+                        <input type="range" min="0" max="100" value={lofiVol} onChange={e=>handleLofiVol(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                        <span style={{fontSize:12,fontWeight:600,color:'var(--dim)',width:34,textAlign:'right'}}>{lofiVol}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Weather */}
+                {moreTab==='weather'&&(
+                  <div>
+                    {!wxData&&wxState==='idle'&&(
+                      <>
+                        <p style={{fontSize:11,color:'var(--dim)',margin:'0 0 12px',lineHeight:1.5}}>{t.wx_desc}</p>
+                        <button onClick={detectWeather} style={{width:'100%',padding:'11px 0',borderRadius:12,border:`1px solid ${accentSoft}`,background:accentSoft,color:accent,fontSize:13,fontWeight:600,cursor:'pointer'}}>{t.wx_detect_btn}</button>
+                      </>
+                    )}
+                    {wxState==='loading'&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0'}}>
+                      <div style={{width:14,height:14,borderRadius:'50%',border:`2px solid ${accentSoft}`,borderTopColor:accent,animation:'spin 0.8s linear infinite',flexShrink:0}}/>
+                      <span style={{fontSize:12,color:'var(--dim)'}}>{t.wx_loading}</span>
+                    </div>}
+                    {wxState==='error'&&<div>
+                      <p style={{fontSize:11,color:'#f97316',margin:'0 0 8px',lineHeight:1.5}}>{t.wx_error}</p>
+                      <button onClick={()=>setWxState('idle')} style={{fontSize:11,color:'var(--dim)',background:'none',border:'none',cursor:'pointer',padding:0,textDecoration:'underline'}}>{t.wx_retry}</button>
+                    </div>}
+                    {wxData&&<div style={{display:'flex',flexDirection:'column',gap:10}}>
+                      <div style={{display:'flex',alignItems:'center',gap:10,background:'var(--input)',borderRadius:14,padding:'12px 14px',border:'1px solid var(--border)'}}>
+                        <span style={{fontSize:30,flexShrink:0}}>{wxData.emoji}</span>
+                        <div>
+                          <div style={{fontSize:14,fontWeight:600}}>{wxData.city} · {wxData.temp}°C</div>
+                          <div style={{fontSize:11,color:'var(--dim)',marginTop:2}}>{wxData.desc}</div>
+                          {(wxData.feels!==null||wxData.humidity!==null||wxData.wind!==null)&&(
+                            <div style={{display:'flex',gap:10,fontSize:10,color:'var(--dim2)',marginTop:4}}>
+                              {wxData.feels!==null&&<span>🌡 {wxData.feels}°C</span>}
+                              {wxData.humidity!==null&&<span>💧 {wxData.humidity}%</span>}
+                              {wxData.wind!==null&&<span>🌬 {wxData.wind} km/h</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div style={{display:'flex',gap:8}}>
+                        <button onClick={detectWeather} style={{flex:1,padding:'8px 0',borderRadius:10,border:'none',background:accentSoft,color:accent,fontSize:12,fontWeight:600,cursor:'pointer'}}>{t.wx_refresh}</button>
+                        <button onClick={()=>{setWxData(null);setWxState('idle');setShowWx(false)}} style={{padding:'8px 14px',borderRadius:10,border:'1px solid var(--border)',background:'transparent',color:'var(--dim)',fontSize:12,cursor:'pointer'}}>{t.wx_clear}</button>
+                      </div>
+                    </div>}
+                  </div>
+                )}
+
+                {/* Pet */}
+                {moreTab==='pet'&&(
+                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:14,padding:'8px 0'}}>
+                    <div style={{background:'var(--input)',border:'1px solid var(--border)',borderRadius:16,padding:'18px 28px',display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
+                      <CodingCatVariant variant={catVariant} size={90}/>
+                      <span style={{fontSize:10,color:'var(--dim2)'}}>{pom.on ? pom.phase==='work' ? t.pet_focused : t.pet_break : '(=^･ω･^=)'}</span>
+                      <div style={{display:'flex',gap:14,fontSize:12,color:'var(--dim)'}}>
+                        <span>🔥 {streak} {t.progress_days}</span>
+                        <span>Lv.{level}</span>
+                        <span>🪙 {coins}</span>
+                      </div>
+                      {(()=>{const xp2=xpProgress(xp,level);return(
+                        <div style={{width:'100%',maxWidth:160}}>
+                          <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'var(--dim2)',marginBottom:4}}>
+                            <span>XP {xp2.current}/{xp2.max}</span><span>{Math.round(xp2.pct)}%</span>
+                          </div>
+                          <div style={{height:4,background:'var(--track)',borderRadius:2,overflow:'hidden'}}>
+                            <div style={{height:'100%',width:`${xp2.pct}%`,background:accent,borderRadius:2,transition:'width .4s'}}/>
+                          </div>
+                        </div>
+                      )})()}
+                    </div>
+                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8,marginTop:4}}>{t.pet_choose}</div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
+                      {(['typist','mouse','beanie','wizard'] as CatVariant[]).map(v=>{
+                        const meta=CAT_VARIANT_META[v]
+                        const active=companionType==='coding'&&catVariant===v
+                        return(
+                          <button key={v} onClick={()=>{setCatVariant(v);setCompanionType('coding')}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'10px 8px',border:`1px solid ${active?accent:'var(--border)'}`,borderRadius:14,background:active?accentSoft:'var(--input)',cursor:'pointer',transition:'all .16s ease',fontFamily:'inherit'}}>
+                            <CodingCatVariant variant={v} size={72}/>
+                            <span style={{fontSize:11,fontWeight:700,color:active?accent:'var(--text)'}}>{meta.label}</span>
+                            <span style={{fontSize:9,color:'var(--dim2)',textAlign:'center',lineHeight:1.4}}>{meta.desc}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                    <button onClick={()=>setCompanionType(companionType==='coding'?'none':'coding')} style={{width:'100%',padding:'10px 0',borderRadius:12,border:`1px solid ${companionType==='coding'?accentSoft:'var(--border)'}`,background:companionType==='coding'?accentSoft:'transparent',color:companionType==='coding'?accent:'var(--dim)',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .2s',fontFamily:'inherit'}}>
+                      {companionType==='coding'?t.pet_hide:t.pet_show}
+                    </button>
+                  </div>
+                )}
+
+                {/* Progress / XP */}
+                {moreTab==='progress'&&(()=>{
+                  const xp2=xpProgress(xp,level)
+                  const unlockedCount=unlockedAchievements.length
+                  return(
+                    <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                      {/* Level + XP */}
+                      <div style={{background:'var(--input)',border:'1px solid var(--border)',borderRadius:14,padding:'14px 16px'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+                          <div style={{width:42,height:42,borderRadius:'50%',background:`linear-gradient(135deg,${accent},${accent}80)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:700,color:'#16121f',flexShrink:0}}>{level}</div>
+                          <div style={{flex:1}}>
+                            <div style={{fontSize:13,fontWeight:600,marginBottom:6}}>Level {level}</div>
+                            <div style={{height:5,background:'var(--track)',borderRadius:3,overflow:'hidden'}}>
+                              <div style={{height:'100%',width:`${xp2.pct}%`,background:accent,borderRadius:3,transition:'width .4s'}}/>
+                            </div>
+                            <div style={{fontSize:10,color:'var(--dim2)',marginTop:4}}>{xp2.current} / {xp2.max} XP</div>
+                          </div>
+                        </div>
+                        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:8,textAlign:'center'}}>
+                          <div style={{background:'var(--panel2)',borderRadius:10,padding:'8px 4px'}}>
+                            <div style={{fontSize:18}}>🔥</div>
+                            <div style={{fontSize:14,fontWeight:700}}>{streak}</div>
+                            <div style={{fontSize:9,color:'var(--dim2)'}}>Streak</div>
+                          </div>
+                          <div style={{background:'var(--panel2)',borderRadius:10,padding:'8px 4px'}}>
+                            <div style={{fontSize:18}}>🎯</div>
+                            <div style={{fontSize:14,fontWeight:700}}>{totalPomodoros}</div>
+                            <div style={{fontSize:9,color:'var(--dim2)'}}>Sessions</div>
+                          </div>
+                          <div style={{background:'var(--panel2)',borderRadius:10,padding:'8px 4px'}}>
+                            <div style={{fontSize:18}}>🪙</div>
+                            <div style={{fontSize:14,fontWeight:700}}>{coins}</div>
+                            <div style={{fontSize:9,color:'var(--dim2)'}}>Coins</div>
+                          </div>
+                        </div>
+                        {bestStreak>0&&<div style={{fontSize:10,color:'var(--dim2)',marginTop:8,textAlign:'center'}}>🏅 Best streak: {bestStreak} days</div>}
+                      </div>
+                      {/* Achievements */}
+                      <div>
+                        <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8}}>
+                          {t.progress_achievements} ({unlockedCount}/{ACHIEVEMENT_DEFS.length})
+                        </div>
+                        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+                          {ACHIEVEMENT_DEFS.map((def)=>{
+                            const unlocked=unlockedAchievements.includes(def.id)
+                            return(
+                              <div key={def.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 10px',borderRadius:10,background:'var(--input)',opacity:unlocked?1:0.5,border:`1px solid ${unlocked?accent+'30':'var(--border)'}`}}>
+                                <span style={{fontSize:18,filter:unlocked?'none':'grayscale(1)'}}>{def.emoji}</span>
+                                <div style={{flex:1,minWidth:0}}>
+                                  <div style={{fontSize:12,fontWeight:600,color:unlocked?'var(--text)':'var(--dim)'}}>{def.title}</div>
+                                  <div style={{fontSize:10,color:'var(--dim2)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{def.desc}</div>
+                                </div>
+                                {unlocked&&<span style={{fontSize:9,color:'#4ade80',background:'rgba(74,222,128,0.15)',padding:'2px 6px',borderRadius:4,flexShrink:0}}>✓</span>}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Share */}
+                {moreTab==='share'&&(
+                  <div>
+                    <p style={{fontSize:11,color:'var(--dim)',margin:'0 0 12px',lineHeight:1.5}}>{t.share_desc}</p>
+                    <div style={{background:'var(--input)',borderRadius:12,padding:'10px 12px',fontSize:10,color:'var(--dim2)',wordBreak:'break-all',lineHeight:1.5,border:'1px solid var(--border)',marginBottom:12,maxHeight:60,overflowY:'auto'}}>
+                      {mounted?shareUrl:'…'}
+                    </div>
+                    <button onClick={handleShare} style={{width:'100%',padding:'11px 0',borderRadius:12,border:'none',background:copied?'#1a3a20':accent,color:copied?'#4ade80':'#16121f',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .2s'}}>
+                      {copied?t.share_copied:t.share_copy}
+                    </button>
+                    <p style={{fontSize:10,color:'var(--dim2)',marginTop:10,lineHeight:1.5,textAlign:'center'}}>{t.share_hint}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Footer player */}
+          <div style={{display:'flex',alignItems:'center',gap:13,padding:'13px 16px',borderTop:'1px solid var(--border)',background:'var(--panel2)'}}>
+            <button onClick={togglePlay} style={{display:'flex',width:42,height:42,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
+              {started&&playing
+                ?<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+                :<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}
+            </button>
+            <div style={{minWidth:0,width:128}}>
+              <div style={{fontSize:10,fontWeight:600,letterSpacing:.6,textTransform:'uppercase',color:'var(--dim2)'}}>{started&&playing?t.music_now_playing:t.music_paused}</div>
+              <div style={{fontSize:14,fontWeight:600,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{lofiId==='custom'?t.music_custom_yt:activeName}</div>
+            </div>
+            <div style={{flex:1,display:'flex',alignItems:'center',gap:9}}>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
+              <input type="range" min="0" max="100" value={lofiVol} onChange={e=>handleLofiVol(+e.target.value)} style={{flex:1,height:4,cursor:'pointer'}}/>
+              <span style={{fontSize:12,fontWeight:600,color:'var(--dim)',width:34,textAlign:'right'}}>{lofiVol}%</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Companion (draggable) ── */}
+      {companionType==='coding'&&(
+        <div
+          {...catDrag.dp}
+          style={{...wStyle(catDrag,{left:32,bottom:88}),zIndex:5,cursor:'grab',lineHeight:0}}
+          onMouseEnter={()=>setCatHovered(true)}
+          onMouseLeave={()=>setCatHovered(false)}
+        >
+          <CodingCatVariant variant={catVariant} size={catSize} accent={accent}/>
+
+          {catHovered&&(
+            <>
+              {/* Close — top right */}
+              <button
+                onPointerDown={e=>e.stopPropagation()}
+                onClick={()=>setCompanionType('none')}
+                title={t.pet_hide_btn}
+                style={{position:'absolute',top:6,right:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',border:'1px solid rgba(255,255,255,.25)',background:'rgba(0,0,0,.58)',backdropFilter:'blur(4px)',color:'rgba(255,255,255,.9)',cursor:'pointer',fontSize:13,lineHeight:1,padding:0,zIndex:2}}
+              >×</button>
+
+              {/* Size controls — bottom right, pill stacked */}
+              <div
+                onPointerDown={e=>e.stopPropagation()}
+                style={{position:'absolute',bottom:10,right:6,display:'flex',flexDirection:'column',gap:3,zIndex:2}}
+              >
+                {[
+                  {label:'+',title:t.pet_enlarge, action:()=>setCatSize(s=>Math.min(280,s+20))},
+                  {label:'−',title:t.pet_shrink,  action:()=>setCatSize(s=>Math.max(80, s-20))},
+                ].map(({label,title,action})=>(
+                  <button key={label} onClick={action} title={title}
+                    style={{width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:7,border:'1px solid rgba(255,255,255,.22)',background:'rgba(0,0,0,.55)',backdropFilter:'blur(4px)',color:'rgba(255,255,255,.85)',cursor:'pointer',fontSize:15,fontWeight:700,lineHeight:1,padding:0,fontFamily:'inherit'}}
+                  >{label}</button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Day/Night badge ── */}
       {mounted&&!started&&(
         <div style={{position:'absolute',top:14,right:14,background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:20,padding:'4px 10px',display:'flex',alignItems:'center',gap:5,zIndex:5,pointerEvents:'none',animation:'dnFade 4s ease forwards'}}>
           <span style={{fontSize:13}}>{dn.emoji}</span>
-          <span style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{dn.label}</span>
+          <span style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{t.dn_labels[dn.period]||dn.label}</span>
         </div>
       )}
 
       {/* ── Click to start ── */}
       {!started&&(
         <div onClick={doStart} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:14,background:'rgba(0,0,0,0.38)',backdropFilter:'blur(4px)',cursor:'pointer',zIndex:10}}>
-          <div style={{width:68,height:68,borderRadius:'50%',background:accent,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 0 40px ${accent}80`}}>
+          <div style={{width:68,height:68,borderRadius:'50%',background:accent,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 0 40px ${accentGlow}`}}>
             <svg viewBox="0 0 24 24" fill="white" width="30" height="30"><path d="M8 5v14l11-7z"/></svg>
           </div>
-          <p style={{fontSize:13,color:'rgba(255,255,255,0.75)',letterSpacing:'0.04em'}}>Nhấn để bắt đầu</p>
+          <p style={{fontSize:13,color:'rgba(255,255,255,0.75)',letterSpacing:'0.04em',margin:0}}>{t.click_to_start}</p>
         </div>
       )}
 
-      {/* ── Settings Panel ── */}
-      {panel&&(
-        <div onClick={e=>e.stopPropagation()} style={{position:'absolute',bottom:74,left:'50%',transform:'translateX(-50%)',width:'min(390px,calc(100vw - 24px))',maxHeight:'65vh',background:'rgba(6,7,17,0.97)',backdropFilter:'blur(24px)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:16,overflow:'hidden',display:'flex',flexDirection:'column',zIndex:50}}>
-          {/* Tabs */}
-          <div style={{display:'flex',alignItems:'center',padding:'10px 12px 0',gap:2,borderBottom:'1px solid rgba(255,255,255,0.06)',paddingBottom:2}}>
-            {TABS.map(t=>(
-              <button key={t.id} onClick={()=>setPanelTab(t.id)} title={t.id} style={{flex:1,padding:'7px 2px',borderRadius:8,border:'none',cursor:'pointer',fontSize:15,background:panelTab===t.id?'#1e2035':'transparent',color:panelTab===t.id?accent:'rgba(255,255,255,0.3)',transition:'all .15s'}}>
-                {t.icon}
-              </button>
-            ))}
-            <button onClick={()=>setPanel(false)} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.3)',fontSize:20,padding:'0 0 0 8px',lineHeight:1}}>×</button>
-          </div>
-
-          <div style={{overflowY:'auto',padding:'12px 14px 16px',flex:1}}>
-
-            {/* 🎵 Lofi */}
-            {panelTab==='lofi'&&<>
-              <div style={{display:'flex',flexDirection:'column',gap:4,marginBottom:12}}>
-                {LOFI_STREAMS.map(s=>(
-                  <button key={s.id} onClick={()=>handleLofiChange(s.id)} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderRadius:8,border:lofiId===s.id?`1px solid ${accent}50`:'1px solid #1e2035',background:lofiId===s.id?`${accent}18`:'transparent',color:lofiId===s.id?'#fff':'rgba(255,255,255,0.4)',fontSize:12,cursor:'pointer',textAlign:'left'}}>
-                    <span style={{width:6,height:6,borderRadius:'50%',flexShrink:0,background:lofiId===s.id?accent:'transparent',border:lofiId===s.id?'none':`1px solid rgba(255,255,255,0.15)`}}/>
-                    {s.label}
-                    {lofiId===s.id&&ytStatus==='loading'&&<span style={{marginLeft:'auto',fontSize:10,color:'rgba(255,255,255,0.35)'}}>đang kết nối…</span>}
-                    {lofiId===s.id&&ytStatus==='ready'&&<span style={{marginLeft:'auto',fontSize:10,color:'#4ade80'}}>● live</span>}
-                  </button>
-                ))}
-                {lofiId==='custom'&&(
-                  <div style={{padding:'8px 10px',borderRadius:8,border:`1px solid ${accent}50`,background:`${accent}18`,fontSize:12,color:'#fff',display:'flex',alignItems:'center',gap:8}}>
-                    <span style={{width:6,height:6,borderRadius:'50%',background:accent,flexShrink:0}}/>
-                    <span style={{flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>YouTube: {customLofiId}</span>
-                    {ytStatus==='ready'&&<span style={{fontSize:10,color:'#4ade80'}}>● live</span>}
-                  </div>
-                )}
-              </div>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 5px',fontWeight:600}}>YouTube tùy chỉnh</p>
-              <div style={{display:'flex',gap:5,marginBottom:10}}>
-                <input type="text" value={customLofiInput} onChange={e=>setCustomLofiInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')applyCustomLofi()}} placeholder="URL hoặc video ID…"
-                  style={{flex:1,background:'#0a0b18',border:'1px solid #1e2035',borderRadius:7,color:'#fff',fontSize:11,padding:'7px 9px',outline:'none'}}/>
-                <button onClick={applyCustomLofi} style={{padding:'7px 11px',borderRadius:7,border:'none',background:accent,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0}}>Phát</button>
-              </div>
-              <div style={{display:'flex',alignItems:'center',gap:10}}>
-                <span style={{fontSize:13}}>🔊</span>
-                <input type="range" min="0" max="100" value={lofiVol} onChange={e=>handleLofiVol(+e.target.value)} style={{flex:1,accentColor:accent,cursor:'pointer'}}/>
-                <span style={{fontSize:11,color:'rgba(255,255,255,0.4)',minWidth:32,textAlign:'right'}}>{lofiVol}%</span>
-              </div>
-              {ytStatus==='blocked'&&<p style={{fontSize:10,color:'#f97316',marginTop:8,lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'6px 8px',borderRadius:6}}>⚠ YouTube chưa sẵn sàng. Âm thanh tổng hợp đang hoạt động.</p>}
-            </>}
-
-            {/* 🎚️ Ambient */}
-            {panelTab==='ambient'&&<>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,marginBottom:12}}>
-                {AMBIENT_SOUNDS.map(s=>{const active=ambVols[s.id]!==undefined;return(
-                  <button key={s.id} onClick={()=>toggleAmbient(s.id)} style={{display:'flex',alignItems:'center',gap:6,padding:'8px 10px',borderRadius:8,border:active?`1px solid ${accent}40`:'1px solid #1e2035',background:active?`${accent}18`:'#0a0b18',color:active?'#fff':'rgba(255,255,255,0.35)',fontSize:11,cursor:'pointer',textAlign:'left',transition:'all .15s'}}>
-                    <span style={{fontSize:15}}>{s.icon}</span><span>{s.label}</span>
-                  </button>
-                )})}
-              </div>
-              {ambCount>0?<div style={{display:'flex',flexDirection:'column',gap:7}}>
-                <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 2px',fontWeight:600}}>Âm lượng</p>
-                {Object.entries(ambVols).map(([id,vol])=>{const s=AMBIENT_SOUNDS.find(s=>s.id===id);if(!s)return null;return(
-                  <div key={id} style={{display:'flex',alignItems:'center',gap:8}}>
-                    <span style={{fontSize:15,minWidth:22}}>{s.icon}</span>
-                    <input type="range" min="0" max="100" value={vol} onChange={e=>handleAmbVol(id,+e.target.value)} style={{flex:1,accentColor:accent,cursor:'pointer'}}/>
-                    <span style={{fontSize:10,color:'rgba(255,255,255,0.3)',minWidth:28,textAlign:'right'}}>{vol}%</span>
-                  </div>
-                )})}
-              </div>:<p style={{textAlign:'center',fontSize:11,color:'rgba(255,255,255,0.2)',padding:'8px 0'}}>Chọn âm thanh bên trên để bật</p>}
-            </>}
-
-            {/* 🖼️ Background */}
-            {panelTab==='bg'&&<>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 8px',fontWeight:600}}>Hình nền GIF</p>
-              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:5,marginBottom:12}}>
-                {BG_PRESETS.map(g=>(
-                  <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType('gif')}} style={{padding:'7px 4px',borderRadius:8,border:bgUrl===g.url&&bgType==='gif'?`1px solid ${accent}60`:'1px solid #1e2035',background:bgUrl===g.url&&bgType==='gif'?`${accent}18`:'#0a0b18',color:bgUrl===g.url&&bgType==='gif'?'#fff':'rgba(255,255,255,0.4)',fontSize:11,cursor:'pointer',textAlign:'center',transition:'all .15s',display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
-                    <span style={{fontSize:18}}>{g.emoji}</span>
-                    <span style={{fontSize:9,lineHeight:1.2}}>{g.label}</span>
-                  </button>
-                ))}
-              </div>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 5px',fontWeight:600}}>URL GIF tùy chỉnh</p>
-              <div style={{display:'flex',gap:5,marginBottom:12}}>
-                <input type="text" value={customBg} onChange={e=>setCustomBg(e.target.value)} placeholder="https://… .gif"
-                  style={{flex:1,background:'#0a0b18',border:'1px solid #1e2035',borderRadius:7,color:'#fff',fontSize:11,padding:'7px 9px',outline:'none'}}/>
-                <button onClick={()=>{if(customBg.trim()){setBgUrl(customBg.trim());setBgType('gif')}}} style={{padding:'7px 11px',borderRadius:7,border:'none',background:accent,color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0}}>Dùng</button>
-              </div>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 5px',fontWeight:600}}>Video YouTube làm nền</p>
-              <div style={{display:'flex',gap:5,marginBottom:12}}>
-                <input type="text" value={bgYtInput} onChange={e=>setBgYtInput(e.target.value)} placeholder="URL hoặc video ID YouTube…"
-                  style={{flex:1,background:'#0a0b18',border:'1px solid #1e2035',borderRadius:7,color:'#fff',fontSize:11,padding:'7px 9px',outline:'none'}}/>
-                <button onClick={()=>{const id=parseYtId(bgYtInput);if(id){setBgYtId(id);setBgType('youtube')}}} style={{padding:'7px 11px',borderRadius:7,border:'none',background:'#dc2626',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer',flexShrink:0}}>▶ Nền</button>
-              </div>
-              {bgType==='youtube'&&<div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,background:'rgba(220,38,38,0.1)',borderRadius:8,padding:'6px 10px',border:'1px solid rgba(220,38,38,0.3)'}}>
-                <span style={{fontSize:11,color:'#fca5a5'}}>🎬 Video YouTube đang làm nền</span>
-                <button onClick={()=>setBgType('gif')} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.4)',fontSize:12,padding:0}}>Tắt ×</button>
-              </div>}
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 5px',fontWeight:600}}>Độ tối nền</p>
-              <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
-                <span style={{fontSize:11}}>☀️</span>
-                <input type="range" min="0" max="90" value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{flex:1,accentColor:accent,cursor:'pointer'}}/>
-                <span style={{fontSize:11}}>🌑</span>
-                <span style={{fontSize:10,color:'rgba(255,255,255,0.4)',minWidth:28,textAlign:'right'}}>{bgOpacity}%</span>
-              </div>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 5px',fontWeight:600}}>Blur nền</p>
-              <div style={{display:'flex',alignItems:'center',gap:8}}>
-                <span style={{fontSize:11}}>🔍</span>
-                <input type="range" min="0" max="20" value={bgBlur} onChange={e=>setBgBlur(+e.target.value)} style={{flex:1,accentColor:accent,cursor:'pointer'}}/>
-                <span style={{fontSize:10,color:'rgba(255,255,255,0.4)',minWidth:36,textAlign:'right'}}>{bgBlur}px</span>
-              </div>
-            </>}
-
-            {/* 🧩 Widgets */}
-            {panelTab==='widgets'&&<>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 8px',fontWeight:600}}>Bật / Tắt</p>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,marginBottom:14}}>
-                {[
-                  {key:'clock',  label:'🕐 Đồng hồ',   on:showClock, toggle:()=>setShowClock(v=>!v)},
-                  {key:'wx',     label:'🌤️ Thời tiết',  on:showWx&&!!wxData, toggle:()=>setShowWx(v=>!v)},
-                  {key:'pom',    label:'🍅 Pomodoro',   on:showPom, toggle:()=>setShowPom(v=>!v)},
-                  {key:'note',   label:'📝 Ghi chú',    on:showNote, toggle:()=>setShowNote(v=>!v)},
-                ].map(w=>(
-                  <button key={w.key} onClick={w.toggle} style={{padding:'8px 10px',borderRadius:8,border:w.on?`1px solid ${accent}50`:'1px solid #1e2035',background:w.on?`${accent}18`:'#0a0b18',color:w.on?accent:'rgba(255,255,255,0.3)',fontSize:11,cursor:'pointer',textAlign:'left',transition:'all .15s'}}>
-                    {w.label}
-                  </button>
-                ))}
-              </div>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 8px',fontWeight:600}}>Kiểu đồng hồ</p>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:5,marginBottom:14}}>
-                {([['digital','🔢 Digital'],['minimal','✦ Minimal'],['bold','𝗕 Bold'],['analog','⟳ Analog']] as [ClockStyle,string][]).map(([s,label])=>(
-                  <button key={s} onClick={()=>setClockStyle(s)} style={{padding:'8px 10px',borderRadius:8,border:clockStyle===s?`1px solid ${accent}50`:'1px solid #1e2035',background:clockStyle===s?`${accent}18`:'#0a0b18',color:clockStyle===s?accent:'rgba(255,255,255,0.3)',fontSize:11,cursor:'pointer',textAlign:'left',transition:'all .15s'}}>
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <p style={{fontSize:10,letterSpacing:'0.06em',textTransform:'uppercase',color:'rgba(255,255,255,0.25)',margin:'0 0 8px',fontWeight:600}}>Đặt lại vị trí</p>
-              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
-                {[['🕐',clockDrag.reset],['🌤️',wxDrag.reset],['🍅',pomDrag.reset],['📝',noteDrag.reset]].map(([icon,fn],i)=>(
-                  <button key={i} onClick={fn as ()=>void} style={{padding:'5px 10px',borderRadius:6,border:'1px solid #1e2035',background:'#0a0b18',color:'rgba(255,255,255,0.4)',fontSize:12,cursor:'pointer'}}>
-                    {icon as string} Reset
-                  </button>
-                ))}
-              </div>
-            </>}
-
-            {/* 🌤️ Weather */}
-            {panelTab==='weather'&&<>
-              {!wxData&&wxState==='idle'&&<>
-                <p style={{fontSize:11,color:'rgba(255,255,255,0.3)',margin:'0 0 10px',lineHeight:1.5}}>Tự động phát hiện thời tiết và hiển thị trên màn hình với đầy đủ thông tin.</p>
-                <button onClick={detectWeather} style={{width:'100%',padding:'10px 0',borderRadius:8,border:`1px solid ${accent}40`,background:`${accent}15`,color:accent,fontSize:12,fontWeight:600,cursor:'pointer'}}>📍 Phát hiện thời tiết của tôi</button>
-              </>}
-              {wxState==='loading'&&<div style={{display:'flex',alignItems:'center',gap:8,padding:'8px 0'}}>
-                <div style={{width:14,height:14,borderRadius:'50%',border:`2px solid ${accent}40`,borderTopColor:accent,animation:'spin 0.8s linear infinite',flexShrink:0}}/>
-                <span style={{fontSize:12,color:'rgba(255,255,255,0.4)'}}>Đang đọc vị trí…</span>
-              </div>}
-              {wxState==='error'&&<div>
-                <p style={{fontSize:11,color:'#f97316',margin:'0 0 8px',lineHeight:1.5}}>⚠ Không thể truy cập vị trí. Cho phép GPS và thử lại.</p>
-                <button onClick={()=>setWxState('idle')} style={{fontSize:11,color:'rgba(255,255,255,0.4)',background:'none',border:'none',cursor:'pointer',padding:0,textDecoration:'underline'}}>Thử lại</button>
-              </div>}
-              {wxData&&<div style={{display:'flex',flexDirection:'column',gap:8}}>
-                <div style={{display:'flex',alignItems:'center',gap:10,background:'#060810',borderRadius:10,padding:'10px 12px',border:'1px solid #12142a'}}>
-                  <span style={{fontSize:28,flexShrink:0}}>{wxData.emoji}</span>
-                  <div>
-                    <div style={{fontSize:13,fontWeight:600,color:'#fff'}}>{wxData.city} · {wxData.temp}°C</div>
-                    <div style={{fontSize:11,color:'rgba(255,255,255,0.4)',marginTop:2}}>{wxData.desc}</div>
-                    {(wxData.feels!==null||wxData.humidity!==null||wxData.wind!==null)&&(
-                      <div style={{display:'flex',gap:10,fontSize:10,color:'rgba(255,255,255,0.35)',marginTop:4}}>
-                        {wxData.feels!==null&&<span>🌡 Cảm giác {wxData.feels}°C</span>}
-                        {wxData.humidity!==null&&<span>💧 {wxData.humidity}%</span>}
-                        {wxData.wind!==null&&<span>🌬 {wxData.wind} km/h</span>}
+      {/* ── Calendar Modal ── */}
+      {showCal&&(
+        <div onClick={()=>setShowCal(false)} style={{position:'absolute',inset:0,zIndex:20,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.42)',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)'}}>
+          <div onClick={e=>e.stopPropagation()} style={{display:'flex',width:'min(660px,92vw)',maxHeight:'90vh',...glassPanel,borderRadius:24,boxShadow:'0 30px 80px rgba(0,0,0,.5)',overflow:'hidden'}}>
+            {/* Calendar grid */}
+            <div style={{flex:1,padding:'22px 24px',overflowY:'auto'}}>
+              {(()=>{
+                const monthNames=t.cal_months
+                const {y,m}=calMonth
+                const firstDow=new Date(y,m,1).getDay()
+                const daysInMonth=new Date(y,m+1,0).getDate()
+                const todayKey=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+                const wdShort=t.cal_days_short
+                const cells:React.ReactNode[]=[]
+                for(let i=0;i<firstDow;i++)cells.push(<div key={`e${i}`}/>)
+                for(let dd=1;dd<=daysInMonth;dd++){
+                  const key=`${y}-${m}-${dd}`
+                  const has=!!(calNotes[key]?.length)
+                  const isToday=key===todayKey,isSel=key===calSelected
+                  let bg='transparent',bd='1px solid transparent',col='var(--text)',fw='500'
+                  if(isSel){bg=accent;col='#16121f';fw='700'}
+                  else if(isToday){bd=`1px solid ${accent}`;col=accent;fw='700'}
+                  cells.push(
+                    <button key={key} onClick={()=>setCalSelected(key)}
+                      style={{position:'relative',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',height:38,border:bd,borderRadius:10,background:bg,color:col,fontSize:13,fontWeight:fw as any,cursor:'pointer',transition:'all .14s ease'}}>
+                      <span>{dd}</span>
+                      {has&&<span style={{position:'absolute',bottom:4,width:4,height:4,borderRadius:'50%',background:isSel?'#16121f':accent2}}/>}
+                    </button>
+                  )
+                }
+                return(
+                  <>
+                    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
+                      <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:19}}>{monthNames[m]}, {y}</span>
+                      <div style={{display:'flex',gap:6}}>
+                        <button onClick={()=>setCalMonth(cm=>{const nm=cm.m-1;return nm<0?{y:cm.y-1,m:11}:{y:cm.y,m:nm}})}
+                          style={{display:'flex',width:32,height:32,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:9,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        </button>
+                        <button onClick={()=>{const t=new Date();setCalMonth({y:t.getFullYear(),m:t.getMonth()});setCalSelected(`${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`)}}
+                          style={{padding:'0 12px',height:32,border:'1px solid var(--border)',borderRadius:9,background:'var(--input)',color:'var(--text)',cursor:'pointer',fontSize:12,fontWeight:600}}>{t.cal_today}</button>
+                        <button onClick={()=>setCalMonth(cm=>{const nm=cm.m+1;return nm>11?{y:cm.y+1,m:0}:{y:cm.y,m:nm}})}
+                          style={{display:'flex',width:32,height:32,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:9,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+                        </button>
                       </div>
-                    )}
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginBottom:6}}>
+                      {wdShort.map(w=><div key={w} style={{textAlign:'center',fontSize:10.5,fontWeight:600,letterSpacing:.4,color:'var(--dim2)',padding:'4px 0'}}>{w}</div>)}
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4}}>{cells}</div>
+                  </>
+                )
+              })()}
+            </div>
+            {/* Day notes side */}
+            <div style={{width:266,flexShrink:0,display:'flex',flexDirection:'column',borderLeft:'1px solid var(--border)',background:'var(--panel2)'}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 18px 14px'}}>
+                <div>
+                  <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)'}}>{t.cal_day_notes}</div>
+                  <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:17,marginTop:2}}>
+                    {(()=>{const p=calSelected.split('-').map(Number);const d=new Date(p[0],p[1],p[2]);if(isNaN(d.getTime()))return'—';return lang==='vi'?`${p[2]} thg ${p[1]+1}`:`${t.cal_months[p[1]].slice(0,3)} ${p[2]}`})()}
                   </div>
                 </div>
-                <div style={{display:'flex',gap:6}}>
-                  <button onClick={detectWeather} style={{flex:1,padding:'7px 0',borderRadius:7,border:'none',background:`${accent}20`,color:accent,fontSize:11,fontWeight:600,cursor:'pointer'}}>↺ Làm mới</button>
-                  <button onClick={()=>{setWxData(null);setWxState('idle');setShowWx(false)}} style={{padding:'7px 12px',borderRadius:7,border:'1px solid #1e2035',background:'transparent',color:'rgba(255,255,255,0.3)',fontSize:11,cursor:'pointer'}}>Xóa</button>
-                </div>
-              </div>}
-            </>}
-
-            {/* 🐱 Pet */}
-            {panelTab==='pet'&&<>
-              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12,padding:'8px 0'}}>
-                <div style={{background:'rgba(255,255,255,0.03)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:14,padding:'16px 24px',display:'flex',flexDirection:'column',alignItems:'center',gap:8}}>
-                  <CatSVG state={pom.on ? pom.phase === 'work' ? 'work' : 'sleep' : 'idle'} size={52}/>
-                  <span style={{fontSize:10,color:'rgba(255,255,255,0.25)'}}>
-                    {pom.on ? pom.phase === 'work' ? '⌨️ đang tập trung' : '💤 nghỉ ngơi' : '(=^･ω･^=)'}
-                  </span>
-                </div>
-                <button onClick={()=>setShowPet(v=>!v)} style={{width:'100%',padding:'10px 0',borderRadius:8,border:`1px solid ${showPet?accent+'50':'rgba(255,255,255,0.1)'}`,background:showPet?`${accent}20`:'transparent',color:showPet?accent:'rgba(255,255,255,0.5)',fontSize:12,fontWeight:600,cursor:'pointer',transition:'all .2s'}}>
-                  {showPet?'🐱 Ẩn mèo':'🐱 Thả mèo ra màn hình'}
+                <button onClick={()=>setShowCal(false)} style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:8,cursor:'pointer'}}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
-                <p style={{fontSize:10,color:'rgba(255,255,255,0.2)',textAlign:'center',lineHeight:1.6,margin:0}}>
-                  Mèo sẽ tự đi lang thang, lăn tròn &amp; làm nũng.<br/>
-                  Đưa chuột lại gần để mèo vui lên! Click = meow~ 🐱
-                </p>
               </div>
-            </>}
-
-            {/* 🔗 Share */}
-            {panelTab==='share'&&<>
-              <p style={{fontSize:11,color:'rgba(255,255,255,0.3)',margin:'0 0 10px',lineHeight:1.5}}>Chia sẻ vibe hiện tại qua một link embed.</p>
-              <div style={{background:'#060810',borderRadius:8,padding:'8px 10px',fontSize:10,color:'rgba(255,255,255,0.3)',wordBreak:'break-all',lineHeight:1.5,border:'1px solid #12142a',marginBottom:10,maxHeight:58,overflowY:'auto'}}>
-                {mounted?shareUrl:'…'}
+              <div style={{flex:1,maxHeight:300,overflowY:'auto',padding:'0 12px'}}>
+                {(calNotes[calSelected]||[]).length===0&&<div style={{padding:'30px 14px',textAlign:'center',fontSize:12.5,color:'var(--dim2)'}}>{t.cal_empty}</div>}
+                {(calNotes[calSelected]||[]).map(dn=>(
+                  <div key={dn.id} style={{display:'flex',alignItems:'flex-start',gap:9,padding:'9px 10px',marginBottom:6,borderRadius:11,background:'var(--input)',border:'1px solid var(--border)'}}>
+                    <span style={{flexShrink:0,width:6,height:6,marginTop:6,borderRadius:'50%',background:accent}}/>
+                    <span style={{flex:1,fontSize:13,lineHeight:1.4,wordBreak:'break-word'}}>{dn.text}</span>
+                    <button onClick={()=>delCalNote(calSelected,dn.id)} style={{display:'flex',width:20,height:20,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer'}}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                    </button>
+                  </div>
+                ))}
               </div>
-              <button onClick={handleShare} style={{width:'100%',padding:'10px 0',borderRadius:8,border:'none',background:copied?'#1a3a20':accent,color:copied?'#4ade80':'#fff',fontSize:12,fontWeight:600,cursor:'pointer',transition:'all .2s'}}>
-                {copied?'✓ Đã sao chép!':'📋 Sao chép link embed'}
-              </button>
-              <p style={{fontSize:10,color:'rgba(255,255,255,0.18)',marginTop:8,lineHeight:1.5,textAlign:'center'}}>Dán vào Notion, blog, hoặc bất kỳ trang web nào</p>
-            </>}
-
+              <div style={{display:'flex',gap:8,padding:12,borderTop:'1px solid var(--border)'}}>
+                <input value={calInput} onChange={e=>setCalInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addCalNote()}} placeholder={t.cal_placeholder}
+                  style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+                <button onClick={addCalNote} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── Control bar ── */}
-      <div style={{position:'absolute',bottom:18,left:16,right:16,display:'flex',justifyContent:'center',zIndex:40}}>
-        <div style={{background:'rgba(0,0,0,0.58)',backdropFilter:'blur(14px)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:44,padding:'8px 14px',display:'flex',alignItems:'center',gap:10}}>
-          <button onClick={togglePlay} style={{width:36,height:36,borderRadius:'50%',border:'none',background:accent,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,boxShadow:`0 0 14px ${accent}60`}}>
-            {started&&playing
-              ?<svg viewBox="0 0 24 24" fill="white" width="16" height="16"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
-              :<svg viewBox="0 0 24 24" fill="white" width="16" height="16"><path d="M8 5v14l11-7z"/></svg>}
-          </button>
-          {started&&playing&&ytStatus==='loading'&&<div style={{display:'flex',alignItems:'center',gap:5}}><div style={{width:10,height:10,borderRadius:'50%',border:`2px solid ${accent}50`,borderTopColor:accent,animation:'spin 0.7s linear infinite'}}/><span style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>Đang tải…</span></div>}
-          {started&&playing&&ytStatus==='ready'&&<div style={{display:'flex',alignItems:'flex-end',gap:2,height:16}}>{[4,7,5,9,6,4,7].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:accent,height:h*2,animation:`eqB ${0.4+i*0.08}s ease-in-out infinite alternate`}}/>)}</div>}
-          {ambCount>0&&<div style={{display:'flex',gap:3,fontSize:13}}>{Object.keys(ambVols).slice(0,4).map(id=>{const s=AMBIENT_SOUNDS.find(s=>s.id===id);return<span key={id}>{s?.icon}</span>})}{ambCount>4&&<span style={{fontSize:10,color:'rgba(255,255,255,0.4)'}}>+{ambCount-4}</span>}</div>}
-          <div style={{width:1,height:18,background:'rgba(255,255,255,0.1)'}}/>
-          <button onClick={()=>setShowNote(v=>!v)} style={{width:30,height:30,borderRadius:'50%',cursor:'pointer',border:showNote?`1px solid ${accent}50`:'1px solid rgba(255,255,255,0.12)',background:showNote?`${accent}20`:'rgba(255,255,255,0.06)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,position:'relative'}}>
-            📝{todos.length>0&&<span style={{position:'absolute',top:-3,right:-3,width:14,height:14,borderRadius:'50%',background:accent,fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:600}}>{todos.length}</span>}
-          </button>
-          <button onClick={()=>setPanel(v=>!v)} style={{width:30,height:30,borderRadius:'50%',cursor:'pointer',border:panel?`1px solid ${accent}50`:'1px solid rgba(255,255,255,0.12)',background:panel?`${accent}20`:'rgba(255,255,255,0.06)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14}}>⚙️</button>
-        </div>
-      </div>
+      {/* ── DOCK ── */}
+      <div className="lf-dock" style={{position:'absolute',left:'50%',bottom:mob?12:28,transform:'translateX(-50%)',zIndex:7,maxWidth:'calc(100vw - 16px)',overflowX:'auto',borderRadius:999,...glassPanel,boxShadow:'0 16px 44px rgba(0,0,0,.4)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:mob?3:7,padding:mob?5:8,width:'max-content'}}>
 
-      {/* Branding */}
-      <a href="/" target="_blank" rel="noopener noreferrer" style={{position:'absolute',bottom:5,right:10,fontSize:9,color:'rgba(255,255,255,0.18)',textDecoration:'none',zIndex:5}} onMouseEnter={e=>(e.currentTarget.style.color='rgba(255,255,255,0.5)')} onMouseLeave={e=>(e.currentTarget.style.color='rgba(255,255,255,0.18)')}>
+        {/* Play/Pause */}
+        <button onClick={togglePlay} style={{display:'flex',width:mob?40:46,height:mob?40:46,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
+          {started&&playing
+            ?<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+            :<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}
+        </button>
+
+        {/* Ambient icons */}
+        {ambCount>0&&(
+          <>
+            <div style={{display:'flex',gap:2,fontSize:14,padding:'0 2px'}}>
+              {Object.keys(ambVols).slice(0,3).map(id=>{const s=AMBIENT_SOUNDS.find(s=>s.id===id);return<span key={id}>{s?.icon}</span>})}
+              {ambCount>3&&<span style={{fontSize:10,color:'var(--dim)',lineHeight:'28px'}}>+{ambCount-3}</span>}
+            </div>
+            <div style={divider}/>
+          </>
+        )}
+
+        {!ambCount&&<div style={divider}/>}
+
+        {/* Panel */}
+        <button onClick={()=>setPanel(v=>!v)} style={dockBtn(panel)} title={t.open_player}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+
+        {/* Pomodoro */}
+        <button onClick={()=>setShowPom(v=>!v)} style={dockBtn(showPom)} title="Pomodoro">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+        </button>
+
+        {/* Notes */}
+        <button onClick={()=>setShowNote(v=>!v)} style={{...dockBtn(showNote),position:'relative'}} title={t.todo_title}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          {todos.length>0&&<span style={{position:'absolute',top:-2,right:-2,width:14,height:14,borderRadius:'50%',background:accent,fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,color:'#16121f'}}>{todos.length}</span>}
+        </button>
+
+        {/* Calendar */}
+        <button onClick={()=>setShowCal(v=>!v)} style={dockBtn(showCal)} title={t.cal_day_notes}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>
+        </button>
+
+        <div style={divider}/>
+
+        {/* Scenes */}
+        <a href="/scenes" target="_blank" rel="noopener noreferrer" style={{...dockBtn(false),textDecoration:'none'}} title={t.tab_scene}>
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+        </a>
+
+        {/* Blog */}
+        <a href="/blog" target="_blank" rel="noopener noreferrer" style={{...dockBtn(false),textDecoration:'none'}} title="Blog">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </a>
+
+        {/* Share / Copy link */}
+        <button onClick={handleShare} style={{...dockBtn(copied),flexShrink:0}} title={t.share_copy}>
+          {copied
+            ?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            :<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>}
+        </button>
+
+        <div style={divider}/>
+
+        {/* Theme toggle */}
+        <button onClick={()=>setTheme(th=>th==='glass'?'warm':'glass')} style={{display:'flex',width:dbSz,height:dbSz,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:'var(--input)',color:'var(--text)',cursor:'pointer'}} title={t.switch_theme}>
+          {theme==='glass'
+            ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+            :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>}
+        </button>
+        {/* Language toggle */}
+        <div style={divider}/>
+        <div style={{display:'flex',gap:2,padding:'0 2px',flexShrink:0}}>
+          {(['en','vi'] as const).map(l=>(
+            <button key={l} onClick={()=>setLang(l)} style={{display:'flex',height:dbSz,padding:'0 8px',alignItems:'center',justifyContent:'center',border:'none',borderRadius:8,cursor:'pointer',transition:'all .16s ease',fontSize:11,fontWeight:700,letterSpacing:.5,
+              background:lang===l?accentSoft:'transparent',color:lang===l?accent:'var(--dim)'}}>
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>{/* end inner flex */}
+      </div>{/* end dock */}
+
+      {/* ── Branding ── */}
+      <a href="/" target="_blank" rel="noopener noreferrer" style={{position:'absolute',bottom:5,right:10,fontSize:9,color:'rgba(255,255,255,0.18)',textDecoration:'none',zIndex:5}}>
         Powered by LofiSpace
       </a>
 
-      {/* Hidden YT player */}
+      {/* ── Hidden YT player ── */}
       <div style={{position:'fixed',bottom:0,right:0,width:1,height:1,opacity:0,overflow:'hidden'}}><div ref={ytRef}/></div>
 
+      {/* ── XP toast ── */}
+      {xpToast&&(
+        <div key={xpToast.key} style={{position:'absolute',left:'50%',bottom:mob?72:96,zIndex:20,pointerEvents:'none',animation:'xpFloat 2.8s ease forwards',whiteSpace:'nowrap'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'7px 16px',borderRadius:999,background:'rgba(26,23,44,0.85)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:`1px solid ${accent}44`,boxShadow:`0 4px 20px ${accentGlow}`,color:'#fff',fontSize:14,fontWeight:700,letterSpacing:.3}}>
+            <span style={{fontSize:16}}>⚡</span>
+            <span style={{color:accent}}>+{xpToast.xp} XP</span>
+            <span style={{color:'rgba(255,255,255,0.5)',fontSize:11,fontWeight:500}}>{t.pom_done_toast}</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Game notifications ── */}
+      {pendingAchievements.length>0&&(
+        <AchievementToast key={pendingAchievements[0]} achievementId={pendingAchievements[0]} onDismiss={dismissAchievement} accent={accent}/>
+      )}
+      {newLevelReached&&(
+        <LevelUpOverlay key={newLevelReached} level={newLevelReached} onDismiss={dismissLevelUp} accent={accent}/>
+      )}
+
       <style>{`
-        @keyframes eqB{from{transform:scaleY(0.3)}to{transform:scaleY(1.2)}}
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+        @keyframes lf-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
+        @keyframes lf-flame{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.12) rotate(2deg)}}
         @keyframes spin{to{transform:rotate(360deg)}}
         @keyframes dnFade{0%{opacity:1}70%{opacity:1}100%{opacity:0;pointer-events:none}}
-        input[type=range]{-webkit-appearance:none;height:3px;border-radius:2px;outline:none;cursor:pointer;background:#1e2035}
-        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;cursor:pointer}
-        textarea::placeholder,input::placeholder{color:rgba(255,255,255,0.2)}
-        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#1e2035;border-radius:2px}
+        @keyframes xpFloat{0%{opacity:0;transform:translate(-50%,0) scale(.7)}15%{opacity:1;transform:translate(-50%,-8px) scale(1)}80%{opacity:1;transform:translate(-50%,-24px) scale(1)}100%{opacity:0;transform:translate(-50%,-36px) scale(.9)}}
+        *{box-sizing:border-box}
+        input[type=range]{-webkit-appearance:none;height:4px;border-radius:2px;outline:none;cursor:pointer;background:var(--track,rgba(255,255,255,.1))}
+        input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;cursor:pointer;background:var(--accent,#a78bfa)}
+        input::placeholder,textarea::placeholder{color:var(--dim2,rgba(255,255,255,.3))}
+        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--track);border-radius:2px}
+        .lf-dock::-webkit-scrollbar{display:none}.lf-dock{scrollbar-width:none;-ms-overflow-style:none}
       `}</style>
-    </div>
-  )
-}
-
-// Extracted to avoid huge inline JSX for Pomodoro
-function PomWidget({pom,accent,pomCirc}:{pom:ReturnType<typeof usePomodoro>;accent:string;pomCirc:number}){
-  return(
-    <div style={{background:'rgba(0,0,0,0.52)',backdropFilter:'blur(10px)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:14,padding:'9px 13px',display:'flex',alignItems:'center',gap:9}}>
-      <svg width="42" height="42" viewBox="0 0 44 44" style={{transform:'rotate(-90deg)',flexShrink:0}}>
-        <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="3"/>
-        <circle cx="22" cy="22" r="18" fill="none" stroke={pom.phase==='work'?accent:'#6ee7b7'} strokeWidth="3" strokeLinecap="round"
-          strokeDasharray={pomCirc} strokeDashoffset={pomCirc*(1-pom.progress)} style={{transition:'stroke-dashoffset 1s linear'}}/>
-      </svg>
-      <div>
-        <div style={{fontSize:19,fontWeight:600,fontFamily:'monospace',lineHeight:1}}>{pom.mm}:{pom.ss}</div>
-        <div style={{display:'flex',gap:6,marginTop:3}}>
-          <button onPointerDown={e=>e.stopPropagation()} onClick={pom.toggle}
-            style={{fontSize:9,padding:'2px 6px',borderRadius:4,border:'none',background:'rgba(255,255,255,0.1)',color:'#fff',cursor:'pointer'}}>
-            {pom.on?'⏸':'▶'}
-          </button>
-          <button onPointerDown={e=>e.stopPropagation()} onClick={pom.reset}
-            style={{fontSize:9,padding:'2px 6px',borderRadius:4,border:'none',background:'rgba(255,255,255,0.08)',color:'rgba(255,255,255,0.5)',cursor:'pointer'}}>
-            ↺
-          </button>
-        </div>
-      </div>
     </div>
   )
 }

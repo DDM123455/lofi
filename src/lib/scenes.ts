@@ -263,7 +263,7 @@ export function getSceneById(id: string) {
 }
 
 /** Build /workspace URL from a scene */
-export function sceneToWorkspaceUrl(scene: Scene, base = ''): string {
+export function sceneToEmbedUrl(scene: Scene, base = ''): string {
   const p = new URLSearchParams()
   p.set('bgv', encodeURIComponent(scene.gifUrl))
   p.set('bgo', String(scene.overlay))
@@ -277,10 +277,8 @@ export function sceneToWorkspaceUrl(scene: Scene, base = ''): string {
   return `${base}/workspace?${p.toString()}`
 }
 
-/** Build /embed URL from a scene */
-export function sceneToEmbedUrl(scene: Scene, base = ''): string {
-  return sceneToWorkspaceUrl(scene, base).replace('/workspace?', '/embed?')
-}
+/** @deprecated use sceneToEmbedUrl */
+export const sceneToWorkspaceUrl = sceneToEmbedUrl
 
 // ─── WEATHER → SCENE MAPPING ─────────────────────────────────────────
 // WMO weather codes: https://open-meteo.com/en/docs#weathervariables

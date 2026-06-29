@@ -236,7 +236,7 @@ export function EmbedClient() {
   const {
     streak, bestStreak, xp, level, coins, totalPomodoros,
     companionMood, pendingAchievements, newLevelReached,
-    completePomodoro, checkAndUpdateStreak, dismissAchievement, dismissLevelUp,
+    completePomodoro, recordActivity, dismissAchievement, dismissLevelUp,
     unlockedAchievements,
   } = useGameStore()
   const pomPhaseRef = useRef<'work'|'break'>('work')
@@ -248,7 +248,7 @@ export function EmbedClient() {
     upd(); window.addEventListener('resize',upd)
     return()=>window.removeEventListener('resize',upd)
   },[])
-  useEffect(()=>{ checkAndUpdateStreak() },[checkAndUpdateStreak])
+  useEffect(()=>{ recordActivity() },[recordActivity])
   useEffect(()=>{
     if(pomPhaseRef.current==='work'&&pom.phase==='break'){
       completePomodoro(25)

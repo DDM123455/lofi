@@ -47,8 +47,16 @@ function xpForLevel(level: number): number {
   return level * 120
 }
 
-function isoDate(d = new Date()): string {
-  return d.toISOString().split('T')[0]
+function localDate(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+function computeStreak(lastActiveDate: string | null, currentStreak: number): number {
+  const today = localDate()
+  if (lastActiveDate === today) return currentStreak
+  const yesterday = localDate(new Date(Date.now() - 86400000))
+  if (lastActiveDate === yesterday) return currentStreak + 1
+  return 1
 }
 
 interface GameStore {
@@ -89,6 +97,7 @@ interface GameStore {
   setCompanionMessage: (msg: string | null) => void
   setRoomTheme: (theme: RoomTheme) => void
   toggleDecoration: (id: string) => void
+  recordActivity: () => void
   checkAndUpdateStreak: () => void
   dismissAchievement: () => void
   dismissLevelUp: () => void
@@ -115,6 +124,18 @@ export const useGameStore = create<GameStore>()(
       pendingAchievements: [],
       newLevelReached: null,
 
+      recordActivity: () => {
+        const state = get()
+        const today = localDate()
+        if (state.lastActiveDate === today) return
+        const newStreak = computeStreak(state.lastActiveDate, state.streak)
+        set({
+          streak: newStreak,
+          lastActiveDate: today,
+          bestStreak: Math.max(state.bestStreak, newStreak),
+        })
+      },
+
       completePomodoro: (minutes = 25) => {
         const state = get()
         const xpGain = minutes
@@ -132,15 +153,9 @@ export const useGameStore = create<GameStore>()(
         const newTotalPoms = state.totalPomodoros + 1
         const newTotalMins = state.totalFocusMinutes + minutes
 
-        // Streak update
-        const todayStr = isoDate()
-        const yesterday = isoDate(new Date(Date.now() - 86400000))
-        let newStreak = state.streak
-        let newBest = state.bestStreak
-        if (state.lastActiveDate !== todayStr) {
-          newStreak = state.lastActiveDate === yesterday ? state.streak + 1 : 1
-          newBest = Math.max(newBest, newStreak)
-        }
+        // Streak: dùng computeStreak (local date, không double-count hôm nay)
+        const newStreak = computeStreak(state.lastActiveDate, state.streak)
+        let newBest = Math.max(state.bestStreak, newStreak)
 
         // Decoration unlocks
         const newDecUnlocks = DECORATION_DEFS
@@ -156,7 +171,7 @@ export const useGameStore = create<GameStore>()(
         // Companion message
         let message: string
         if (leveledUp) message = `Level ${newLevel}! You're unstoppable! ✨`
-        else if (newStreak > 1 && state.lastActiveDate !== todayStr) message = `${newStreak} day streak! 🔥`
+        else if (newStreak > state.streak) message = `${newStreak} day streak! 🔥`
         else if (newTotalPoms % 10 === 0) message = `${newTotalPoms} sessions done! Legendary! 🏆`
         else message = ['Great work! 🎉', 'That was productive!', "Let's keep going! 💪", 'One session at a time! 🎯'][newTotalPoms % 4]
 
@@ -168,7 +183,7 @@ export const useGameStore = create<GameStore>()(
           totalPomodoros: newTotalPoms,
           totalFocusMinutes: newTotalMins,
           streak: newStreak,
-          lastActiveDate: todayStr,
+          lastActiveDate: localDate(),
           bestStreak: newBest,
           unlockedDecorations: [...state.unlockedDecorations, ...newDecUnlocks],
           unlockedAchievements: [...state.unlockedAchievements, ...newAchievements],
@@ -200,14 +215,9 @@ export const useGameStore = create<GameStore>()(
         })
       },
 
-      checkAndUpdateStreak: () => {
-        const { lastActiveDate, streak } = get()
-        if (!lastActiveDate) return
-        const twoDaysAgo = isoDate(new Date(Date.now() - 2 * 86400000))
-        if (lastActiveDate <= twoDaysAgo && streak > 0) {
-          set({ streak: 0 })
-        }
-      },
+      // Streak reset xảy ra tự nhiên trong computeStreak() khi user hoàn thành
+      // Pomodoro hoặc recordActivity() — không cần reset sớm khi mở app.
+      checkAndUpdateStreak: () => {},
 
       dismissAchievement: () => {
         const { pendingAchievements } = get()

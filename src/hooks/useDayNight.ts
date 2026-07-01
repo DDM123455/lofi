@@ -23,7 +23,7 @@ const CONFIGS: Record<TimePeriod, Omit<DayNightConfig, 'period'>> = {
   dawn: {
     label: 'Bình Minh',
     emoji: '🌅',
-    bgUrl: 'https://media.giphy.com/media/xUA7b1MxpngddUvdgc/giphy.gif',
+    bgUrl: '/video/forest.mp4',
     lofiId: 'lofi4',
     accent: '#fbbf24',
     overlay: 22,
@@ -32,7 +32,7 @@ const CONFIGS: Record<TimePeriod, Omit<DayNightConfig, 'period'>> = {
   morning: {
     label: 'Buổi Sáng',
     emoji: '☀️',
-    bgUrl: 'https://media.giphy.com/media/xT9IgG50Lg7rusyOGY/giphy.gif',
+    bgUrl: '/video/study-corner.mp4',
     lofiId: 'lofi4',
     accent: '#a78bfa',
     overlay: 30,
@@ -41,7 +41,7 @@ const CONFIGS: Record<TimePeriod, Omit<DayNightConfig, 'period'>> = {
   afternoon: {
     label: 'Buổi Chiều',
     emoji: '🌤️',
-    bgUrl: 'https://media.giphy.com/media/TlK63EQERmiAVzMEgO4/giphy.gif',
+    bgUrl: '/video/street-scene.mp4',
     lofiId: 'lofi2',
     accent: '#22d3ee',
     overlay: 35,
@@ -50,7 +50,7 @@ const CONFIGS: Record<TimePeriod, Omit<DayNightConfig, 'period'>> = {
   evening: {
     label: 'Buổi Tối',
     emoji: '🌆',
-    bgUrl: 'https://media.giphy.com/media/3o6Zt6KHxJTbXCnSvu/giphy.gif',
+    bgUrl: '/video/winter-night.mp4',
     lofiId: 'lofi4',
     accent: '#f472b6',
     overlay: 45,
@@ -59,7 +59,7 @@ const CONFIGS: Record<TimePeriod, Omit<DayNightConfig, 'period'>> = {
   night: {
     label: 'Ban Đêm',
     emoji: '🌙',
-    bgUrl: 'https://media.giphy.com/media/077i6AULCXc0FKTj9s/giphy.gif',
+    bgUrl: '/video/lofi-bedroom.mp4',
     lofiId: 'lofi2',
     accent: '#818cf8',
     overlay: 55,

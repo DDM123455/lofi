@@ -56,15 +56,28 @@ export function SceneGrid({ scenes }: Props) {
             <div className="relative h-44 overflow-hidden" style={{
               background: `linear-gradient(135deg, ${scene.bgGradient[0]}, ${scene.bgGradient[1]})`
             }}>
-              {/* GIF — load on hover only to save bandwidth */}
+              {/* Preview — load on hover only to save bandwidth */}
               {hoveredId === scene.id ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={scene.gifUrl}
-                  alt={scene.name}
-                  className="absolute inset-0 h-full w-full object-cover"
-                  style={{ opacity: 1 - scene.overlay / 100 + 0.3 }}
-                />
+                /\.(mp4|webm|mov)$/i.test(scene.gifUrl) ? (
+                  <video
+                    src={scene.gifUrl}
+                    autoPlay muted playsInline
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ opacity: 1 - scene.overlay / 100 + 0.3 }}
+                    onTimeUpdate={e => {
+                      const v = e.currentTarget
+                      if (v.duration && v.currentTime >= v.duration - 0.1) v.currentTime = 0
+                    }}
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={scene.gifUrl}
+                    alt={scene.description}
+                    className="absolute inset-0 h-full w-full object-cover"
+                    style={{ opacity: 1 - scene.overlay / 100 + 0.3 }}
+                  />
+                )
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center text-6xl">
                   {scene.emoji}
@@ -99,14 +112,13 @@ export function SceneGrid({ scenes }: Props) {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h3 className="font-semibold text-white">{scene.name}</h3>
-                  <p className="text-xs text-white/40 mt-0.5">{scene.nameVi}</p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   {scene.showPomodoro && (
-                    <span title="Có Pomodoro" className="text-xs">🍅</span>
+                    <span title="Includes Pomodoro timer" className="text-xs">🍅</span>
                   )}
                   {scene.showClock && (
-                    <span title="Có đồng hồ" className="text-xs">🕐</span>
+                    <span title="Includes clock" className="text-xs">🕐</span>
                   )}
                 </div>
               </div>
@@ -131,12 +143,12 @@ export function SceneGrid({ scenes }: Props) {
                   className="flex-1 rounded-lg py-2 text-center text-xs font-semibold text-white transition-colors"
                   style={{ background: scene.accentColor + 'dd' }}
                 >
-                  ▶ Dùng Scene
+                  ▶ Open Scene
                 </Link>
                 <button
                   onClick={() => copyEmbed(scene)}
                   className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60 hover:bg-white/10 transition-colors"
-                  title="Copy link nhúng Notion"
+                  title="Copy Notion embed link"
                 >
                   {copiedId === scene.id ? '✓' : '🔗'}
                 </button>
@@ -145,7 +157,7 @@ export function SceneGrid({ scenes }: Props) {
                   target="_blank"
                   rel="noreferrer"
                   className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/60 hover:bg-white/10 transition-colors"
-                  title="Xem preview"
+                  title="Preview scene"
                 >
                   👁
                 </a>
@@ -157,7 +169,7 @@ export function SceneGrid({ scenes }: Props) {
 
       {filtered.length === 0 && (
         <div className="py-20 text-center text-white/30">
-          Chưa có scene nào trong danh mục này.
+          No scenes in this category.
         </div>
       )}
     </>

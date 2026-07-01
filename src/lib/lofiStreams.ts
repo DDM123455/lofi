@@ -6,8 +6,9 @@ export interface LofiStream {
 }
 
 export const LOFI_STREAMS: LofiStream[] = [
-  { id: 'lofi2', label: 'Synthwave Chill',    youtubeId: '4xDzrJKXOOY' },
-  { id: 'lofi4', label: 'Chillhop Radio',     youtubeId: '7NOSDKb0HlU' },
+  { id: 'lofi1', label: 'Lofi Hip-Hop Radio', youtubeId: 'jfKfPfyJRdk' }, // Lofi Girl — stable long-running stream
+  { id: 'lofi2', label: 'Synthwave Chill',    youtubeId: '4xDzrJKXOOY' }, // verified working
+  { id: 'lofi4', label: 'Chillhop Radio',     youtubeId: '7NOSDKb0HlU' }, // Chillhop Music — stable long-running stream
 ]
 
 export const AMBIENT_SOUNDS = [

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { JsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
+import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -55,11 +55,15 @@ export default function FocusRoomPage() {
   // Thunderstorm Focus scene — high-focus preset
   const workspaceUrl =
     '/workspace?bgv=' +
-    encodeURIComponent('https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif') +
+    encodeURIComponent('/video/study-corner.mp4') +
     '&bgo=60&ls=lofi1&lv=50&at=thunder:60,rain:70&pom=1&clk=1&ac=818cf8'
 
   return (
     <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://focusworkspace.app' },
+        { name: 'Focus Room', url: 'https://focusworkspace.app/focus-room' },
+      ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Focus Room"

@@ -17,56 +17,52 @@ export const PRESETS: WorkspacePreset[] = [
     slug: 'anime-rain-focus',
     title: 'Anime Rain Focus',
     description:
-      'A cosy Japanese-aesthetic workspace with cherry blossom backgrounds, soft rain sounds and lofi city-pop. Perfect for long study sessions.',
+      'A cosy Japanese-aesthetic workspace with lofi bedroom background, soft rain sounds and lofi city-pop. Perfect for long study sessions.',
     emoji: '🌸',
     keywords: ['anime study room', 'japanese aesthetic', 'rain lofi', 'study preset'],
     accentColor: '#db2777',
     category: 'anime',
     workspaceQuery:
-      'bgv=' +
-      encodeURIComponent('https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif') +
+      'bgv=' + encodeURIComponent('/video/lofi-bedroom.mp4') +
       '&bgo=40&ls=lofi1&lv=65&at=rain:55,cafe:35&pom=1&clk=1&ac=a78bfa',
   },
   {
     slug: 'coding-night',
     title: 'Coding Night',
     description:
-      'Dark synthwave workspace for late-night coding sessions. Midnight cityscape, electronic beats and rain on glass — enter the zone.',
+      'Dark synthwave workspace for late-night coding sessions. Midnight lofi bedroom, electronic beats and rain on glass — enter the zone.',
     emoji: '💻',
     keywords: ['coding room', 'synthwave', 'developer focus', 'night coding'],
     accentColor: '#0891b2',
     category: 'coding',
     workspaceQuery:
-      'bgv=' +
-      encodeURIComponent('https://media.giphy.com/media/3o6Zt6KHxJTbXCnSvu/giphy.gif') +
+      'bgv=' + encodeURIComponent('/video/lofi-bedroom.mp4') +
       '&bgo=50&ls=lofi2&lv=70&at=city:30,wind:20&pom=1&clk=1&ac=22d3ee',
   },
   {
     slug: 'deep-work',
     title: 'Deep Work',
     description:
-      'Minimal, high-intensity focus preset. Rainy library backdrop, low-BPM lofi and heavy rain ambience — built for solving hard problems.',
+      'Minimal, high-intensity focus preset. Study corner backdrop, low-BPM lofi and heavy rain ambience — built for solving hard problems.',
     emoji: '🧠',
     keywords: ['deep work', 'focus room', 'concentration', 'flow state'],
     accentColor: '#7c3aed',
     category: 'focus',
     workspaceQuery:
-      'bgv=' +
-      encodeURIComponent('https://media.giphy.com/media/xT9IgG50Lg7rusyOGY/giphy.gif') +
+      'bgv=' + encodeURIComponent('/video/study-corner.mp4') +
       '&bgo=45&ls=lofi1&lv=55&at=rain:45,cafe:15&pom=1&clk=1&ac=c4b5fd',
   },
   {
     slug: 'cozy-cafe',
     title: 'Cozy Café',
     description:
-      'Warm café atmosphere with jazz hop music, café chatter and rain. The classic study vibe — focused but comfortable.',
+      'Warm street café atmosphere with jazz hop music, café chatter and rain. The classic study vibe — focused but comfortable.',
     emoji: '☕',
     keywords: ['cafe study room', 'coffee shop ambience', 'lofi cafe', 'cozy study'],
     accentColor: '#d97706',
     category: 'chill',
     workspaceQuery:
-      'bgv=' +
-      encodeURIComponent('https://media.giphy.com/media/9JrkkDovAbZaU/giphy.gif') +
+      'bgv=' + encodeURIComponent('/video/street-scene.mp4') +
       '&bgo=35&ls=lofi1&lv=60&at=cafe:55,rain:30&pom=1&clk=1&ac=f59e0b',
   },
   {
@@ -79,8 +75,7 @@ export const PRESETS: WorkspacePreset[] = [
     accentColor: '#6366f1',
     category: 'focus',
     workspaceQuery:
-      'bgv=' +
-      encodeURIComponent('https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif') +
+      'bgv=' + encodeURIComponent('/video/winter-night.mp4') +
       '&bgo=60&ls=lofi1&lv=50&at=thunder:60,rain:70&pom=1&clk=1&ac=818cf8',
   },
   {
@@ -92,7 +87,8 @@ export const PRESETS: WorkspacePreset[] = [
     keywords: ['morning study', 'lofi morning', 'productive morning', 'sunrise study'],
     accentColor: '#ea580c',
     category: 'chill',
-    workspaceQuery: 'ls=lofi1&lv=55&at=birds:40,rain:20&pom=1&clk=1&ac=fb923c',
+    workspaceQuery: 'bgv=' + encodeURIComponent('/video/forest.mp4') +
+      '&bgo=30&ls=lofi1&lv=55&at=forest:50,wind:20&pom=1&clk=1&ac=fb923c',
   },
 ]
 
@@ -100,10 +96,20 @@ export function getPreset(slug: string): WorkspacePreset | undefined {
   return PRESETS.find(p => p.slug === slug)
 }
 
+export function getPresetsByCategory(
+  category: WorkspacePreset['category'],
+): WorkspacePreset[] {
+  return PRESETS.filter(p => p.category === category)
+}
+
+export function getPresetUrl(preset: WorkspacePreset, base = BASE): string {
+  return `${base}/workspace?${preset.workspaceQuery}`
+}
+
 export function presetWorkspaceUrl(preset: WorkspacePreset): string {
   return `/workspace?${preset.workspaceQuery}`
 }
 
-export function presetCanonicalUrl(slug: string): string {
-  return `${BASE}/workspace/p/${slug}`
+export function presetCanonicalUrl(slug: string, base = BASE): string {
+  return `${base}/workspace/p/${slug}`
 }

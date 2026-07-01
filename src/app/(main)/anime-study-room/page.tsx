@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { JsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
+import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -57,11 +57,15 @@ export default function AnimeStudyRoomPage() {
   // Tokyo Cafe Rain scene params
   const workspaceUrl =
     '/workspace?bgv=' +
-    encodeURIComponent('https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif') +
+    encodeURIComponent('/video/lofi-bedroom.mp4') +
     '&bgo=40&ls=lofi1&lv=65&at=rain:55,cafe:35&pom=1&clk=1&ac=a78bfa'
 
   return (
     <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://focusworkspace.app' },
+        { name: 'Anime Study Room', url: 'https://focusworkspace.app/anime-study-room' },
+      ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Anime Study Room"

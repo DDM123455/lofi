@@ -8,11 +8,20 @@ interface RelatedPage {
 }
 
 const ALL_STUDY_ROOMS: RelatedPage[] = [
-  { href: '/online-study-room',  emoji: '📚', title: 'Online Study Room',  description: 'Virtual study space with lofi & Pomodoro' },
-  { href: '/anime-study-room',   emoji: '🌸', title: 'Anime Study Room',   description: 'Japanese aesthetic + rain + lofi beats' },
-  { href: '/coding-room',        emoji: '💻', title: 'Coding Room',        description: 'Synthwave, dark UI & coding cat companion' },
-  { href: '/focus-room',         emoji: '🎯', title: 'Focus Room',         description: 'Deep work preset, minimal distractions' },
-  { href: '/deep-work-room',     emoji: '🧠', title: 'Deep Work Room',     description: 'Flow state environment for hard problems' },
+  { href: '/online-study-room',    emoji: '📚', title: 'Online Study Room',    description: 'Virtual study space with lofi & Pomodoro' },
+  { href: '/anime-study-room',     emoji: '🌸', title: 'Anime Study Room',     description: 'Japanese aesthetic + rain + lofi beats' },
+  { href: '/coding-room',          emoji: '💻', title: 'Coding Room',          description: 'Synthwave, dark UI & coding cat companion' },
+  { href: '/focus-room',           emoji: '🎯', title: 'Focus Room',           description: 'Deep work preset, minimal distractions' },
+  { href: '/deep-work-room',       emoji: '🧠', title: 'Deep Work Room',       description: 'Flow state environment for hard problems' },
+  { href: '/adhd-focus-room',      emoji: '⚡', title: 'ADHD Focus Room',      description: 'Structured focus for ADHD & neurodivergent' },
+  { href: '/virtual-study-room',   emoji: '🖥️', title: 'Virtual Study Room',   description: 'Study together online, any time zone' },
+  { href: '/coffee-shop-sounds',   emoji: '☕', title: 'Coffee Shop Sounds',   description: 'Café ambience for focus & relaxation' },
+  { href: '/study-music',          emoji: '🎵', title: 'Study Music',          description: 'Background music for studying & focus' },
+  { href: '/coding-music',         emoji: '🎧', title: 'Coding Music',         description: 'Lofi & synthwave for coding sessions' },
+  { href: '/thunderstorm-sounds',  emoji: '⛈️', title: 'Thunderstorm Sounds', description: 'Rain & thunder for deep focus' },
+  { href: '/forest-sounds',        emoji: '🌿', title: 'Forest Sounds',        description: 'Nature sounds for calm & clarity' },
+  { href: '/fireplace-sounds',     emoji: '🔥', title: 'Fireplace Sounds',     description: 'Warm crackling fire for cozy study' },
+  { href: '/website-for-studying', emoji: '🌐', title: 'Website for Studying', description: 'Best free online study tool' },
 ]
 
 interface Props {

@@ -289,9 +289,9 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
       evening: 'Evening', night: 'Night',
     },
 
-    home_badge: '🎵 Free · No sign-up · Works everywhere',
+    home_badge: '🌍 50K+ sessions · Free · No sign-up',
     home_h1_prefix: 'Your Free',
-    home_h1_accent: 'Online Study Room',
+    home_h1_accent: 'Focus & Study Workspace',
     home_desc: 'Lofi music, ambient sounds mixer, Pomodoro timer, to-do list and XP rewards — all in one beautiful workspace. Embed in Notion or use standalone.',
     home_cta_open: 'Open Workspace →',
     home_cta_scenes: 'Browse Scenes',
@@ -466,7 +466,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
       evening: 'Buổi Tối', night: 'Ban Đêm',
     },
 
-    home_badge: '🎵 Miễn phí · Không cần đăng ký · Dùng mọi nơi',
+    home_badge: '🌍 50K+ phiên học · Miễn phí · Không cần đăng ký',
     home_h1_prefix: 'Phòng Học Online',
     home_h1_accent: 'Miễn Phí Của Bạn',
     home_desc: 'Nhạc lofi, bộ trộn âm thanh nền, hẹn giờ Pomodoro, danh sách việc cần làm và điểm XP — tất cả trong một workspace đẹp. Nhúng vào Notion hoặc dùng độc lập.',

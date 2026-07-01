@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { JsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
+import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -55,11 +55,15 @@ export default function DeepWorkRoomPage() {
   // Rainy Library scene — deep focus preset
   const workspaceUrl =
     '/workspace?bgv=' +
-    encodeURIComponent('https://media.giphy.com/media/xT9IgG50Lg7rusyOGY/giphy.gif') +
+    encodeURIComponent('/video/study-corner.mp4') +
     '&bgo=45&ls=lofi1&lv=55&at=rain:45,cafe:15&pom=1&clk=1&ac=c4b5fd'
 
   return (
     <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://focusworkspace.app' },
+        { name: 'Deep Work Room', url: 'https://focusworkspace.app/deep-work-room' },
+      ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Deep Work Room"
@@ -135,6 +139,123 @@ export default function DeepWorkRoomPage() {
             ))}
           </div>
           <p className="mt-4 text-xs text-white/35">All settings can be customised inside the workspace.</p>
+        </section>
+
+        {/* What is deep work — expanded content */}
+        <section className="mb-16 space-y-6">
+          <h2 className="text-2xl font-bold text-white">What Is Deep Work and Why Does It Matter?</h2>
+          <p className="text-white/60 text-sm leading-relaxed">
+            Cal Newport, computer scientist and author of the book <em>Deep Work</em>, defines it as
+            "professional activities performed in a state of distraction-free concentration that push
+            your cognitive capabilities to their limit." The output of deep work sessions is high-quality,
+            hard-to-replicate work — the kind that actually moves the needle.
+          </p>
+          <p className="text-white/60 text-sm leading-relaxed">
+            In contrast, shallow work — email, meetings, social media, easy admin tasks — can feel
+            busy but produces little lasting value. Newport argues that deep work is becoming both
+            <strong className="text-white"> increasingly rare</strong> (because open offices and
+            constant notifications make it nearly impossible) and
+            <strong className="text-white"> increasingly valuable</strong> (because the most
+            important problems require sustained, undistracted thought).
+          </p>
+
+          <h2 className="text-2xl font-bold text-white pt-4">How to Build a Deep Work Practice</h2>
+          <p className="text-white/60 text-sm leading-relaxed">
+            Deep work is a skill, not a personality trait. It degrades without practice and grows
+            with consistent training. Here is how to start building it:
+          </p>
+          <div className="space-y-4">
+            {[
+              {
+                title: '1. Choose your deep work philosophy',
+                body: 'Newport identifies four approaches: Monastic (cut off everything), Bimodal (deep work in multi-day blocks), Rhythmic (same time every day), and Journalistic (fit it in wherever possible). Most people start with Rhythmic — a daily 90-minute deep work block at a fixed time.',
+              },
+              {
+                title: '2. Design your shutdown ritual',
+                body: 'Your brain needs a clear signal that the work day has ended. Write tomorrow\'s top three tasks before you close the laptop. Say "shutdown complete" out loud if you like — it sounds odd but trains your brain to stop ruminating after hours.',
+              },
+              {
+                title: '3. Embrace boredom',
+                body: 'Attention is a muscle. If you reach for your phone every time you feel bored, you are training your brain to crave constant stimulation — which makes deep work nearly impossible. Practice sitting with boredom for five minutes a day.',
+              },
+              {
+                title: '4. Quit social media (or batch it)',
+                body: 'You don\'t have to delete everything. But checking Twitter/X or Reddit between tasks destroys your ability to focus. Batch social media to one 20-minute window per day, outside of work hours.',
+              },
+              {
+                title: '5. Set a hard cutoff time',
+                body: 'Parkinson\'s Law: work expands to fill the time available. Fix a hard stop time for deep work — say 5pm — and work backward to ensure your most important task gets done first. Urgency sharpens focus.',
+              },
+            ].map(item => (
+              <div key={item.title} className="rounded-xl border border-white/8 bg-white/3 p-5">
+                <h3 className="mb-2 font-semibold text-white text-sm">{item.title}</h3>
+                <p className="text-sm text-white/55 leading-relaxed">{item.body}</p>
+              </div>
+            ))}
+          </div>
+
+          <h2 className="text-2xl font-bold text-white pt-4">The Science Behind Rain Sounds and Concentration</h2>
+          <p className="text-white/60 text-sm leading-relaxed">
+            Rain is the most studied ambient sound for cognitive performance. A 2012 study published
+            in the <em>Journal of Consumer Research</em> found that moderate ambient noise (~70 dB)
+            — like the sound of a coffee shop or light rain — enhances creative performance compared
+            to silence or loud noise. The LofiSpace Deep Work Room uses a heavy rain preset calibrated
+            to this range.
+          </p>
+          <p className="text-white/60 text-sm leading-relaxed">
+            Rain works specifically because it is <strong className="text-white">consistent and non-predictive</strong>.
+            Your brain is wired to track unexpected sounds (evolutionary survival mechanism). Rain never
+            spikes, never speaks, and never contains meaningful information — so your attentional system
+            can safely ignore it, leaving full cognitive bandwidth for your work.
+          </p>
+
+          <h2 className="text-2xl font-bold text-white pt-4">Who Should Use the Deep Work Room?</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {[
+              { emoji: '💻', label: 'Software developers', desc: 'Solving hard algorithmic problems, code reviews, architecture design.' },
+              { emoji: '✍️', label: 'Writers', desc: 'First drafts, research synthesis, long-form content that requires sustained narrative thinking.' },
+              { emoji: '🎨', label: 'Designers', desc: 'Creative concepting, visual problem-solving, deep UX thinking sessions.' },
+              { emoji: '📊', label: 'Analysts', desc: 'Data modelling, complex spreadsheet work, report writing that requires zero interruption.' },
+              { emoji: '🎓', label: 'Students', desc: 'Dissertation writing, exam revision, understanding new complex subjects from scratch.' },
+              { emoji: '🔬', label: 'Researchers', desc: 'Literature review, hypothesis development, paper writing.' },
+            ].map(item => (
+              <div key={item.label} className="flex gap-3 rounded-xl border border-white/8 bg-white/4 p-4">
+                <span className="text-2xl">{item.emoji}</span>
+                <div>
+                  <p className="font-semibold text-white text-sm">{item.label}</p>
+                  <p className="text-xs text-white/50 mt-0.5">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <h2 className="text-2xl font-bold text-white pt-4">Deep Work vs Focus Room: Which Should You Choose?</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="py-3 text-left text-white/40 font-normal">Feature</th>
+                  <th className="py-3 text-left text-violet-300 font-semibold">Deep Work Room</th>
+                  <th className="py-3 text-left text-indigo-300 font-semibold">Focus Room</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {[
+                  ['Best for', '2–4 hour intensive sessions', '25–90 min Pomodoro sessions'],
+                  ['Sound', 'Heavy rain (minimal)', 'Thunderstorm + rain (immersive)'],
+                  ['Mood', 'Austere, minimal', 'Atmospheric, energising'],
+                  ['Ideal tasks', 'Writing, complex coding, deep thinking', 'General studying, moderate coding'],
+                  ['Pomodoro', 'Optional — longer blocks encouraged', 'Core mechanic'],
+                ].map(([feature, deep, focus]) => (
+                  <tr key={feature}>
+                    <td className="py-2.5 text-white/40">{feature}</td>
+                    <td className="py-2.5 text-white/70">{deep}</td>
+                    <td className="py-2.5 text-white/70">{focus}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         {/* FAQ */}

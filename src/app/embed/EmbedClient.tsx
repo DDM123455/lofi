@@ -13,11 +13,16 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { SupportModal } from '@/components/support/SupportModal'
 
 type ClockStyle = 'digital'|'minimal'|'bold'|'analog'
-type BgType = 'gif'|'youtube'
+type BgType = 'gif'|'youtube'|'video'
 type PanelTab = 'music'|'sounds'|'scene'|'more'
 type MoreTab = 'widgets'|'weather'|'pet'|'progress'|'share'
 interface Todo { id:string; text:string; done:boolean }
 interface WxData { city:string; temp:number; code:number; desc:string; emoji:string; feels:number|null; humidity:number|null; wind:number|null }
+
+function bgTypeFromUrl(url:string):BgType {
+  if(/\.(mp4|webm|mov)$/i.test(url)) return 'video'
+  return 'gif'
+}
 
 function parseYtId(s:string):string|null {
   const m = s.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/)
@@ -93,11 +98,16 @@ function usePomodoro(){
   const[phase,setPhase]=useState<'work'|'break'>('work')
   const[secs,setSecs]=useState(25*60)
   const[on,setOn]=useState(false)
+  const[completions,setCompletions]=useState(0)
   const total=phase==='work'?25*60:5*60
   useEffect(()=>{
     if(!on)return
     const id=setInterval(()=>setSecs(s=>{
-      if(s<=1){setPhase(p=>p==='work'?'break':'work');return phase==='work'?5*60:25*60}
+      if(s<=1){
+        if(phase==='work') setCompletions(c=>c+1)
+        setPhase(p=>p==='work'?'break':'work')
+        return phase==='work'?5*60:25*60
+      }
       return s-1
     }),1000)
     return()=>clearInterval(id)
@@ -106,7 +116,7 @@ function usePomodoro(){
   return{
     mm:String(Math.floor(secs/60)).padStart(2,'0'),
     ss:String(secs%60).padStart(2,'0'),
-    on,toggle:()=>setOn(v=>!v),phase,
+    on,toggle:()=>setOn(v=>!v),phase,completions,
     progress:secs/total,
     reset:()=>{setOn(false);setPhase('work');setSecs(25*60)},
     setMode,
@@ -136,7 +146,7 @@ export function EmbedClient() {
   const { lang, setLang, t } = useLanguage()
   const hasBgParam = sp.has('bgv')
 
-  const initBgUrl  = hasBgParam ? decodeURIComponent(sp.get('bgv')!) : BG_PRESETS[0].url
+  const initBgUrl  = hasBgParam ? decodeURIComponent(sp.get('bgv')!) : '/video/street-scene.mp4'
   const initBgOp   = Math.min(90, Math.max(0, parseInt(sp.get('bgo') ?? String(dn.overlay))))
   const initBlur   = Math.min(20, Math.max(0, parseInt(sp.get('bl') ?? '0')))
   const urlAccent  = '#' + (sp.get('ac') ?? dn.accent.replace('#',''))
@@ -148,7 +158,7 @@ export function EmbedClient() {
   const [theme,       setTheme]       = useState<'glass'|'warm'>('glass')
 
   // Background
-  const [bgType,      setBgType]      = useState<BgType>('gif')
+  const [bgType,      setBgType]      = useState<BgType>(()=>bgTypeFromUrl(initBgUrl))
   const [bgUrl,       setBgUrl]       = useState(initBgUrl)
   const [bgOpacity,   setBgOpacity]   = useState(initBgOp)
   const [bgBlur,      setBgBlur]      = useState(initBlur)
@@ -222,6 +232,7 @@ export function EmbedClient() {
   const [vw,          setVw]          = useState(1280)
   const [showSupport,  setShowSupport]  = useState(false)
   const [showOnboard,  setShowOnboard]  = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   // Refs
   const ctxRef    = useRef<AudioContext|null>(null)
@@ -239,7 +250,6 @@ export function EmbedClient() {
     completePomodoro, recordActivity, dismissAchievement, dismissLevelUp,
     unlockedAchievements,
   } = useGameStore()
-  const pomPhaseRef = useRef<'work'|'break'>('work')
   const [xpToast, setXpToast] = useState<{xp:number;key:number}|null>(null)
 
   useEffect(()=>{ setMounted(true); analytics.workspaceOpen() },[])
@@ -248,15 +258,41 @@ export function EmbedClient() {
     upd(); window.addEventListener('resize',upd)
     return()=>window.removeEventListener('resize',upd)
   },[])
+  // Fullscreen sync
+  useEffect(()=>{
+    const h=()=>setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange',h)
+    return()=>document.removeEventListener('fullscreenchange',h)
+  },[])
+  // Restore settings from localStorage (URL params take priority)
+  useEffect(()=>{
+    try{
+      const s=JSON.parse(localStorage.getItem('lofispace-settings')||'{}')
+      if(!hasBgParam&&s.bgUrl){setBgUrl(s.bgUrl);setBgType(bgTypeFromUrl(s.bgUrl))}
+      if(!sp.has('bgo')&&s.bgOpacity!=null)setBgOpacity(s.bgOpacity)
+      if(!sp.has('bl')&&s.bgBlur!=null)setBgBlur(s.bgBlur)
+      if(!sp.has('ls')&&s.lofiId)setLofiId(s.lofiId)
+      if(!sp.has('lv')&&s.lofiVol!=null)setLofiVol(s.lofiVol)
+      if(!sp.has('at')&&s.ambVols)setAmbVols(s.ambVols)
+      if(s.theme)setTheme(s.theme)
+      if(s.clockStyle)setClockStyle(s.clockStyle)
+      if(s.atmosphere)setAtmosphere(s.atmosphere)
+    }catch(_){}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
+  // Save settings to localStorage on change (gated on mounted to skip first render)
+  useEffect(()=>{
+    if(!mounted)return
+    try{localStorage.setItem('lofispace-settings',JSON.stringify({bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere}))}catch(_){}
+  },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere])
   useEffect(()=>{ recordActivity() },[recordActivity])
   useEffect(()=>{
-    if(pomPhaseRef.current==='work'&&pom.phase==='break'){
-      completePomodoro(25)
-      setXpToast({xp:25,key:Date.now()})
-      setTimeout(()=>setXpToast(null),2800)
-    }
-    pomPhaseRef.current=pom.phase
-  },[pom.phase,completePomodoro])
+    if(pom.completions===0) return
+    completePomodoro(25)
+    setXpToast({xp:25,key:Date.now()})
+    setTimeout(()=>setXpToast(null),2800)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[pom.completions])
   useEffect(()=>{
     if(typeof window!=='undefined'){
       try{ const t=JSON.parse(localStorage.getItem('lofispace-todos')||'[]'); setTodos(t) }catch(_){}
@@ -473,6 +509,10 @@ export function EmbedClient() {
   },[])
 
   const handleShare=async()=>{try{await navigator.clipboard.writeText(shareUrl);setCopied(true);setTimeout(()=>setCopied(false),2000);analytics.shareClick()}catch(_){}}
+  const toggleFullscreen=useCallback(()=>{
+    if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{})
+    else document.exitFullscreen().catch(()=>{})
+  },[])
 
   const saveCalFn=(cn:Record<string,{id:number;text:string}[]>)=>{try{localStorage.setItem('lofispace-calNotes',JSON.stringify(cn))}catch(_){}}
   const addCalNote=()=>{const t=calInput.trim();if(!t)return;const arr=[...(calNotes[calSelected]||[]),{id:Date.now(),text:t}];const cn={...calNotes,[calSelected]:arr};saveCalFn(cn);setCalNotes(cn);setCalInput('')}
@@ -575,10 +615,14 @@ export function EmbedClient() {
     <div style={{position:'fixed',inset:0,overflow:'hidden',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
 
       {/* ── Background ── */}
-      {bgType==='gif'
-        // eslint-disable-next-line @next/next/no-img-element
-        ?<img src={bgUrl} alt="" aria-hidden style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
-        :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none'}} allow="autoplay"/>
+      {bgType==='video'
+        ?<video key={bgUrl} src={bgUrl} autoPlay muted playsInline aria-hidden
+            onTimeUpdate={e=>{const v=e.currentTarget;if(v.duration&&v.currentTime>=v.duration-0.1)v.currentTime=0}}
+            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+        :bgType==='gif'
+          // eslint-disable-next-line @next/next/no-img-element
+          ?<img src={bgUrl} alt="" aria-hidden style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+          :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none'}} allow="autoplay"/>
       }
       <div style={{position:'absolute',inset:0,background:'#000',opacity:bgOpacity/100}}/>
       {bgBlur>0&&<div style={{position:'absolute',inset:0,backdropFilter:`blur(${bgBlur}px)`}}/>}
@@ -874,7 +918,7 @@ export function EmbedClient() {
                 <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_bg_title}</div>
                 <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
                   {BG_PRESETS.map(g=>(
-                    <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType('gif')}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'14px 8px',border:`1px solid ${bgUrl===g.url&&bgType==='gif'?accent:'var(--border)'}`,borderRadius:14,background:bgUrl===g.url&&bgType==='gif'?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease'}}>
+                    <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType(bgTypeFromUrl(g.url))}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'14px 8px',border:`1px solid ${bgUrl===g.url&&bgType!=='youtube'?accent:'var(--border)'}`,borderRadius:14,background:bgUrl===g.url&&bgType!=='youtube'?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease'}}>
                       <span style={{fontSize:22,lineHeight:1}}>{g.emoji}</span>
                       <span style={{fontSize:11,fontWeight:600}}>{g.label}</span>
                     </button>
@@ -884,7 +928,7 @@ export function EmbedClient() {
                 <div style={{display:'flex',gap:8,marginBottom:12}}>
                   <input type="text" value={customBg} onChange={e=>setCustomBg(e.target.value)} placeholder="https://… .gif"
                     style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
-                  <button onClick={()=>{if(customBg.trim()){setBgUrl(customBg.trim());setBgType('gif')}}} style={{padding:'0 16px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_gif_use}</button>
+                  <button onClick={()=>{const u=customBg.trim();if(u){setBgUrl(u);setBgType(bgTypeFromUrl(u))}}} style={{padding:'0 16px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_gif_use}</button>
                 </div>
                 <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_yt_title}</div>
                 <div style={{display:'flex',gap:8,marginBottom:10}}>
@@ -1391,6 +1435,13 @@ export function EmbedClient() {
         <button onClick={()=>setShowSupport(true)} style={{...dockBtn(false),flexShrink:0,color:'#f472b6'}} title="Support LofiSpace 💜">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
+        <div style={divider}/>
+        {/* Fullscreen toggle */}
+        <button onClick={toggleFullscreen} style={{...dockBtn(isFullscreen),flexShrink:0}} title={isFullscreen?'Exit Fullscreen':'Fullscreen (F)'}>
+          {isFullscreen
+            ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 0 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+            :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>}
+        </button>
       </div>{/* end inner flex */}
       </div>{/* end dock */}
 
@@ -1408,8 +1459,8 @@ export function EmbedClient() {
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderRadius:14,background:'rgba(20,17,40,0.92)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:`1px solid ${accent}55`,boxShadow:`0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${accent}22`,whiteSpace:'nowrap',maxWidth:'calc(100vw - 32px)'}}>
             <span style={{fontSize:18,flexShrink:0}}>🎵</span>
             <div style={{minWidth:0}}>
-              <p style={{margin:0,fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.3}}>Dán link YouTube bạn muốn nghe</p>
-              <p style={{margin:'2px 0 0',fontSize:11,color:'var(--dim)',lineHeight:1.3}}>Nhấn nút nhạc → dán URL vào ô Custom YouTube</p>
+              <p style={{margin:0,fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.3}}>Paste a YouTube link to listen to</p>
+              <p style={{margin:'2px 0 0',fontSize:11,color:'var(--dim)',lineHeight:1.3}}>Tap the music button → paste URL in Custom YouTube</p>
             </div>
             <div style={{flexShrink:0,width:20,height:20,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'var(--dim)'}}>✕</div>
           </div>

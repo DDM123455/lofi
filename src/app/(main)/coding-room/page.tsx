@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { JsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
+import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -57,11 +57,15 @@ export default function CodingRoomPage() {
   // Midnight Coding scene params
   const workspaceUrl =
     '/workspace?bgv=' +
-    encodeURIComponent('https://media.giphy.com/media/3o6Zt6KHxJTbXCnSvu/giphy.gif') +
+    encodeURIComponent('/video/lofi-bedroom.mp4') +
     '&bgo=50&ls=lofi2&lv=70&at=city:30,wind:20&pom=1&clk=1&ac=22d3ee'
 
   return (
     <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://focusworkspace.app' },
+        { name: 'Coding Room', url: 'https://focusworkspace.app/coding-room' },
+      ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Coding Room"

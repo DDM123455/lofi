@@ -3,7 +3,7 @@ import { DEFAULT_AMBIENT_TRACKS, LOFI_STREAMS } from './youtubeStreams'
 
 export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
   backgroundType: 'gif',
-  backgroundValue: 'https://media.giphy.com/media/l0HlBO7eyXzSZkJri/giphy.gif',
+  backgroundValue: '/video/street-scene.mp4',
   backgroundOpacity: 90,
   lofiStreamId: 'lofi-girl',
   lofiVolume: 0.7,

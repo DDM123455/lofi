@@ -7,10 +7,14 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         disallow: [
-          '/embed',      // legacy route — redirects to /workspace
           '/api/',
+          '/embed',
         ],
       },
+      // Block AI scrapers from training data
+      { userAgent: 'GPTBot', disallow: ['/'] },
+      { userAgent: 'Google-Extended', disallow: ['/'] },
+      { userAgent: 'CCBot', disallow: ['/'] },
     ],
     sitemap: 'https://focusworkspace.app/sitemap.xml',
   }

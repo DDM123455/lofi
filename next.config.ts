@@ -20,11 +20,43 @@ const nextConfig: NextConfig = {
         destination: '/workspace',
         permanent: true,
       },
+      // Phase 5: Vietnamese blog slugs → English slugs (301 permanent)
+      {
+        source: '/blog/trang-tri-notion-widget-lofi',
+        destination: '/blog/lofi-widget-notion-embed',
+        permanent: true,
+      },
+      {
+        source: '/blog/nhac-lofi-hoc-bai-hieu-qua',
+        destination: '/blog/best-lofi-music-for-studying',
+        permanent: true,
+      },
+      {
+        source: '/blog/setup-ban-lam-viec-aesthetic',
+        destination: '/blog/aesthetic-desk-setup-guide',
+        permanent: true,
+      },
+      {
+        source: '/blog/pomodoro-technique-hoc-bai',
+        destination: '/blog/pomodoro-technique-guide',
+        permanent: true,
+      },
     ]
   },
-  // Allow /workspace to be iframed by Notion and any embed platform
+  // Security + frame headers
   async headers() {
     return [
+      // Global security headers for all routes
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      // Allow /workspace to be iframed by Notion and any embed platform
       {
         source: '/workspace',
         headers: [
@@ -38,6 +70,13 @@ const nextConfig: NextConfig = {
         headers: [
           { key: 'X-Frame-Options', value: 'ALLOWALL' },
           { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
+        ],
+      },
+      // Prevent framing of all other pages
+      {
+        source: '/((?!workspace|embed).*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
         ],
       },
     ]

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { JsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
+import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -64,6 +64,10 @@ export default function OnlineStudyRoomPage() {
 
   return (
     <>
+      <BreadcrumbJsonLd items={[
+        { name: 'Home', url: 'https://focusworkspace.app' },
+        { name: 'Online Study Room', url: 'https://focusworkspace.app/online-study-room' },
+      ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Online Study Room"

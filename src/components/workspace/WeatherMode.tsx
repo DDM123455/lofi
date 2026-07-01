@@ -38,7 +38,7 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
       // 2. Fetch weather from Open-Meteo (free, no API key)
       const [weatherRes, geoRes] = await Promise.all([
         fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=weather_code,temperature_2m&timezone=auto`),
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=vi`),
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`),
       ])
 
       const weatherJson = await weatherRes.json()
@@ -51,10 +51,10 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
         geoJson.address?.city ||
         geoJson.address?.town ||
         geoJson.address?.state ||
-        'Vị trí của bạn'
+        'Your Location'
 
       const sceneId = weatherCodeToSceneId(code, hour)
-      const description = WMO_DESCRIPTIONS[code] ?? 'Thời tiết đặc biệt'
+      const description = WMO_DESCRIPTIONS[code] ?? 'Special weather'
 
       const emoji = code>=95?'⛈️':code>=80?'🌧️':code>=71?'❄️':code>=51?'🌦️':code===45||code===48?'🌫️':code>=2?'☁️':'☀️'
       setWeather({ city, temp, code, description, sceneId })
@@ -96,7 +96,7 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
         </p>
         {state === 'done' && (
           <span style={{ fontSize: 9, color: '#4ade80', background: '#0a2010', padding: '2px 7px', borderRadius: 10, border: '1px solid #1a4020' }}>
-            Đã phát hiện
+            Detected
           </span>
         )}
       </div>
@@ -104,7 +104,7 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
       {state === 'idle' && (
         <>
           <p style={{ fontSize: 11, color: '#4a4c70', margin: '0 0 10px', lineHeight: 1.5 }}>
-            Tự động chọn scene phù hợp với <strong style={{ color: '#6B6E80' }}>thời tiết thực tế</strong> của bạn ngay lúc này.
+            Automatically pick a scene matching your <strong style={{ color: '#6B6E80' }}>current weather</strong> right now.
           </p>
           <button
             onClick={detect}
@@ -117,7 +117,7 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
           >
-            📍 Phát hiện thời tiết của tôi
+            📍 Detect my weather
           </button>
         </>
       )}
@@ -131,17 +131,17 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
             animation: 'spin 0.8s linear infinite',
             flexShrink: 0,
           }} />
-          <span style={{ fontSize: 12, color: '#6B6E80' }}>Đang đọc vị trí & thời tiết…</span>
+          <span style={{ fontSize: 12, color: '#6B6E80' }}>Reading location & weather…</span>
         </div>
       )}
 
       {state === 'error' && (
         <div>
           <p style={{ fontSize: 11, color: '#f97316', margin: '0 0 8px', lineHeight: 1.5 }}>
-            ⚠ Không thể truy cập vị trí. Hãy cho phép trình duyệt dùng GPS.
+            ⚠ Cannot access location. Please allow browser to use GPS.
           </p>
           <button onClick={() => setState('idle')} style={{ fontSize: 11, color: '#6B6E80', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
-            Thử lại
+            Try again
           </button>
         </div>
       )}
@@ -174,7 +174,7 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
             <span style={{ fontSize: 22 }}>{scene.emoji}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#fff' }}>
-                {scene.nameVi}
+                {scene.name}
               </div>
               <div style={{ fontSize: 10, color: '#6B6E80', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {scene.ambientTracks.map(t => {
@@ -183,7 +183,7 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
                 }).join(' ')} · {scene.name}
               </div>
             </div>
-            <span style={{ fontSize: 10, color: accentColor, fontWeight: 600 }}>Gợi ý</span>
+            <span style={{ fontSize: 10, color: accentColor, fontWeight: 600 }}>Suggested</span>
           </div>
 
           {/* Actions */}
@@ -198,7 +198,7 @@ export function WeatherMode({ onApplyScene, accentColor, onDetected }: Props) {
                 transition: 'all .2s',
               }}
             >
-              {applied ? '✓ Đã áp dụng!' : '✨ Áp dụng Scene này'}
+              {applied ? '✓ Applied!' : '✨ Apply this Scene'}
             </button>
             <button
               onClick={() => { setState('idle'); setWeather(null) }}

@@ -28,7 +28,7 @@ export function HomeContent() {
   return (
     <div className="flex min-h-screen flex-col bg-[#0d0d14]">
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
 
         {/* ── Hero ──────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden border-b border-white/5 pb-24 pt-20 text-center">

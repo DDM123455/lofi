@@ -1,28 +1,32 @@
 import type { Metadata } from 'next'
-import { JsonLd, WebsiteJsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
+import { JsonLd, WebsiteJsonLd, FaqJsonLd, OrganizationJsonLd } from '@/components/seo/JsonLd'
 import { HomeContent } from './HomeContent'
 
 export const metadata: Metadata = {
-  title: 'LofiSpace — Free Online Study Room & Focus Workspace',
+  // Use absolute to prevent the root layout template from appending "| LofiSpace" again
+  title: {
+    absolute: 'LofiSpace — Free Online Study Room, Focus Workspace & Pomodoro Timer',
+  },
   description:
-    'Free online study room with lofi music, ambient sounds mixer, Pomodoro timer, to-do list, XP system and animated backgrounds. No sign-up. Start studying now.',
+    'Free online study room with lofi music, ambient sounds mixer, Pomodoro timer, to-do list and XP rewards. No account needed. Anime room, coding workspace, deep work — all in one tab.',
   keywords: [
     'online study room', 'virtual study room', 'focus workspace', 'lofi music',
-    'ambient sounds', 'pomodoro timer online', 'anime study room', 'productivity workspace',
-    'study with me', 'deep work room',
+    'ambient sounds', 'pomodoro timer', 'anime study room', 'coding workspace',
+    'study with me', 'deep work room', 'productivity app', 'website for studying',
   ],
+  alternates: { canonical: 'https://focusworkspace.app' },
   openGraph: {
-    title: 'LofiSpace — Free Online Study Room',
-    description: 'Lofi music, ambient sounds, Pomodoro timer & XP system. Study smarter for free.',
+    title: 'LofiSpace — Free Online Study Room & Focus Workspace',
+    description: 'Lofi music, ambient sounds, Pomodoro timer, anime room, coding workspace, XP rewards — free forever. No sign-up.',
     type: 'website',
     url: 'https://focusworkspace.app',
+    siteName: 'LofiSpace',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'LofiSpace — Free Online Study Room',
-    description: 'Lofi music, ambient sounds, Pomodoro timer & XP system. Study smarter for free.',
+    title: 'LofiSpace — Free Online Study Room & Focus Workspace',
+    description: 'Lofi music, ambient sounds, Pomodoro timer, anime room, coding workspace — all free. No sign-up.',
   },
-  alternates: { canonical: 'https://focusworkspace.app' },
 }
 
 const FAQ_EN = [
@@ -38,6 +42,7 @@ export default function HomePage() {
   return (
     <>
       <WebsiteJsonLd />
+      <OrganizationJsonLd />
       <JsonLd
         type="SoftwareApplication"
         name="LofiSpace"

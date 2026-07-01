@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const preset = getPreset(slug)
   if (!preset) return {}
 
-  const title = `${preset.title} — Focus Workspace Preset | LofiSpace`
+  const title = `${preset.title} — Focus Workspace Preset`
   const canonical = presetCanonicalUrl(slug)
 
   return {
@@ -24,6 +24,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: preset.description,
     keywords: preset.keywords,
     alternates: { canonical },
+    // Preset pages auto-redirect to /workspace — noindex to avoid doorway page penalty
+    robots: { index: false, follow: true },
     openGraph: {
       title,
       description: preset.description,

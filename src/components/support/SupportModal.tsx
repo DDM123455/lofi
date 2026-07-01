@@ -42,7 +42,7 @@ function CopyButton({ text }: { text: string }) {
       onClick={copy}
       className="mt-1 rounded-lg border border-violet-500/30 bg-violet-900/20 px-3 py-1.5 text-xs font-semibold text-violet-300 transition-all hover:bg-violet-900/40 active:scale-95"
     >
-      {copied ? '✓ Đã copy!' : '📋 Copy số TK'}
+      {copied ? '✓ Copied!' : '📋 Copy account no.'}
     </button>
   )
 }
@@ -76,20 +76,20 @@ export function SupportModal({ open, onClose }: Props) {
       <div className="flex flex-col items-center gap-4" onClick={e => e.stopPropagation()}>
         <Image
           src="/qr.png"
-          alt="QR chuyển khoản Agribank"
+          alt="Agribank bank transfer QR code"
           width={300}
           height={300}
           className="rounded-2xl shadow-2xl"
         />
         <div className="text-center">
           <p className="text-sm font-semibold text-white">{BANK_NAME} · {BANK_ACCOUNT}</p>
-          <p className="mt-1 text-xs text-white/50">Nhấp ra ngoài để đóng</p>
+          <p className="mt-1 text-xs text-white/50">Click outside to close</p>
         </div>
         <button
           onClick={() => setQrZoom(false)}
           className="rounded-full border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white transition hover:bg-white/20"
         >
-          Đóng
+          Close
         </button>
       </div>
     </div>
@@ -164,7 +164,7 @@ export function SupportModal({ open, onClose }: Props) {
               >
                 <Image
                   src="/qr.png"
-                  alt="QR chuyển khoản"
+                  alt="Bank transfer QR code"
                   width={110}
                   height={110}
                   className="rounded-xl"

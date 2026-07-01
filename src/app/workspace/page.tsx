@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { EmbedClient } from '@/app/embed/EmbedClient'
 
 export const metadata: Metadata = {
-  title: 'Focus Workspace — Lofi Music, Pomodoro & Ambient Sounds | LofiSpace',
+  title: 'Focus Workspace — Lofi Music, Pomodoro & Ambient Sounds',
   description:
     'Your all-in-one online focus workspace. Lofi music, ambient sounds mixer, Pomodoro timer, to-do list, XP system and animated backgrounds — free forever.',
   keywords: [

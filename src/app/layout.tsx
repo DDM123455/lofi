@@ -90,6 +90,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         )}
       </head>
       <body className="min-h-screen bg-[#0d0d14] text-white">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[9999] focus:rounded-lg focus:bg-violet-600 focus:px-4 focus:py-2 focus:text-white focus:no-underline">
+          Skip to content
+        </a>
         <Providers>
 
         {/* ── Microsoft Clarity ───────────────────────────────────── */}

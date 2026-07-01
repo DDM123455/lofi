@@ -100,3 +100,113 @@ export function FaqJsonLd({ items }: { items: { q: string; a: string }[] }) {
     />
   )
 }
+
+export function BreadcrumbJsonLd({ items }: { items: { name: string; url: string }[] }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+export function ItemListJsonLd({ items }: { items: { name: string; url: string; description?: string }[] }) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      url: item.url,
+      ...(item.description ? { description: item.description } : {}),
+    })),
+  }
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+interface BlogPostingProps {
+  title: string
+  description: string
+  url: string
+  publishedAt: string
+  imageUrl?: string
+  authorName?: string
+}
+
+export function BlogPostingJsonLd({
+  title,
+  description,
+  url,
+  publishedAt,
+  imageUrl,
+  authorName = 'LofiSpace',
+}: BlogPostingProps) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: title,
+    description,
+    url,
+    datePublished: publishedAt,
+    dateModified: publishedAt,
+    author: {
+      '@type': 'Organization',
+      name: authorName,
+      url: BASE,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'LofiSpace',
+      url: BASE,
+      logo: { '@type': 'ImageObject', url: `${BASE}/logo.png` },
+    },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    ...(imageUrl ? { image: { '@type': 'ImageObject', url: imageUrl } } : {}),
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}
+
+export function OrganizationJsonLd() {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'LofiSpace',
+    url: BASE,
+    logo: { '@type': 'ImageObject', url: `${BASE}/logo.png` },
+    description: 'Free online study room and focus workspace with lofi music, ambient sounds, Pomodoro timer and XP system.',
+    sameAs: [
+      'https://twitter.com/lofispace_app',
+      'https://www.reddit.com/r/lofispace',
+    ],
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  )
+}

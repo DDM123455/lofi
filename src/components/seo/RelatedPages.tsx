@@ -22,6 +22,15 @@ const ALL_STUDY_ROOMS: RelatedPage[] = [
   { href: '/forest-sounds',        emoji: '🌿', title: 'Forest Sounds',        description: 'Nature sounds for calm & clarity' },
   { href: '/fireplace-sounds',     emoji: '🔥', title: 'Fireplace Sounds',     description: 'Warm crackling fire for cozy study' },
   { href: '/website-for-studying', emoji: '🌐', title: 'Website for Studying', description: 'Best free online study tool' },
+  { href: '/pomodoro-timer',       emoji: '⏱️', title: 'Pomodoro Timer',       description: 'Free online Pomodoro with XP & streaks' },
+  { href: '/lofi-music',           emoji: '🎶', title: 'Lofi Music',           description: 'Chill lofi beats to study & relax' },
+  { href: '/rain-sounds',          emoji: '🌧️', title: 'Rain Sounds',          description: 'Rain ambience for deep focus & sleep' },
+  { href: '/white-noise',          emoji: '⚪', title: 'White Noise',          description: 'Pure white noise for concentration' },
+  { href: '/brown-noise',          emoji: '🟤', title: 'Brown Noise',          description: 'Deep brown noise for calm focus' },
+  { href: '/ambient-sounds',       emoji: '🎐', title: 'Ambient Sounds',       description: 'Layered ambient mixes for any mood' },
+  { href: '/focus-music',          emoji: '🎹', title: 'Focus Music',          description: 'Instrumental music to boost concentration' },
+  { href: '/study-with-me',        emoji: '👥', title: 'Study With Me',        description: 'Virtual co-studying, no video needed' },
+  { href: '/notion-widget',        emoji: '📝', title: 'Notion Widget',        description: 'Embed a live lofi widget in Notion' },
 ]
 
 interface Props {

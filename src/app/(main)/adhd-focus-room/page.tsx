@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'ADHD Focus Room — Free Study Space with Brown Noise & Lofi',
   description:
-    'Free ADHD focus room with brown noise, rain sounds, lofi music, and Pomodoro timer. Designed for ADHD brains — structured sessions, sensory stimulation, visual calm. No sign-up.',
+    'Free ADHD focus room with brown noise, rain sounds, lofi music, and Pomodoro timer. Structured sessions and sensory calm for ADHD brains. No sign-up.',
   keywords: [
     'adhd focus room', 'adhd study room', 'adhd focus music', 'brown noise adhd',
     'adhd study music', 'adhd productivity', 'focus adhd', 'adhd pomodoro',

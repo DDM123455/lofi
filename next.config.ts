@@ -4,12 +4,6 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'img.youtube.com' },
-      { protocol: 'https', hostname: 'media.giphy.com' },
-      { protocol: 'https', hostname: 'media1.giphy.com' },
-      { protocol: 'https', hostname: 'media2.giphy.com' },
-      { protocol: 'https', hostname: 'media3.giphy.com' },
-      { protocol: 'https', hostname: 'media4.giphy.com' },
-      { protocol: 'https', hostname: 'i.giphy.com' },
     ],
   },
   async redirects() {
@@ -53,7 +47,14 @@ const nextConfig: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'X-DNS-Prefetch-Control', value: 'on' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' },
+        ],
+      },
+      // Long-term cache for background videos (large, static, filename-versioned by deploy)
+      {
+        source: '/video/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       // Allow /workspace to be iframed by Notion and any embed platform

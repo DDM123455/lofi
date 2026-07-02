@@ -55,9 +55,6 @@ export const metadata: Metadata = {
     description: 'Lofi music, ambient sounds, Pomodoro timer & XP system. Study smarter for free.',
   },
   alternates: { canonical: BASE },
-  verification: {
-    google: 'PASTE_YOUR_VERIFICATION_CODE_HERE',
-  },
 }
 
 export const viewport: Viewport = {

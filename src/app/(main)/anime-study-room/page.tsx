@@ -4,7 +4,7 @@ import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
-  title: 'Anime Study Room — Japanese Aesthetic Study Space with Lofi Music',
+  title: 'Anime Study Room — Japanese Aesthetic Study Space',
   description:
     'Study in a cosy anime-inspired room with Japanese lofi music, rain sounds, cherry blossom backgrounds and a Pomodoro timer. Free online aesthetic study room.',
   keywords: [

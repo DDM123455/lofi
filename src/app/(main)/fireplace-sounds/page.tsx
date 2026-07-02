@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Fireplace Sounds for Focus & Relaxation — Free Online',
   description:
-    'Free fireplace sounds online — crackling fire, cosy hearth ambience for studying, working, and relaxation. Mix with lofi music in our interactive mixer. No sign-up.',
+    'Free fireplace sounds online — crackling fire and cosy hearth ambience for studying and relaxation. Mix with lofi music. No sign-up.',
   keywords: [
     'fireplace sounds', 'crackling fire sounds', 'fireplace ambience',
     'fireplace sounds for studying', 'crackling fireplace', 'fire sounds online',

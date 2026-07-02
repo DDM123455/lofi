@@ -55,7 +55,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         description={post.excerpt}
         url={postUrl}
         publishedAt={post.publishedAt}
-        imageUrl={`https://focusworkspace.app/og/blog-default.jpg`}
+        imageUrl="https://focusworkspace.app/logo.png"
       />
 
       {/* Breadcrumb */}

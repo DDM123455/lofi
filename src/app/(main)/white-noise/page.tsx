@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Free White Noise Online — Focus, Study & Sleep',
   description:
-    'Free white noise online for studying, focus, and sleep. Combine with lofi music and ambient sounds in our interactive mixer. No ads, no sign-up. Works in any browser.',
+    'Free white noise online for studying, focus, and sleep. Combine with lofi music and ambient sounds in our interactive mixer. No ads, no sign-up.',
   keywords: [
     'white noise', 'white noise online', 'white noise for studying', 'white noise free',
     'white noise for focus', 'white noise for sleep', 'white noise machine online',

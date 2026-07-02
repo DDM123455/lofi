@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { getDayNightConfig } from '@/hooks/useDayNight'
 import { LOFI_STREAMS, AMBIENT_SOUNDS } from '@/lib/lofiStreams'
-import { BG_PRESETS } from '@/lib/backgrounds'
+import { BG_PRESETS, getBgPresetByUrl } from '@/lib/backgrounds'
 import { useGameStore, xpProgress, ACHIEVEMENT_DEFS } from '@/lib/gameStore'
 import { CodingCatVariant, CAT_VARIANT_META, type CatVariant } from '@/components/companion/CodingCatVariants'
 import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
@@ -162,6 +162,7 @@ export function EmbedClient() {
   const [bgUrl,       setBgUrl]       = useState(initBgUrl)
   const [bgOpacity,   setBgOpacity]   = useState(initBgOp)
   const [bgBlur,      setBgBlur]      = useState(initBlur)
+  const [bgReady,     setBgReady]     = useState(false)
   const [bgYtInput,   setBgYtInput]   = useState('')
   const [bgYtId,      setBgYtId]      = useState('')
   const [customBg,    setCustomBg]    = useState('')
@@ -286,6 +287,8 @@ export function EmbedClient() {
     try{localStorage.setItem('lofispace-settings',JSON.stringify({bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere}))}catch(_){}
   },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere])
   useEffect(()=>{ recordActivity() },[recordActivity])
+  // Reset fade-in state whenever the background source changes
+  useEffect(()=>{ setBgReady(false) },[bgUrl])
   useEffect(()=>{
     if(pom.completions===0) return
     completePomodoro(25)
@@ -610,18 +613,22 @@ export function EmbedClient() {
   const mob=vw<640
   const dbSz=mob?32:40
   const divider:React.CSSProperties={width:1,height:26,background:'var(--border)',margin:'0 2px',flexShrink:0}
+  const bgGradient=getBgPresetByUrl(bgUrl)?.gradient ?? ['#0d0d14','#1a1a24']
 
   return (
     <div style={{position:'fixed',inset:0,overflow:'hidden',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
 
       {/* ── Background ── */}
+      <div style={{position:'absolute',inset:0,background:`linear-gradient(160deg,${bgGradient[0]},${bgGradient[1]})`}}/>
       {bgType==='video'
-        ?<video key={bgUrl} src={bgUrl} autoPlay muted playsInline aria-hidden
+        ?<video key={bgUrl} src={bgUrl} autoPlay muted playsInline preload="auto" aria-hidden
             onTimeUpdate={e=>{const v=e.currentTarget;if(v.duration&&v.currentTime>=v.duration-0.1)v.currentTime=0}}
-            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+            onCanPlay={()=>setBgReady(true)}
+            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'
           // eslint-disable-next-line @next/next/no-img-element
-          ?<img src={bgUrl} alt="" aria-hidden style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+          ?<img src={bgUrl} alt="" aria-hidden onLoad={()=>setBgReady(true)}
+              style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
           :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none'}} allow="autoplay"/>
       }
       <div style={{position:'absolute',inset:0,background:'#000',opacity:bgOpacity/100}}/>

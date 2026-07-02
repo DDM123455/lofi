@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Free Ambient Sounds Mixer — Study, Focus & Relax Online',
   description:
-    'Free online ambient sounds mixer. Layer rain, café noise, fire, ocean, forest, and more with lofi music. Customise volumes. No sign-up. Perfect for studying and working from home.',
+    'Free online ambient sounds mixer. Layer rain, café noise, fire, ocean, forest and more with lofi music. Customise volumes. No sign-up.',
   keywords: [
     'ambient sounds', 'ambient sound mixer', 'ambient sounds for studying', 'ambient noise',
     'nature sounds', 'background sounds for focus', 'white noise online', 'study sounds',

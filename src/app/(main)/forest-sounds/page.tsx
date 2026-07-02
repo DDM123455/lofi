@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Forest Sounds for Focus & Relaxation — Free Online',
   description:
-    'Free forest sounds online — birds, rustling leaves, wind through trees, and babbling brooks. Natural ambient sounds for studying, relaxation, and sleep. No sign-up.',
+    'Free forest sounds online — birds, rustling leaves, and wind through trees. Natural ambience for studying, relaxation, and sleep. No sign-up.',
   keywords: [
     'forest sounds', 'forest sounds for studying', 'nature sounds forest',
     'forest ambient sounds', 'forest sounds online', 'forest background noise',

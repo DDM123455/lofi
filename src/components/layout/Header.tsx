@@ -30,6 +30,7 @@ const FOCUS_TOOLS = [
   { href: "/thunderstorm-sounds",  label: "Thunderstorm Sounds" },
   { href: "/forest-sounds",        label: "Forest Sounds" },
   { href: "/fireplace-sounds",     label: "Fireplace Sounds" },
+  { href: "/website-for-studying", label: "Website for Studying" },
 ];
 
 export function Header() {

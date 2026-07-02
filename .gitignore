@@ -41,3 +41,16 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# raw/unoptimized asset source dumps (final assets live under /public)
+/mp3
+/video
+/whitenoise
+
+# playwright capture tooling (test artifacts + local node_modules)
+/playright
+
+# local scratch/planning docs
+/AUDIT_FIXES.md
+/SEO_PROGRESS.md
+/seo-audit-focusworkspace.md

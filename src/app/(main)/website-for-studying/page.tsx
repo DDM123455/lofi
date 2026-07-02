@@ -3,9 +3,9 @@ import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
-  title: 'Best Website for Studying — Free Study Room with Lofi & Tools',
+  title: 'Best Website for Studying — Free Study Room with Lofi',
   description:
-    'LofiSpace is the best free website for studying online. Lofi music, ambient sounds, Pomodoro timer, to-do list, and 15+ study scenes — all in one browser tab. No sign-up.',
+    'LofiSpace is the best free website for studying online. Lofi music, ambient sounds, Pomodoro timer, and 15+ study scenes — all in one tab. No sign-up.',
   keywords: [
     'website for studying', 'best website for studying', 'study website',
     'online study room', 'free study website', 'study tool online',

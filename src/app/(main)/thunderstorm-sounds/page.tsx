@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Thunderstorm Sounds for Sleep & Focus — Free Online',
   description:
-    'Free thunderstorm sounds for sleep, focus, and relaxation. Heavy rain, distant thunder, and storm ambience — combined with lofi music in our interactive mixer. No sign-up.',
+    'Free thunderstorm sounds for sleep, focus, and relaxation. Heavy rain and distant thunder combined with lofi music in our interactive mixer. No sign-up.',
   keywords: [
     'thunderstorm sounds', 'thunderstorm sounds for sleeping', 'thunder sounds for sleep',
     'thunderstorm noise', 'rain and thunder sounds', 'thunderstorm ambient',

@@ -6,7 +6,7 @@ import { BlogFilter } from './BlogFilter'
 
 export const metadata: Metadata = {
   title: 'Study Tips & Lofi Advice Blog — LofiSpace',
-  description: 'LofiSpace blog: how to study better, set up your workspace, use the Pomodoro technique, and find the best focus music for students, developers, and remote workers.',
+  description: 'LofiSpace blog: how to study better, set up your workspace, use the Pomodoro technique, and find the best focus music for studying.',
   keywords: ['study tips', 'productivity blog', 'lofi music guide', 'pomodoro technique', 'ambient sound tips', 'focus workspace', 'study with me'],
   alternates: { canonical: 'https://focusworkspace.app/blog' },
   openGraph: {

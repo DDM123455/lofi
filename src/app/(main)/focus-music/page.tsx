@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Free Focus Music Online — Music to Study, Work & Concentrate',
   description:
-    'Free focus music for studying and deep work. Lofi beats, ambient music, and binaural-style soundscapes designed to help you concentrate. No ads, no sign-up. Works in any browser.',
+    'Free focus music for studying and deep work. Lofi beats and ambient soundscapes designed to help you concentrate. No ads, no sign-up.',
   keywords: [
     'focus music', 'music to focus', 'music for studying', 'concentration music',
     'study music online', 'focus music free', 'focus music for work', 'music for deep work',

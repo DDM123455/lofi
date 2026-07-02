@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Virtual Study Room — Free Online Study Space with Lofi Music',
   description:
-    'Free virtual study room with lofi music, ambient sounds, Pomodoro timer, and XP streaks. Beautiful animated backgrounds — anime, cosy cottage, coding space, and more. No sign-up.',
+    'Free virtual study room with lofi music, ambient sounds, Pomodoro timer, and XP streaks. Animated backgrounds — anime, cottage, coding space. No sign-up.',
   keywords: [
     'virtual study room', 'online study room', 'virtual study space', 'study room online',
     'virtual study hall', 'online study environment', 'aesthetic study room online',

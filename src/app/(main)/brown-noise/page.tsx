@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Free Brown Noise Online — Focus, ADHD & Deep Work',
   description:
-    'Free brown noise online for ADHD focus, deep work, and anxiety relief. Deep low-frequency sound combined with lofi music and ambient sounds. No ads, no sign-up. Works in any browser.',
+    'Free brown noise online for ADHD focus, deep work, and anxiety relief. Combine with lofi music and ambient sounds. No ads, no sign-up.',
   keywords: [
     'brown noise', 'brown noise online', 'brown noise for focus', 'brown noise adhd',
     'brown noise free', 'brown noise for studying', 'brown noise sleep', 'brown noise anxiety',

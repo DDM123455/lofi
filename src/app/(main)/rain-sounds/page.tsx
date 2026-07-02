@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Rain Sounds for Studying & Focus — Free Online',
   description:
-    'Free rain sounds for studying, working, and sleeping. Combine rain with lofi music and other ambient sounds in our interactive mixer. No sign-up. Runs in any browser.',
+    'Free rain sounds for studying, working, and sleeping. Combine rain with lofi music and ambient sounds in our interactive mixer. No sign-up.',
   keywords: [
     'rain sounds', 'rain sounds for studying', 'rain sounds for focus', 'rain sounds online',
     'rain noise for studying', 'rainfall sounds', 'rain ambient', 'rain white noise',

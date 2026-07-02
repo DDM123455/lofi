@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Free Lofi Music Online — Study, Focus & Chill',
   description:
-    'Stream free lofi music online. Lofi hip hop, chillhop, synthwave, and ambient beats for studying, working, and relaxing. No ads, no sign-up. Perfect background music for focus.',
+    'Stream free lofi music online. Lofi hip hop, chillhop, synthwave, and ambient beats for studying, working, and relaxing. No ads, no sign-up.',
   keywords: [
     'lofi music', 'lofi hip hop', 'lofi music for studying', 'lofi beats', 'chill lofi',
     'lofi study music', 'chillhop', 'lo-fi music', 'lofi music free', 'lofi music online',

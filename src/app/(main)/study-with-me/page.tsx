@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Study With Me Online — Free Virtual Study Space',
   description:
-    'Study with me online in a free virtual study room. Lofi music, ambient sounds, Pomodoro timer, XP streaks, and a cosy aesthetic environment. No sign-up. Start studying in 30 seconds.',
+    'Study with me online in a free virtual study room. Lofi music, ambient sounds, Pomodoro timer, XP streaks, and a cosy environment. No sign-up.',
   keywords: [
     'study with me', 'study with me online', 'study with me free', 'virtual study buddy',
     'online study session', 'study together online', 'body doubling for studying',

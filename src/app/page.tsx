@@ -5,10 +5,10 @@ import { HomeContent } from './HomeContent'
 export const metadata: Metadata = {
   // Use absolute to prevent the root layout template from appending "| LofiSpace" again
   title: {
-    absolute: 'LofiSpace — Free Online Study Room, Focus Workspace & Pomodoro Timer',
+    absolute: 'LofiSpace — Free Study Room, Focus & Pomodoro Timer',
   },
   description:
-    'Free online study room with lofi music, ambient sounds mixer, Pomodoro timer, to-do list and XP rewards. No account needed. Anime room, coding workspace, deep work — all in one tab.',
+    'Free online study room with lofi music, ambient sounds mixer, Pomodoro timer, to-do list and XP rewards. No account needed. All in one browser tab.',
   keywords: [
     'online study room', 'virtual study room', 'focus workspace', 'lofi music',
     'ambient sounds', 'pomodoro timer', 'anime study room', 'coding workspace',

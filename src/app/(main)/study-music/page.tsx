@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Study Music for Focus & Concentration — Free Online',
   description:
-    'Free study music for focus and concentration. Lofi hip-hop, chill beats, and ambient soundscapes — scientifically selected to help you study better. No sign-up, runs in any browser.',
+    'Free study music for focus and concentration. Lofi hip-hop, chill beats, and ambient soundscapes to help you study better. No sign-up, any browser.',
   keywords: [
     'study music', 'study music for focus', 'study music concentration',
     'music to study to', 'best music for studying', 'lofi study music',

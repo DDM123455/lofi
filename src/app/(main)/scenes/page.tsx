@@ -8,7 +8,7 @@ import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/seo/JsonLd'
 
 export const metadata: Metadata = {
   title: 'Scene Gallery — 15+ Lofi Study Scenes & Ambient Backgrounds',
-  description: 'Browse 15+ hand-crafted lofi ambient scenes: Tokyo Café Rain, Midnight Coding, Cozy Cabin, Thunderstorm Focus and more. Pick your vibe and open your study workspace instantly. Free.',
+  description: 'Browse 15+ hand-crafted lofi ambient scenes: Tokyo Café Rain, Midnight Coding, Cozy Cabin and more. Pick your vibe and open your workspace instantly. Free.',
   keywords: ['lofi scene', 'ambient study backgrounds', 'study vibes', 'lofi backgrounds', 'aesthetic study room', 'virtual study environment', 'ambient workspace'],
   alternates: { canonical: 'https://focusworkspace.app/scenes' },
   openGraph: {

@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Coffee Shop Sounds for Studying & Focus — Free Online',
   description:
-    'Free coffee shop sounds online for studying, work, and focus. Realistic café ambience — murmur, espresso machines, cups — mixed with lofi music. No sign-up, runs in any browser.',
+    'Free coffee shop sounds online for studying, work, and focus. Realistic café ambience mixed with lofi music. No sign-up, runs in any browser.',
   keywords: [
     'coffee shop sounds', 'coffee shop sounds for studying', 'cafe sounds for studying',
     'coffee shop ambience', 'cafe background noise', 'coffee shop noise',

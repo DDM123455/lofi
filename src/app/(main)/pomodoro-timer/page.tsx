@@ -6,7 +6,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 export const metadata: Metadata = {
   title: 'Free Pomodoro Timer Online — Study & Work with Music',
   description:
-    'Free online Pomodoro timer with lofi music, ambient sounds, XP rewards and streak tracking. 25-minute focus sessions with breaks. No sign-up. Works on any device.',
+    'Free online Pomodoro timer with lofi music, ambient sounds, XP rewards and streak tracking. 25-minute sessions with breaks. No sign-up.',
   keywords: [
     'pomodoro timer', 'pomodoro timer online', 'free pomodoro timer', 'pomodoro technique',
     'study timer', 'focus timer', 'pomodoro with music', 'pomodoro app', 'pomodoro clock',

@@ -4,7 +4,7 @@ import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
-  title: 'Focus Room — Deep Focus Workspace with Pomodoro & Ambient Sounds',
+  title: 'Focus Room — Deep Focus Workspace with Pomodoro Timer',
   description:
     'A minimalist online focus room designed for deep work. Ambient sounds, Pomodoro timer, no distractions. Enter a flow state and get more done in less time.',
   keywords: [

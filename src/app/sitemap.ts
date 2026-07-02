@@ -1,6 +1,5 @@
 import type { MetadataRoute } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
-import { PRESETS } from '@/lib/presets'
 
 const BASE = 'https://focusworkspace.app'
 
@@ -10,7 +9,7 @@ const D = (iso: string) => new Date(iso)
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE,                                  lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 1.0 },
-    { url: `${BASE}/workspace`,                   lastModified: D('2026-06-29'), changeFrequency: 'monthly', priority: 0.5 },
+    // /workspace is noindexed (robots: {index:false}) — SEO value lives on landing pages, kept out of sitemap
     { url: `${BASE}/scenes`,                      lastModified: D('2026-06-29'), changeFrequency: 'weekly',  priority: 0.85 },
     // Core SEO landing pages
     { url: `${BASE}/online-study-room`,           lastModified: D('2026-06-29'), changeFrequency: 'monthly', priority: 0.9 },
@@ -42,12 +41,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog`,                        lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 0.8 },
   ]
 
-  const presetRoutes: MetadataRoute.Sitemap = PRESETS.map(preset => ({
-    url: `${BASE}/workspace/p/${preset.slug}`,
-    lastModified: D('2026-06-29'),
-    changeFrequency: 'monthly' as const,
-    priority: 0.75,
-  }))
+  // /workspace/p/* preset pages are noindexed (doorway-page avoidance) — excluded from sitemap
 
   const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map(post => ({
     url: `${BASE}/blog/${post.slug}`,
@@ -56,5 +50,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...presetRoutes, ...blogRoutes]
+  return [...staticRoutes, ...blogRoutes]
 }

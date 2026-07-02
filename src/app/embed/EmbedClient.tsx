@@ -16,7 +16,7 @@ type ClockStyle = 'digital'|'minimal'|'bold'|'analog'
 type BgType = 'gif'|'youtube'|'video'
 type PanelTab = 'music'|'sounds'|'scene'|'more'
 type MoreTab = 'widgets'|'weather'|'pet'|'progress'|'share'
-interface Todo { id:string; text:string; done:boolean }
+interface Todo { id:string; text:string; done:boolean; estimate?:number; actual:number }
 interface WxData { city:string; temp:number; code:number; desc:string; emoji:string; feels:number|null; humidity:number|null; wind:number|null }
 
 function bgTypeFromUrl(url:string):BgType {
@@ -163,6 +163,7 @@ export function EmbedClient() {
   const [bgOpacity,   setBgOpacity]   = useState(initBgOp)
   const [bgBlur,      setBgBlur]      = useState(initBlur)
   const [bgReady,     setBgReady]     = useState(false)
+  const [prevBg,      setPrevBg]      = useState<{url:string;type:BgType}|null>(null)
   const [bgYtInput,   setBgYtInput]   = useState('')
   const [bgYtId,      setBgYtId]      = useState('')
   const [customBg,    setCustomBg]    = useState('')
@@ -186,6 +187,8 @@ export function EmbedClient() {
   const [showNote,    setShowNote]    = useState(sp.get('note')!=='0')
   const [todos,       setTodos]       = useState<Todo[]>([])
   const [todoInput,   setTodoInput]   = useState('')
+  const [todoEstInput,setTodoEstInput]= useState('')
+  const [activeTodoId,setActiveTodoId]= useState<string|null>(null)
   const noteDrag      = useDraggable()
   const pomDrag       = useDraggable()
   const catDrag       = useDraggable()
@@ -243,6 +246,9 @@ export function EmbedClient() {
   const ytPlayer  = useRef<any>(null)
   const ytTimer   = useRef<ReturnType<typeof setTimeout>|null>(null)
   const noteTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
+  const shownBgRef  = useRef<{url:string;type:BgType}|null>(null)
+  const prevBgTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
+  const bgElRef     = useRef<HTMLVideoElement|HTMLImageElement|null>(null)
 
   // ── Game store ──────────────────────────────────────────────────────────
   const {
@@ -287,18 +293,49 @@ export function EmbedClient() {
     try{localStorage.setItem('lofispace-settings',JSON.stringify({bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere}))}catch(_){}
   },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere])
   useEffect(()=>{ recordActivity() },[recordActivity])
-  // Reset fade-in state whenever the background source changes
-  useEffect(()=>{ setBgReady(false) },[bgUrl])
+  const handleBgReady=useCallback(()=>{
+    setBgReady(true)
+    shownBgRef.current={url:bgUrl,type:bgType}
+    if(prevBgTimer.current)clearTimeout(prevBgTimer.current)
+    prevBgTimer.current=setTimeout(()=>setPrevBg(null),550)
+  },[bgUrl,bgType])
+  // Keep the last-shown background visible (crossfade base) until the new one has loaded,
+  // so switching backgrounds never drops to the bare gradient placeholder mid-transition
+  useEffect(()=>{
+    setBgReady(false)
+    if(shownBgRef.current&&shownBgRef.current.url!==bgUrl){
+      setPrevBg(shownBgRef.current)
+      if(prevBgTimer.current)clearTimeout(prevBgTimer.current)
+    }
+    // The server-rendered <video autoplay>/<img> may start loading before this effect's
+    // listeners attach, so 'canplay'/'load' can fire and be missed — check current state too.
+    const el=bgElRef.current
+    if(el instanceof HTMLVideoElement && el.readyState>=3) handleBgReady()
+    else if(el instanceof HTMLImageElement && el.complete && el.naturalWidth>0) handleBgReady()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[bgUrl])
   useEffect(()=>{
     if(pom.completions===0) return
     completePomodoro(25)
     setXpToast({xp:25,key:Date.now()})
     setTimeout(()=>setXpToast(null),2800)
+    if(activeTodoId){
+      setTodos(prev=>{
+        const next=prev.map(x=>x.id===activeTodoId?{...x,actual:(x.actual??0)+1}:x)
+        if(noteTimer.current)clearTimeout(noteTimer.current)
+        localStorage.setItem('lofispace-todos',JSON.stringify(next))
+        return next
+      })
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[pom.completions])
   useEffect(()=>{
     if(typeof window!=='undefined'){
-      try{ const t=JSON.parse(localStorage.getItem('lofispace-todos')||'[]'); setTodos(t) }catch(_){}
+      try{
+        const t=JSON.parse(localStorage.getItem('lofispace-todos')||'[]')
+        setTodos(Array.isArray(t)?t.map((x:Todo)=>({...x,actual:x.actual??0})):[])
+      }catch(_){}
+      try{ setActiveTodoId(localStorage.getItem('lofispace-active-todo')) }catch(_){}
     }
   },[])
   useEffect(()=>{
@@ -321,7 +358,6 @@ export function EmbedClient() {
 
   // Pre-init YT player silently so first-play is instant
   useEffect(()=>{
-    let tid: ReturnType<typeof setTimeout>
     const tryPre=()=>{
       if(!ytRef.current||ytPlayer.current)return
       const container=document.createElement('div')
@@ -335,11 +371,10 @@ export function EmbedClient() {
         },
       })
     }
-    tid=setTimeout(()=>{
-      if((window as any).YT?.Player)tryPre()
-      else{const p=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{p?.();tryPre()}}
-    },500)
-    return()=>clearTimeout(tid)
+    // No artificial delay: start as soon as this effect runs (post-hydration) so the
+    // player is ready by the time a user actually clicks "Tap to start"
+    if((window as any).YT?.Player)tryPre()
+    else{const p=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{p?.();tryPre()}}
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
   // Auto-detect weather on mount (skip if URL already has data)
@@ -471,11 +506,22 @@ export function EmbedClient() {
     if(noteTimer.current)clearTimeout(noteTimer.current)
     noteTimer.current=setTimeout(()=>localStorage.setItem('lofispace-todos',JSON.stringify(list)),500)
   }
-  const addTodo=()=>{if(!todoInput.trim())return;saveTodos([...todos,{id:Date.now().toString(),text:todoInput.trim(),done:false}]);setTodoInput('')}
+  const addTodo=()=>{
+    if(!todoInput.trim())return
+    const est=parseInt(todoEstInput,10)
+    saveTodos([...todos,{id:Date.now().toString(),text:todoInput.trim(),done:false,actual:0,estimate:est>0?est:undefined}])
+    setTodoInput('');setTodoEstInput('')
+  }
+  const setActiveTodo=(id:string)=>{
+    const next=activeTodoId===id?null:id
+    setActiveTodoId(next)
+    try{if(next)localStorage.setItem('lofispace-active-todo',next);else localStorage.removeItem('lofispace-active-todo')}catch(_){}
+  }
   const toggleTodo=(id:string)=>{
     const todo=todos.find(t=>t.id===id);if(!todo)return
     const newDone=!todo.done
     saveTodos(todos.map(t=>t.id===id?{...t,done:newDone}:t))
+    if(newDone&&activeTodoId===id)setActiveTodo(id)
     // Sync to calendar: tick adds ✅ entry, untick removes it
     const d=new Date();const calKey=`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
     const doneText=`✅ ${todo.text}`
@@ -487,7 +533,10 @@ export function EmbedClient() {
       const cn={...calNotes,[calKey]:arr};if(!arr.length)delete cn[calKey];saveCalFn(cn);setCalNotes(cn)
     }
   }
-  const removeTodo=(id:string)=>saveTodos(todos.filter(t=>t.id!==id))
+  const removeTodo=(id:string)=>{
+    saveTodos(todos.filter(t=>t.id!==id))
+    if(activeTodoId===id){setActiveTodoId(null);try{localStorage.removeItem('lofispace-active-todo')}catch(_){}}
+  }
 
   // ── Weather ────────────────────────────────────────────────────────────
   const detectWeather=useCallback(async()=>{
@@ -527,6 +576,7 @@ export function EmbedClient() {
     ctxRef.current?.close();try{ytPlayer.current?.destroy()}catch(_){}
     if(ytTimer.current)clearTimeout(ytTimer.current)
     if(noteTimer.current)clearTimeout(noteTimer.current)
+    if(prevBgTimer.current)clearTimeout(prevBgTimer.current)
   },[])
 
   // ── Theme tokens ───────────────────────────────────────────────────────
@@ -620,16 +670,25 @@ export function EmbedClient() {
 
       {/* ── Background ── */}
       <div style={{position:'absolute',inset:0,background:`linear-gradient(160deg,${bgGradient[0]},${bgGradient[1]})`}}/>
+      {/* Crossfade base: last-shown background stays visible until the new one finishes loading */}
+      {prevBg&&(prevBg.type==='video'
+        ?<video key={`prev-${prevBg.url}`} src={prevBg.url} autoPlay muted playsInline aria-hidden
+            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+        :prevBg.type==='gif'
+          // eslint-disable-next-line @next/next/no-img-element
+          ?<img src={prevBg.url} alt="" aria-hidden
+              style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+          :null)}
       {bgType==='video'
-        ?<video key={bgUrl} src={bgUrl} autoPlay muted playsInline preload="auto" aria-hidden
+        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} key={bgUrl} src={bgUrl} autoPlay muted playsInline preload="auto" aria-hidden
             onTimeUpdate={e=>{const v=e.currentTarget;if(v.duration&&v.currentTime>=v.duration-0.1)v.currentTime=0}}
-            onCanPlay={()=>setBgReady(true)}
+            onCanPlay={handleBgReady}
             style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'
           // eslint-disable-next-line @next/next/no-img-element
-          ?<img src={bgUrl} alt="" aria-hidden onLoad={()=>setBgReady(true)}
+          ?<img ref={bgElRef as React.RefObject<HTMLImageElement>} src={bgUrl} alt="" aria-hidden onLoad={handleBgReady}
               style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
-          :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none'}} allow="autoplay"/>
+          :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} onLoad={handleBgReady} style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none',opacity:bgReady?1:0,transition:'opacity .5s ease'}} allow="autoplay"/>
       }
       <div style={{position:'absolute',inset:0,background:'#000',opacity:bgOpacity/100}}/>
       {bgBlur>0&&<div style={{position:'absolute',inset:0,backdropFilter:`blur(${bgBlur}px)`}}/>}
@@ -682,6 +741,12 @@ export function EmbedClient() {
             <button onClick={()=>pom.setMode('work')} style={seg(pom.phase==='work')}>{t.pom_focus}</button>
             <button onClick={()=>pom.setMode('break')} style={seg(pom.phase==='break')}>{t.pom_break}</button>
           </div>
+          {activeTodoId&&todos.find(x=>x.id===activeTodoId)&&(
+            <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:14,padding:'7px 10px',borderRadius:10,background:accentSoft,fontSize:11.5,color:accent,fontWeight:600,overflow:'hidden'}}>
+              <span style={{flexShrink:0}}>🎯</span>
+              <span style={{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{todos.find(x=>x.id===activeTodoId)?.text}</span>
+            </div>
+          )}
           <div style={{position:'relative',width:148,height:148,margin:'0 auto 16px'}}>
             <svg width="148" height="148" viewBox="0 0 148 148" style={{transform:'rotate(-90deg)'}}>
               <circle cx="74" cy="74" r="62" fill="none" stroke="var(--track)" strokeWidth="9"/>
@@ -789,23 +854,36 @@ export function EmbedClient() {
             </div>
             <span style={{fontSize:12,fontWeight:600,color:accent}}>{doneTodos}/{todos.length}</span>
           </div>
+          <div style={{padding:'8px 15px 0',fontSize:10.5,color:'var(--dim2)',lineHeight:1.4}}>
+            {activeTodoId&&todos.find(x=>x.id===activeTodoId)
+              ?<span>🎯 {t.todo_active_label}: <strong style={{color:accent}}>{todos.find(x=>x.id===activeTodoId)?.text}</strong></span>
+              :<span>{t.todo_active_hint}</span>}
+          </div>
           <div style={{maxHeight:188,overflowY:'auto',padding:'8px 8px 4px'}}>
             {todos.length===0&&<div style={{padding:'26px 12px',textAlign:'center',fontSize:13,color:'var(--dim2)'}}>{t.todo_empty}</div>}
-            {todos.map(t=>(
-              <div key={t.id} style={{display:'flex',alignItems:'center',gap:10,padding:'8px',borderRadius:10}}>
-                <button onPointerDown={e=>e.stopPropagation()} onClick={()=>toggleTodo(t.id)} style={{display:'flex',width:20,height:20,flexShrink:0,alignItems:'center',justifyContent:'center',borderRadius:6,cursor:'pointer',transition:'all .16s ease',border:t.done?`1px solid ${accent}`:'1.5px solid var(--dim2)',background:t.done?accent:'transparent'}}>
-                  {t.done&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16121f" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12l5 5L20 6"/></svg>}
+            {todos.map(td=>{
+              const isActive=activeTodoId===td.id
+              return (
+              <div key={td.id} onClick={()=>!td.done&&setActiveTodo(td.id)} title={td.done?undefined:t.todo_set_active} style={{display:'flex',alignItems:'center',gap:10,padding:'8px',borderRadius:10,cursor:td.done?'default':'pointer',background:isActive?accentSoft:'transparent',border:`1px solid ${isActive?accent:'transparent'}`,transition:'all .16s ease'}}>
+                <button onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();toggleTodo(td.id)}} style={{display:'flex',width:20,height:20,flexShrink:0,alignItems:'center',justifyContent:'center',borderRadius:6,cursor:'pointer',transition:'all .16s ease',border:td.done?`1px solid ${accent}`:'1.5px solid var(--dim2)',background:td.done?accent:'transparent'}}>
+                  {td.done&&<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16121f" strokeWidth="3.2" strokeLinecap="round"><path d="M5 12l5 5L20 6"/></svg>}
                 </button>
-                <span style={{flex:1,fontSize:13.5,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:t.done?'var(--dim2)':'var(--text)',textDecoration:t.done?'line-through':'none'}}>{t.text}</span>
-                <button onPointerDown={e=>e.stopPropagation()} onClick={()=>removeTodo(t.id)} style={{display:'flex',width:22,height:22,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer',opacity:.5}}>
+                <span style={{flex:1,fontSize:13.5,minWidth:0,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',color:td.done?'var(--dim2)':'var(--text)',textDecoration:td.done?'line-through':'none'}}>{td.text}</span>
+                {(td.actual>0||td.estimate)&&(
+                  <span style={{flexShrink:0,fontSize:10.5,fontWeight:600,color:isActive?accent:'var(--dim2)',whiteSpace:'nowrap'}}>🍅 {td.actual}{td.estimate?`/${td.estimate}`:''}</span>
+                )}
+                <button onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();removeTodo(td.id)}} style={{display:'flex',width:22,height:22,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer',opacity:.5}}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
                 </button>
               </div>
-            ))}
+              )
+            })}
           </div>
           <div onPointerDown={e=>e.stopPropagation()} style={{display:'flex',gap:8,padding:'11px 12px',borderTop:'1px solid var(--border)'}}>
             <input value={todoInput} onChange={e=>setTodoInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} placeholder={t.todo_placeholder}
-              style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+              style={{flex:1,minWidth:0,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+            <input value={todoEstInput} onChange={e=>setTodoEstInput(e.target.value.replace(/\D/g,'').slice(0,2))} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} placeholder={t.todo_estimate_placeholder} inputMode="numeric" title={t.todo_estimate_placeholder}
+              style={{width:36,flexShrink:0,padding:'9px 6px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',textAlign:'center',fontFamily:'inherit'}}/>
             <button onClick={addTodo} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>

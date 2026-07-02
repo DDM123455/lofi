@@ -100,6 +100,11 @@ export interface Translations {
   todo_title: string
   todo_empty: string
   todo_placeholder: string
+  todo_estimate_placeholder: string
+  todo_set_active: string
+  todo_active_hint: string
+  todo_active_label: string
+  todo_active_none: string
 
   // Calendar
   cal_today: string
@@ -250,6 +255,11 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     todo_title: 'To-Do',
     todo_empty: 'No items yet',
     todo_placeholder: 'Add item…',
+    todo_estimate_placeholder: '🍅',
+    todo_set_active: 'Set as active task',
+    todo_active_hint: 'Click a task to focus it — pomodoros you complete count toward it',
+    todo_active_label: 'Focusing on',
+    todo_active_none: 'No active task',
 
     cal_today: 'Today',
     cal_day_notes: 'Day Notes',
@@ -427,6 +437,11 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     todo_title: 'Việc cần làm',
     todo_empty: 'Chưa có mục nào',
     todo_placeholder: 'Thêm mục…',
+    todo_estimate_placeholder: '🍅',
+    todo_set_active: 'Đặt làm việc đang tập trung',
+    todo_active_hint: 'Nhấn vào một việc để tập trung — pomodoro hoàn thành sẽ tính cho việc đó',
+    todo_active_label: 'Đang tập trung',
+    todo_active_none: 'Chưa chọn việc',
 
     cal_today: 'Hôm nay',
     cal_day_notes: 'Ghi chú ngày',

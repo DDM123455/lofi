@@ -94,31 +94,32 @@ function buildSynthGraph(ctx:AudioContext,id:string):SynthNode {
   return{gain:master,stop:()=>stops.forEach(f=>f())}
 }
 
-function usePomodoro(){
+function usePomodoro(workMin=25,breakMin=5){
   const[phase,setPhase]=useState<'work'|'break'>('work')
-  const[secs,setSecs]=useState(25*60)
+  const[secs,setSecs]=useState(workMin*60)
   const[on,setOn]=useState(false)
   const[completions,setCompletions]=useState(0)
-  const total=phase==='work'?25*60:5*60
+  const total=phase==='work'?workMin*60:breakMin*60
   useEffect(()=>{
     if(!on)return
     const id=setInterval(()=>setSecs(s=>{
       if(s<=1){
         if(phase==='work') setCompletions(c=>c+1)
         setPhase(p=>p==='work'?'break':'work')
-        return phase==='work'?5*60:25*60
+        return phase==='work'?breakMin*60:workMin*60
       }
       return s-1
     }),1000)
     return()=>clearInterval(id)
-  },[on,phase])
-  const setMode=(mode:'work'|'break')=>{setOn(false);setPhase(mode);setSecs(mode==='work'?25*60:5*60)}
+  },[on,phase,workMin,breakMin])
+  const setMode=(mode:'work'|'break')=>{setOn(false);setPhase(mode);setSecs(mode==='work'?workMin*60:breakMin*60)}
   return{
     mm:String(Math.floor(secs/60)).padStart(2,'0'),
     ss:String(secs%60).padStart(2,'0'),
     on,toggle:()=>setOn(v=>!v),phase,completions,
     progress:secs/total,
-    reset:()=>{setOn(false);setPhase('work');setSecs(25*60)},
+    workMin,
+    reset:()=>{setOn(false);setPhase('work');setSecs(workMin*60)},
     setMode,
   }
 }
@@ -149,6 +150,8 @@ export function EmbedClient() {
   const initBgUrl  = hasBgParam ? decodeURIComponent(sp.get('bgv')!) : '/video/street-scene.mp4'
   const initBgOp   = Math.min(90, Math.max(0, parseInt(sp.get('bgo') ?? String(dn.overlay))))
   const initBlur   = Math.min(20, Math.max(0, parseInt(sp.get('bl') ?? '0')))
+  const initWorkMin  = Math.min(60, Math.max(1, parseInt(sp.get('pw') ?? '25') || 25))
+  const initBreakMin = Math.min(30, Math.max(1, parseInt(sp.get('pb') ?? '5') || 5))
   const urlAccent  = '#' + (sp.get('ac') ?? dn.accent.replace('#',''))
   const urlWx:WxData|null = (sp.get('city')&&sp.get('temp'))
     ? {city:sp.get('city')!,temp:parseInt(sp.get('temp')!),code:0,desc:sp.get('wdesc')??'',emoji:sp.get('wemoji')??'🌤️',feels:null,humidity:null,wind:null}
@@ -181,7 +184,7 @@ export function EmbedClient() {
 
   // Pomodoro
   const [showPom,     setShowPom]     = useState(sp.get('pom')!=='0')
-  const pom = usePomodoro()
+  const pom = usePomodoro(initWorkMin, initBreakMin)
 
   // Note / Todo
   const [showNote,    setShowNote]    = useState(sp.get('note')!=='0')
@@ -316,8 +319,9 @@ export function EmbedClient() {
   },[bgUrl])
   useEffect(()=>{
     if(pom.completions===0) return
-    completePomodoro(25)
-    setXpToast({xp:25,key:Date.now()})
+    const activeTodo = activeTodoId ? todos.find(x=>x.id===activeTodoId) : undefined
+    completePomodoro(pom.workMin, activeTodo ? {id:activeTodo.id, title:activeTodo.text} : undefined)
+    setXpToast({xp:pom.workMin,key:Date.now()})
     setTimeout(()=>setXpToast(null),2800)
     if(activeTodoId){
       setTodos(prev=>{
@@ -672,7 +676,7 @@ export function EmbedClient() {
       <div style={{position:'absolute',inset:0,background:`linear-gradient(160deg,${bgGradient[0]},${bgGradient[1]})`}}/>
       {/* Crossfade base: last-shown background stays visible until the new one finishes loading */}
       {prevBg&&(prevBg.type==='video'
-        ?<video key={`prev-${prevBg.url}`} src={prevBg.url} autoPlay muted playsInline aria-hidden
+        ?<video key={`prev-${prevBg.url}`} src={prevBg.url} autoPlay loop muted playsInline aria-hidden
             style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
         :prevBg.type==='gif'
           // eslint-disable-next-line @next/next/no-img-element
@@ -680,8 +684,7 @@ export function EmbedClient() {
               style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
           :null)}
       {bgType==='video'
-        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} key={bgUrl} src={bgUrl} autoPlay muted playsInline preload="auto" aria-hidden
-            onTimeUpdate={e=>{const v=e.currentTarget;if(v.duration&&v.currentTime>=v.duration-0.1)v.currentTime=0}}
+        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} key={bgUrl} src={bgUrl} autoPlay loop muted playsInline preload="auto" aria-hidden
             onCanPlay={handleBgReady}
             style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'

@@ -31,6 +31,13 @@ const ALL_STUDY_ROOMS: RelatedPage[] = [
   { href: '/focus-music',          emoji: '🎹', title: 'Focus Music',          description: 'Instrumental music to boost concentration' },
   { href: '/study-with-me',        emoji: '👥', title: 'Study With Me',        description: 'Virtual co-studying, no video needed' },
   { href: '/notion-widget',        emoji: '📝', title: 'Notion Widget',        description: 'Embed a live lofi widget in Notion' },
+  { href: '/dashboard',            emoji: '📊', title: 'Focus Dashboard',      description: 'Streak, weekly chart & 90-day heatmap' },
+  { href: '/focus-dashboard',      emoji: '📈', title: 'About the Dashboard',  description: 'See what the focus dashboard tracks' },
+  { href: '/lofi-pomodoro',        emoji: '🎧', title: 'Lofi Pomodoro',        description: 'Pomodoro timer with lofi music built in' },
+  { href: '/pomodoro-streak-tracker', emoji: '🔥', title: 'Streak Tracker',    description: 'Track your daily Pomodoro streak' },
+  { href: '/notion-pomodoro-widget', emoji: '📝', title: 'Notion Pomodoro Widget', description: 'A real timer embedded in Notion' },
+  { href: '/lofi-timer-for-studying', emoji: '📚', title: 'Lofi Study Timer',  description: 'Study timer with task-linked Pomodoros' },
+  { href: '/ambient-focus-timer',  emoji: '🌿', title: 'Ambient Focus Timer',  description: 'Layered ambient sound + Pomodoro' },
 ]
 
 interface Props {

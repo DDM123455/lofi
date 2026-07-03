@@ -47,8 +47,22 @@ function xpForLevel(level: number): number {
   return level * 120
 }
 
-function localDate(d = new Date()): string {
+export function localDate(d = new Date()): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export interface FocusSession {
+  id: string
+  date: string // YYYY-MM-DD (local)
+  startedAt: number
+  durationSeconds: number
+  taskId?: string
+  taskTitle?: string
+}
+
+export interface DailyStat {
+  pomodoros: number
+  focusSeconds: number
 }
 
 function computeStreak(lastActiveDate: string | null, currentStreak: number): number {
@@ -91,8 +105,12 @@ interface GameStore {
   pendingAchievements: string[]
   newLevelReached: number | null
 
+  // Session history
+  sessions: FocusSession[]
+  dailyStats: Record<string, DailyStat>
+
   // Actions
-  completePomodoro: (minutes?: number) => void
+  completePomodoro: (minutes?: number, task?: { id: string; title: string }) => void
   setCompanionMood: (mood: CompanionMood) => void
   setCompanionMessage: (msg: string | null) => void
   setRoomTheme: (theme: RoomTheme) => void
@@ -123,6 +141,8 @@ export const useGameStore = create<GameStore>()(
       unlockedAchievements: [],
       pendingAchievements: [],
       newLevelReached: null,
+      sessions: [],
+      dailyStats: {},
 
       recordActivity: () => {
         const state = get()
@@ -136,7 +156,7 @@ export const useGameStore = create<GameStore>()(
         })
       },
 
-      completePomodoro: (minutes = 25) => {
+      completePomodoro: (minutes = 25, task) => {
         const state = get()
         const xpGain = minutes
         const coinGain = Math.floor(minutes * 0.4)
@@ -175,6 +195,24 @@ export const useGameStore = create<GameStore>()(
         else if (newTotalPoms % 10 === 0) message = `${newTotalPoms} sessions done! Legendary! 🏆`
         else message = ['Great work! 🎉', 'That was productive!', "Let's keep going! 💪", 'One session at a time! 🎯'][newTotalPoms % 4]
 
+        // Session history + daily stats (for dashboard analytics)
+        const today = localDate()
+        const durationSeconds = minutes * 60
+        const session: FocusSession = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          date: today,
+          startedAt: Date.now(),
+          durationSeconds,
+          taskId: task?.id,
+          taskTitle: task?.title,
+        }
+        const newSessions = [...state.sessions, session].slice(-200)
+        const prevDay = state.dailyStats[today] ?? { pomodoros: 0, focusSeconds: 0 }
+        const newDailyStats = {
+          ...state.dailyStats,
+          [today]: { pomodoros: prevDay.pomodoros + 1, focusSeconds: prevDay.focusSeconds + durationSeconds },
+        }
+
         set({
           xp: newXp,
           level: newLevel,
@@ -191,6 +229,8 @@ export const useGameStore = create<GameStore>()(
           newLevelReached: leveledUp ? newLevel : state.newLevelReached,
           companionMood: leveledUp ? 'level_up' : 'happy',
           companionMessage: message,
+          sessions: newSessions,
+          dailyStats: newDailyStats,
         })
 
         setTimeout(() => {

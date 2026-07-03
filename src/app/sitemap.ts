@@ -37,6 +37,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/forest-sounds`,               lastModified: D('2026-07-01'), changeFrequency: 'monthly', priority: 0.85 },
     { url: `${BASE}/fireplace-sounds`,            lastModified: D('2026-07-01'), changeFrequency: 'monthly', priority: 0.8  },
     { url: `${BASE}/website-for-studying`,        lastModified: D('2026-07-01'), changeFrequency: 'monthly', priority: 0.85 },
+    // Focus dashboard + streak/heatmap tracking (2026-07-03)
+    { url: `${BASE}/dashboard`,                   lastModified: D('2026-07-03'), changeFrequency: 'weekly',  priority: 0.85 },
+    { url: `${BASE}/focus-dashboard`,             lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${BASE}/pomodoro-streak-tracker`,     lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${BASE}/lofi-pomodoro`,               lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.9  },
+    { url: `${BASE}/notion-pomodoro-widget`,      lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${BASE}/lofi-timer-for-studying`,     lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
+    { url: `${BASE}/ambient-focus-timer`,         lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
     // Blog index
     { url: `${BASE}/blog`,                        lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 0.8 },
   ]

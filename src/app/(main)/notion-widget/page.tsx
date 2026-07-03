@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { PRESETS as WORKSPACE_PRESETS, presetWorkspaceUrl } from '@/lib/presets'
+import { EmbedGenerator } from '@/components/embed/EmbedGenerator'
 
 export const metadata: Metadata = {
   title: 'Lofi Widget for Notion — Free Embeddable Study Room',
@@ -41,15 +43,6 @@ const STEPS = [
     title: 'Resize and enjoy',
     desc: 'Drag the embed block to your preferred size. We recommend at least 600px height for the full experience with Pomodoro timer and sound controls.',
   },
-]
-
-const PRESETS = [
-  { name: 'Tokyo Café Rain', desc: 'Jazz lofi + rain — the classic study vibe', emoji: '☕', scene: 'tokyo-cafe-rain' },
-  { name: 'Midnight Coding', desc: 'Synthwave + city rain — for late-night sessions', emoji: '💻', scene: 'midnight-coding' },
-  { name: 'Cozy Cabin', desc: 'Fireplace + wind — warm and distraction-free', emoji: '🔥', scene: 'cozy-cabin' },
-  { name: 'Thunderstorm Focus', desc: 'Heavy thunder — deep concentration mode', emoji: '⛈️', scene: 'thunderstorm-focus' },
-  { name: 'Ocean Waves', desc: 'Chillhop + waves — calm and refreshing', emoji: '🌊', scene: 'ocean-waves' },
-  { name: 'Deep Space', desc: 'Synthwave + space ambience — flow state fuel', emoji: '🚀', scene: 'deep-space' },
 ]
 
 const WHY = [
@@ -165,18 +158,27 @@ export default function NotionWidgetPage() {
           <h2 className="mb-3 text-center text-2xl font-bold text-white">Ready-to-Use Presets</h2>
           <p className="mb-8 text-center text-white/45 text-sm">Click any scene to open the workspace — then copy the URL and embed it in Notion.</p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {PRESETS.map(p => (
+            {WORKSPACE_PRESETS.map(p => (
               <Link
-                key={p.scene}
-                href={`/workspace?scene=${p.scene}`}
+                key={p.slug}
+                href={presetWorkspaceUrl(p)}
                 className="group rounded-xl border border-white/10 bg-white/3 p-5 hover:border-violet-500/30 hover:bg-violet-900/10 transition-all"
               >
                 <div className="mb-3 text-3xl">{p.emoji}</div>
-                <h3 className="mb-1 font-semibold text-white group-hover:text-violet-300 transition-colors">{p.name}</h3>
-                <p className="text-xs text-white/45">{p.desc}</p>
+                <h3 className="mb-1 font-semibold text-white group-hover:text-violet-300 transition-colors">{p.title}</h3>
+                <p className="text-xs text-white/45">{p.description}</p>
               </Link>
             ))}
           </div>
+        </section>
+
+        {/* Embed generator */}
+        <section className="mb-16">
+          <h2 className="mb-3 text-center text-2xl font-bold text-white">Build Your Embed Code</h2>
+          <p className="mb-8 text-center text-white/45 text-sm">
+            Pick your scene and Pomodoro settings, preview it live, then copy the iframe code straight into Notion.
+          </p>
+          <EmbedGenerator />
         </section>
 
         {/* FAQ */}

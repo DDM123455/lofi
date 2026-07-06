@@ -486,13 +486,13 @@ export function EmbedClient() {
   const handleLofiVol=(v:number)=>{setLofiVol(v);if(started)try{ytPlayer.current?.setVolume(v)}catch(_){}}
   const handleLofiChange=(id:string)=>{
     setLofiId(id);try{ytPlayer.current?.destroy()}catch(_){}; ytPlayer.current=null
-    if(started&&playing){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'7NOSDKb0HlU');setTimeout(()=>initYT(ytId,lofiVol),80)}
+    if(started){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'7NOSDKb0HlU');setPlaying(true);setTimeout(()=>initYT(ytId,lofiVol),80)}
   }
   const applyCustomLofi=()=>{
     const id=parseYtId(customLofiInput);if(!id)return
     setCustomLofiId(id);setLofiId('custom')
     try{ytPlayer.current?.destroy()}catch(_){};ytPlayer.current=null
-    if(started&&playing)setTimeout(()=>initYT(id,lofiVol),80)
+    if(started){setPlaying(true);setTimeout(()=>initYT(id,lofiVol),80)}
   }
   const dismissOnboard=()=>{
     setShowOnboard(false)

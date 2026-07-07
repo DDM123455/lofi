@@ -135,7 +135,7 @@ export function EmbedGenerator() {
       </div>
 
       {/* Preview + code */}
-      <div className="space-y-4">
+      <div className="space-y-4 min-w-0">
         <div className="overflow-hidden rounded-xl border border-white/10 bg-black/40" style={{ aspectRatio: '4 / 3' }}>
           <iframe
             key={embedPath}

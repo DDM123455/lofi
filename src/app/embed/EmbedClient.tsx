@@ -268,6 +268,14 @@ export function EmbedClient() {
     upd(); window.addEventListener('resize',upd)
     return()=>window.removeEventListener('resize',upd)
   },[])
+  // On mobile the floating panels stack vertically in one column (see mobTop below) and the
+  // root canvas is overflow:hidden (keeps the fixed background pinned, so it can't scroll).
+  // Progress/Streak is the least essential of the default-open panels, so skip it by default
+  // on first mobile load to keep Pomodoro + To-Do reachable without exceeding the viewport.
+  useEffect(()=>{
+    if(window.innerWidth<640) setShowStreak(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
   // Fullscreen sync
   useEffect(()=>{
     const h=()=>setIsFullscreen(!!document.fullscreenElement)
@@ -669,6 +677,17 @@ export function EmbedClient() {
   const divider:React.CSSProperties={width:1,height:26,background:'var(--border)',margin:'0 2px',flexShrink:0}
   const bgGradient=getBgPresetByUrl(bgUrl)?.gradient ?? ['#0d0d14','#1a1a24']
 
+  // On mobile, panel widths grow to near-full-viewport (see width:Math.min(N,vw-M) below),
+  // so the desktop two-column left/right placement collides. Stack them in one column instead.
+  const mobTop:Record<string,number>={}
+  if(mob){
+    let cursor=132
+    if(showWx&&wxData){mobTop.wx=cursor;cursor+=92}
+    if(showStreak){mobTop.streak=cursor;cursor+=196}
+    if(showPom){mobTop.pom=cursor;cursor+=352}
+    if(showNote){mobTop.note=cursor;cursor+=300}
+  }
+
   return (
     <div style={{position:'fixed',inset:0,overflow:'hidden',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
 
@@ -710,8 +729,8 @@ export function EmbedClient() {
               ?<div style={{fontFamily:'system-ui,sans-serif',fontWeight:900,fontSize:'clamp(46px,12vw,90px)',lineHeight:.9,letterSpacing:'-0.03em',textShadow:'0 4px 28px rgba(0,0,0,.5)'}}>{timeStr}</div>
               :<div>
                 <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:74,lineHeight:.9,letterSpacing:-2,textShadow:'0 3px 22px rgba(0,0,0,.45)'}}>{timeStr}</span>
-                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:600,fontSize:24,color:accent,textShadow:'0 2px 14px rgba(0,0,0,.4)'}}>{secStr}</span>
+                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:'clamp(34px,10vw,74px)',lineHeight:.9,letterSpacing:-2,textShadow:'0 3px 22px rgba(0,0,0,.45)'}}>{timeStr}</span>
+                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:600,fontSize:'clamp(14px,4vw,24px)',color:accent,textShadow:'0 2px 14px rgba(0,0,0,.4)'}}>{secStr}</span>
                 </div>
                 <div style={{marginTop:4,fontSize:14,fontWeight:500,letterSpacing:.3,opacity:.92,textShadow:'0 2px 10px rgba(0,0,0,.5)',textTransform:'capitalize'}}>{dateStr}</div>
               </div>
@@ -721,7 +740,7 @@ export function EmbedClient() {
       )}
 
       {/* ── Theme switch (top-center) ── */}
-      <div style={{position:'absolute',top:30,left:'50%',transform:'translateX(-50%)',zIndex:6,display:'flex',gap:4,padding:5,borderRadius:999,...glassPanel,boxShadow:'0 10px 30px rgba(0,0,0,.35)'}}>
+      <div style={{position:'absolute',top:mob?86:30,left:'50%',transform:'translateX(-50%)',zIndex:6,display:'flex',gap:4,padding:5,borderRadius:999,...glassPanel,boxShadow:'0 10px 30px rgba(0,0,0,.35)'}}>
         {(['glass','warm'] as const).map(t=>(
           <button key={t} onClick={()=>setTheme(t)} style={{padding:'7px 18px',border:'none',borderRadius:999,fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .16s ease',
             background:theme===t?accent:'transparent',color:theme===t?'#16121f':'var(--dim)',
@@ -733,7 +752,7 @@ export function EmbedClient() {
 
       {/* ── Pomodoro panel (draggable, top-right) ── */}
       {showPom&&(
-        <div style={{...wStyle(pomDrag,{right:32,top:96}),zIndex:5,width:Math.min(236,vw-48),padding:'20px 20px 22px',...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)'}}>
+        <div style={{...wStyle(pomDrag,mob?{left:16,top:mobTop.pom}:{right:32,top:96}),zIndex:5,width:Math.min(236,vw-48),padding:'20px 20px 22px',...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)'}}>
           <div {...pomDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,cursor:'grab'}}>
             <span style={{fontSize:11,fontWeight:600,letterSpacing:1.4,textTransform:'uppercase',color:'var(--dim)'}}>Pomodoro</span>
             <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPom(false)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
@@ -778,7 +797,7 @@ export function EmbedClient() {
 
       {/* ── Weather (draggable) ── */}
       {showWx&&wxData&&(
-        <div {...wxDrag.dp} style={{...wStyle(wxDrag,{left:20,top:showClock&&clockStyle==='digital'?130:80}),cursor:'grab',zIndex:20,minWidth:160}}>
+        <div {...wxDrag.dp} style={{...wStyle(wxDrag,mob?{left:16,top:mobTop.wx}:{left:20,top:showClock&&clockStyle==='digital'?130:80}),cursor:'grab',zIndex:20,minWidth:160}}>
           <div style={{display:'flex',flexDirection:'column',gap:4,...glassPanel,borderRadius:16,padding:'10px 14px',boxShadow:'0 10px 28px rgba(0,0,0,.3)'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:24}}>{wxData.emoji}</span>
@@ -801,7 +820,7 @@ export function EmbedClient() {
 
       {/* ── Progress card (left) ── */}
       {showStreak&&(
-        <div style={{...wStyle(progressDrag,{left:20,top:showWx&&wxData?290:showClock&&clockStyle==='digital'?172:90}),zIndex:5,width:Math.min(244,vw-40),padding:16,borderRadius:18,background:'rgba(26,23,44,0.55)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',border:'1px solid rgba(255,255,255,0.10)',color:'#fff',boxShadow:'0 14px 40px rgba(0,0,0,.34)'}}>
+        <div style={{...wStyle(progressDrag,mob?{left:16,top:mobTop.streak}:{left:20,top:showWx&&wxData?290:showClock&&clockStyle==='digital'?172:90}),zIndex:5,width:Math.min(244,vw-40),padding:16,borderRadius:18,background:'rgba(26,23,44,0.55)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',border:'1px solid rgba(255,255,255,0.10)',color:'#fff',boxShadow:'0 14px 40px rgba(0,0,0,.34)'}}>
           {/* Header — drag handle */}
           <div {...progressDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,cursor:'grab'}}>
             <span style={{fontSize:10,fontWeight:700,letterSpacing:'0.1em',color:'rgba(255,255,255,0.5)'}}>{t.progress_title}</span>
@@ -849,7 +868,7 @@ export function EmbedClient() {
 
       {/* ── Notes panel (bottom-right) ── */}
       {showNote&&(
-        <div style={{position:'absolute',zIndex:5,width:Math.min(264,vw-48),touchAction:'none',userSelect:'none',...(noteDrag.pos?{left:noteDrag.pos.x,top:noteDrag.pos.y}:{right:32,bottom:118}),...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)',overflow:'hidden'}}>
+        <div style={{position:'absolute',zIndex:5,width:Math.min(264,vw-48),touchAction:'none',userSelect:'none',...(noteDrag.pos?{left:noteDrag.pos.x,top:noteDrag.pos.y}:mob?{left:16,top:mobTop.note}:{right:32,bottom:118}),...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)',overflow:'hidden'}}>
           <div {...noteDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 15px',borderBottom:'1px solid var(--border)',cursor:'grab'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -1291,11 +1310,11 @@ export function EmbedClient() {
       {companionType==='coding'&&(
         <div
           {...catDrag.dp}
-          style={{...wStyle(catDrag,{left:32,bottom:88}),zIndex:5,cursor:'grab',lineHeight:0}}
+          style={{...wStyle(catDrag,mob?{right:12,bottom:76}:{left:32,bottom:88}),zIndex:5,cursor:'grab',lineHeight:0}}
           onMouseEnter={()=>setCatHovered(true)}
           onMouseLeave={()=>setCatHovered(false)}
         >
-          <CodingCatVariant variant={catVariant} size={catSize} accent={accent}/>
+          <CodingCatVariant variant={catVariant} size={mob?Math.min(catSize,100):catSize} accent={accent}/>
 
           {catHovered&&(
             <>

@@ -741,8 +741,8 @@ export function EmbedClient() {
             </button>
           </div>
           <div style={{display:'flex',gap:5,marginBottom:16}}>
-            <button onClick={()=>pom.setMode('work')} style={seg(pom.phase==='work')}>{t.pom_focus}</button>
-            <button onClick={()=>pom.setMode('break')} style={seg(pom.phase==='break')}>{t.pom_break}</button>
+            <button onClick={()=>pom.phase!=='work'&&pom.setMode('work')} style={seg(pom.phase==='work')}>{t.pom_focus}</button>
+            <button onClick={()=>pom.phase!=='break'&&pom.setMode('break')} style={seg(pom.phase==='break')}>{t.pom_break}</button>
           </div>
           {activeTodoId&&todos.find(x=>x.id===activeTodoId)&&(
             <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:14,padding:'7px 10px',borderRadius:10,background:accentSoft,fontSize:11.5,color:accent,fontWeight:600,overflow:'hidden'}}>

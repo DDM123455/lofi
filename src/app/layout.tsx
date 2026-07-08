@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-const BASE = 'https://focusworkspace.app'
+const BASE = 'https://www.focusworkspace.app'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE),

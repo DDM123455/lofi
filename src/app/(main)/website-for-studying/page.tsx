@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     'study app online', 'lofi study website', 'website to help study',
     'free online study room', 'study tools for students', 'study environment online',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/website-for-studying' },
+  alternates: { canonical: 'https://www.focusworkspace.app/website-for-studying' },
   openGraph: {
     title: 'Best Free Website for Studying | LofiSpace',
     description: 'Lofi music, ambient sounds, Pomodoro timer, and 15+ study scenes — all free in one browser tab. The study website students actually use.',
-    url: 'https://focusworkspace.app/website-for-studying',
+    url: 'https://www.focusworkspace.app/website-for-studying',
     type: 'website',
   },
   twitter: {
@@ -115,14 +115,14 @@ export default function WebsiteForStudyingPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Website for Studying', url: 'https://focusworkspace.app/website-for-studying' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Website for Studying', url: 'https://www.focusworkspace.app/website-for-studying' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace — Website for Studying"
         description="Free study website with lofi music, ambient sounds, Pomodoro timer, to-do list, and 15+ animated study scenes."
-        url="https://focusworkspace.app/website-for-studying"
+        url="https://www.focusworkspace.app/website-for-studying"
         keywords={['website for studying', 'study website', 'online study room', 'lofi study website']}
       />
       <FaqJsonLd items={FAQ} />

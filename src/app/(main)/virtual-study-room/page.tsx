@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'virtual study hall', 'online study environment', 'aesthetic study room online',
     'free virtual study room', 'lofi study room', 'virtual library', 'study room with music',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/virtual-study-room' },
+  alternates: { canonical: 'https://www.focusworkspace.app/virtual-study-room' },
   openGraph: {
     title: 'Virtual Study Room — Free Online Study Space | LofiSpace',
     description: 'Free virtual study room with lofi music, Pomodoro timer, XP streaks and beautiful animated scenes.',
-    url: 'https://focusworkspace.app/virtual-study-room',
+    url: 'https://www.focusworkspace.app/virtual-study-room',
     type: 'website',
   },
   twitter: {
@@ -144,14 +144,14 @@ export default function VirtualStudyRoomPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Virtual Study Room', url: 'https://focusworkspace.app/virtual-study-room' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Virtual Study Room', url: 'https://www.focusworkspace.app/virtual-study-room' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Virtual Study Room"
         description="Free virtual study room with lofi music, Pomodoro timer, ambient sounds, XP streaks and beautiful animated backgrounds."
-        url="https://focusworkspace.app/virtual-study-room"
+        url="https://www.focusworkspace.app/virtual-study-room"
         keywords={['virtual study room', 'online study room', 'lofi study room', 'study space online']}
       />
       <FaqJsonLd items={FAQ} />

@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     'thunderstorm white noise', 'thunder rain sounds', 'stormy weather sounds',
     'thunderstorm sounds for studying', 'thunder sounds online',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/thunderstorm-sounds' },
+  alternates: { canonical: 'https://www.focusworkspace.app/thunderstorm-sounds' },
   openGraph: {
     title: 'Thunderstorm Sounds for Sleep & Focus | LofiSpace',
     description: 'Free thunderstorm sounds — heavy rain and distant thunder for deep focus or sleep. Mix with lofi music. No sign-up.',
-    url: 'https://focusworkspace.app/thunderstorm-sounds',
+    url: 'https://www.focusworkspace.app/thunderstorm-sounds',
     type: 'website',
   },
   twitter: {
@@ -70,14 +70,14 @@ export default function ThunderstormSoundsPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Thunderstorm Sounds', url: 'https://focusworkspace.app/thunderstorm-sounds' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Thunderstorm Sounds', url: 'https://www.focusworkspace.app/thunderstorm-sounds' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Thunderstorm Sounds"
         description="Free thunderstorm sounds for sleep, focus, and relaxation. Heavy rain and thunder in an interactive ambient mixer."
-        url="https://focusworkspace.app/thunderstorm-sounds"
+        url="https://www.focusworkspace.app/thunderstorm-sounds"
         keywords={['thunderstorm sounds', 'thunder sounds for sleep', 'rain and thunder', 'storm sounds']}
       />
       <FaqJsonLd items={FAQ} />

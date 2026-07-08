@@ -12,11 +12,18 @@ export const metadata: Metadata = {
     'lofi study music', 'chillhop', 'lo-fi music', 'lofi music free', 'lofi music online',
     'lofi radio', 'background music for studying', 'study music', 'focus music lofi',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/lofi-music' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/lofi-music',
+    languages: {
+      en: 'https://www.focusworkspace.app/lofi-music',
+      vi: 'https://www.focusworkspace.app/vi/nhac-lofi-hoc-bai',
+      'x-default': 'https://www.focusworkspace.app/lofi-music',
+    },
+  },
   openGraph: {
     title: 'Free Lofi Music for Studying & Focus | LofiSpace',
     description: 'Stream free lofi hip hop, chillhop and synthwave with ambient sounds. No ads. No sign-up.',
-    url: 'https://focusworkspace.app/lofi-music',
+    url: 'https://www.focusworkspace.app/lofi-music',
     type: 'website',
   },
   twitter: {
@@ -98,14 +105,14 @@ export default function LofiMusicPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Lofi Music', url: 'https://focusworkspace.app/lofi-music' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Lofi Music', url: 'https://www.focusworkspace.app/lofi-music' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Lofi Music"
         description="Free lofi music streaming for studying and focus. Lofi hip hop, chillhop, synthwave and ambient music with ambient sound mixer."
-        url="https://focusworkspace.app/lofi-music"
+        url="https://www.focusworkspace.app/lofi-music"
         keywords={['lofi music', 'lofi hip hop', 'study music', 'chillhop', 'focus music']}
       />
       <FaqJsonLd items={FAQ} />

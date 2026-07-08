@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Anime Study Room — LofiSpace',
     description: 'Japanese aesthetic study space with lofi music, rain sounds & Pomodoro timer. Free.',
     type: 'website',
-    url: 'https://focusworkspace.app/anime-study-room',
+    url: 'https://www.focusworkspace.app/anime-study-room',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Anime Study Room — LofiSpace',
     description: 'Japanese aesthetic study space with lofi music, rain sounds & Pomodoro timer.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/anime-study-room' },
+  alternates: { canonical: 'https://www.focusworkspace.app/anime-study-room' },
 }
 
 const FAQ = [
@@ -63,14 +63,14 @@ export default function AnimeStudyRoomPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Anime Study Room', url: 'https://focusworkspace.app/anime-study-room' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Anime Study Room', url: 'https://www.focusworkspace.app/anime-study-room' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Anime Study Room"
         description="Japanese aesthetic virtual study room with lofi music, rain ambience and Pomodoro timer."
-        url="https://focusworkspace.app/anime-study-room"
+        url="https://www.focusworkspace.app/anime-study-room"
         keywords={['anime study room', 'japanese aesthetic', 'lofi anime', 'study with me']}
       />
       <FaqJsonLd items={FAQ} />

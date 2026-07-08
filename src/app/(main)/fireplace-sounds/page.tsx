@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     'fireplace sounds free', 'fire crackling sounds', 'fireplace white noise',
     'fire sounds for focus', 'fireplace asmr', 'crackling fire for sleep',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/fireplace-sounds' },
+  alternates: { canonical: 'https://www.focusworkspace.app/fireplace-sounds' },
   openGraph: {
     title: 'Fireplace Sounds for Focus & Relaxation | LofiSpace',
     description: 'Free crackling fireplace sounds — cosy hearth ambience for studying, relaxation, and sleep. Mix with lofi music. No sign-up.',
-    url: 'https://focusworkspace.app/fireplace-sounds',
+    url: 'https://www.focusworkspace.app/fireplace-sounds',
     type: 'website',
   },
   twitter: {
@@ -70,14 +70,14 @@ export default function FireplaceSoundsPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Fireplace Sounds', url: 'https://focusworkspace.app/fireplace-sounds' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Fireplace Sounds', url: 'https://www.focusworkspace.app/fireplace-sounds' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Fireplace Sounds"
         description="Free fireplace sounds online — crackling fire and cosy hearth ambience for studying, relaxation, and sleep."
-        url="https://focusworkspace.app/fireplace-sounds"
+        url="https://www.focusworkspace.app/fireplace-sounds"
         keywords={['fireplace sounds', 'crackling fire sounds', 'fireplace ambience', 'cosy fire sounds']}
       />
       <FaqJsonLd items={FAQ} />

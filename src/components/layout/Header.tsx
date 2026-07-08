@@ -31,6 +31,10 @@ const FOCUS_TOOLS = [
   { href: "/forest-sounds",        label: "Forest Sounds" },
   { href: "/fireplace-sounds",     label: "Fireplace Sounds" },
   { href: "/website-for-studying", label: "Website for Studying" },
+  { href: "/lofi-pomodoro",        label: "Lofi Pomodoro" },
+  { href: "/lofi-timer-for-studying", label: "Lofi Study Timer" },
+  { href: "/ambient-focus-timer",  label: "Ambient Focus Timer" },
+  { href: "/notion-pomodoro-widget", label: "Notion Pomodoro Widget" },
 ];
 
 export function Header() {
@@ -92,6 +96,7 @@ export function Header() {
 
             <Link href="/scenes" className="hover:text-white transition-colors">Scenes</Link>
             <Link href="/notion-widget" className="hover:text-white transition-colors">Notion Widget</Link>
+            <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
             <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
             <LanguageToggle />
             <Link href="/workspace" className="rounded-full bg-violet-600 px-4 py-1.5 text-white hover:bg-violet-500 transition-colors">
@@ -187,6 +192,8 @@ export function Header() {
                 {[
                   { href: '/scenes',       label: '✨ Scene Gallery' },
                   { href: '/notion-widget', label: '📎 Notion Widget' },
+                  { href: '/dashboard',    label: '📊 Focus Dashboard' },
+                  { href: '/pomodoro-streak-tracker', label: '🔥 Streak Tracker' },
                   { href: '/blog',         label: '📝 Blog' },
                 ].map(r => (
                   <Link

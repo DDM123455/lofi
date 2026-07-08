@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Pomodoro Streak Tracker — LofiSpace',
     description: 'Current streak, best streak, weekly progress and a 90-day focus heatmap. Free.',
     type: 'website',
-    url: 'https://focusworkspace.app/pomodoro-streak-tracker',
+    url: 'https://www.focusworkspace.app/pomodoro-streak-tracker',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Pomodoro Streak Tracker — LofiSpace',
     description: 'Current streak, best streak, weekly progress and a 90-day focus heatmap. Free.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/pomodoro-streak-tracker' },
+  alternates: { canonical: 'https://www.focusworkspace.app/pomodoro-streak-tracker' },
 }
 
 const FAQ = [
@@ -66,14 +66,14 @@ export default function PomodoroStreakTrackerPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Pomodoro Streak Tracker', url: 'https://focusworkspace.app/pomodoro-streak-tracker' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Pomodoro Streak Tracker', url: 'https://www.focusworkspace.app/pomodoro-streak-tracker' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Pomodoro Streak Tracker"
         description="Free Pomodoro streak tracker with weekly chart, 90-day heatmap and top-task breakdown."
-        url="https://focusworkspace.app/pomodoro-streak-tracker"
+        url="https://www.focusworkspace.app/pomodoro-streak-tracker"
         applicationCategory="ProductivityApplication"
         keywords={['pomodoro streak tracker', 'focus streak', 'study streak']}
       />

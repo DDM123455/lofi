@@ -11,11 +11,11 @@ export const metadata: Metadata = {
     'pomodoro dashboard', 'focus dashboard', 'pomodoro streak tracker', 'focus heatmap',
     'pomodoro stats', 'study streak tracker', 'productivity dashboard', 'focus time tracker',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/dashboard' },
+  alternates: { canonical: 'https://www.focusworkspace.app/dashboard' },
   openGraph: {
     title: 'Focus Dashboard — Pomodoro Streaks, Heatmap & Stats | LofiSpace',
     description: 'Track your focus time, streak, weekly progress and a focus heatmap. Free, no sign-up.',
-    url: 'https://focusworkspace.app/dashboard',
+    url: 'https://www.focusworkspace.app/dashboard',
     type: 'website',
   },
   twitter: {
@@ -48,14 +48,14 @@ export default function DashboardPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Dashboard', url: 'https://focusworkspace.app/dashboard' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Dashboard', url: 'https://www.focusworkspace.app/dashboard' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Focus Dashboard"
         description="Pomodoro streak tracker with weekly progress chart and a 90-day focus heatmap."
-        url="https://focusworkspace.app/dashboard"
+        url="https://www.focusworkspace.app/dashboard"
         keywords={['pomodoro dashboard', 'focus heatmap', 'streak tracker']}
       />
       <FaqJsonLd items={FAQ} />

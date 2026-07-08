@@ -13,11 +13,18 @@ export const metadata: Metadata = {
     'white noise generator', 'white noise for concentration', 'white noise adhd',
     'white noise background', 'free white noise',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/white-noise' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/white-noise',
+    languages: {
+      en: 'https://www.focusworkspace.app/white-noise',
+      vi: 'https://www.focusworkspace.app/vi/am-thanh-trang-tap-trung',
+      'x-default': 'https://www.focusworkspace.app/white-noise',
+    },
+  },
   openGraph: {
     title: 'Free White Noise Online — Focus, Study & Sleep | LofiSpace',
     description: 'Free white noise for studying and sleep. Mix with lofi music and ambient sounds. No ads. No sign-up.',
-    url: 'https://focusworkspace.app/white-noise',
+    url: 'https://www.focusworkspace.app/white-noise',
     type: 'website',
   },
   twitter: {
@@ -94,14 +101,14 @@ export default function WhiteNoisePage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'White Noise', url: 'https://focusworkspace.app/white-noise' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'White Noise', url: 'https://www.focusworkspace.app/white-noise' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace White Noise"
         description="Free white noise online for focus, studying and sleep. Mix with lofi music and ambient sounds in an interactive mixer."
-        url="https://focusworkspace.app/white-noise"
+        url="https://www.focusworkspace.app/white-noise"
         keywords={['white noise', 'white noise online', 'white noise for studying', 'white noise free']}
       />
       <FaqJsonLd items={FAQ} />

@@ -1,4 +1,4 @@
-const BASE = 'https://focusworkspace.app'
+const BASE = 'https://www.focusworkspace.app'
 
 export interface WorkspacePreset {
   slug: string

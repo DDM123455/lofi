@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'adhd study music', 'adhd productivity', 'focus adhd', 'adhd pomodoro',
     'white noise adhd', 'adhd concentration', 'study with adhd', 'adhd ambient noise',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/adhd-focus-room' },
+  alternates: { canonical: 'https://www.focusworkspace.app/adhd-focus-room' },
   openGraph: {
     title: 'ADHD Focus Room — Brown Noise, Lofi & Pomodoro Timer | LofiSpace',
     description: 'Free study space for ADHD brains. Brown noise, rain sounds, Pomodoro structure, XP streaks. No sign-up.',
-    url: 'https://focusworkspace.app/adhd-focus-room',
+    url: 'https://www.focusworkspace.app/adhd-focus-room',
     type: 'website',
   },
   twitter: {
@@ -96,14 +96,14 @@ export default function AdhdFocusRoomPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'ADHD Focus Room', url: 'https://focusworkspace.app/adhd-focus-room' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'ADHD Focus Room', url: 'https://www.focusworkspace.app/adhd-focus-room' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace ADHD Focus Room"
         description="Free ADHD focus room with brown noise, rain sounds, lofi music, Pomodoro timer and visual calm. Designed for ADHD brains."
-        url="https://focusworkspace.app/adhd-focus-room"
+        url="https://www.focusworkspace.app/adhd-focus-room"
         keywords={['adhd focus room', 'adhd study room', 'brown noise adhd', 'adhd pomodoro timer']}
       />
       <FaqJsonLd items={FAQ} />

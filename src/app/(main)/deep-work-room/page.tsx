@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Deep Work Room — Maximum Concentration Workspace | LofiSpace',
     description: 'Minimal online room for deep work. Rain ambience, Pomodoro timer, XP system. Free.',
     type: 'website',
-    url: 'https://focusworkspace.app/deep-work-room',
+    url: 'https://www.focusworkspace.app/deep-work-room',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Deep Work Room — LofiSpace',
     description: 'Minimal online room for deep work. Rain ambience, Pomodoro timer, XP system.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/deep-work-room' },
+  alternates: { canonical: 'https://www.focusworkspace.app/deep-work-room' },
 }
 
 const FAQ = [
@@ -61,14 +61,14 @@ export default function DeepWorkRoomPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Deep Work Room', url: 'https://focusworkspace.app/deep-work-room' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Deep Work Room', url: 'https://www.focusworkspace.app/deep-work-room' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Deep Work Room"
         description="Minimal online deep work room with rain ambience and Pomodoro timer for maximum concentration."
-        url="https://focusworkspace.app/deep-work-room"
+        url="https://www.focusworkspace.app/deep-work-room"
         keywords={['deep work room', 'deep focus', 'concentration workspace', 'flow state']}
       />
       <FaqJsonLd items={FAQ} />

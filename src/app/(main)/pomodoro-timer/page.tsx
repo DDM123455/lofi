@@ -12,11 +12,18 @@ export const metadata: Metadata = {
     'study timer', 'focus timer', 'pomodoro with music', 'pomodoro app', 'pomodoro clock',
     '25 minute timer', 'pomodoro for students',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/pomodoro-timer' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/pomodoro-timer',
+    languages: {
+      en: 'https://www.focusworkspace.app/pomodoro-timer',
+      vi: 'https://www.focusworkspace.app/vi/dong-ho-pomodoro',
+      'x-default': 'https://www.focusworkspace.app/pomodoro-timer',
+    },
+  },
   openGraph: {
     title: 'Free Pomodoro Timer Online with Lofi Music | LofiSpace',
     description: 'Free Pomodoro timer with lofi music, ambient sounds and XP rewards. No sign-up. Start in 10 seconds.',
-    url: 'https://focusworkspace.app/pomodoro-timer',
+    url: 'https://www.focusworkspace.app/pomodoro-timer',
     type: 'website',
   },
   twitter: {
@@ -81,14 +88,14 @@ export default function PomodoroTimerPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Pomodoro Timer', url: 'https://focusworkspace.app/pomodoro-timer' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Pomodoro Timer', url: 'https://www.focusworkspace.app/pomodoro-timer' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Pomodoro Timer"
         description="Free online Pomodoro timer with lofi music, ambient sounds and XP reward system."
-        url="https://focusworkspace.app/pomodoro-timer"
+        url="https://www.focusworkspace.app/pomodoro-timer"
         keywords={['pomodoro timer', 'free pomodoro', 'study timer', 'pomodoro with music']}
       />
       <FaqJsonLd items={FAQ} />

@@ -1,18 +1,18 @@
 import type { Metadata } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 import { AdBanner } from '@/components/ads/AdBanner'
-import { BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/seo/JsonLd'
 import { BlogFilter } from './BlogFilter'
 
 export const metadata: Metadata = {
   title: 'Study Tips & Lofi Advice Blog — LofiSpace',
   description: 'LofiSpace blog: how to study better, set up your workspace, use the Pomodoro technique, and find the best focus music for studying.',
   keywords: ['study tips', 'productivity blog', 'lofi music guide', 'pomodoro technique', 'ambient sound tips', 'focus workspace', 'study with me'],
-  alternates: { canonical: 'https://focusworkspace.app/blog' },
+  alternates: { canonical: 'https://www.focusworkspace.app/blog' },
   openGraph: {
     title: 'Study Tips & Lofi Advice Blog | LofiSpace',
     description: 'Guides on studying better, workspace setup, Pomodoro technique, and the best focus music.',
-    url: 'https://focusworkspace.app/blog',
+    url: 'https://www.focusworkspace.app/blog',
     type: 'website',
   },
   twitter: {
@@ -26,9 +26,14 @@ export default function BlogPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Blog', url: 'https://focusworkspace.app/blog' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Blog', url: 'https://www.focusworkspace.app/blog' },
       ]} />
+      <ItemListJsonLd items={BLOG_POSTS.map(p => ({
+        name: p.title,
+        url: `https://www.focusworkspace.app/blog/${p.slug}`,
+        description: p.excerpt,
+      }))} />
 
       {/* Header */}
       <div className="mb-10 text-center">

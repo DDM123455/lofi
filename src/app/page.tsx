@@ -14,12 +14,12 @@ export const metadata: Metadata = {
     'ambient sounds', 'pomodoro timer', 'anime study room', 'coding workspace',
     'study with me', 'deep work room', 'productivity app', 'website for studying',
   ],
-  alternates: { canonical: 'https://focusworkspace.app' },
+  alternates: { canonical: 'https://www.focusworkspace.app' },
   openGraph: {
     title: 'LofiSpace — Free Online Study Room & Focus Workspace',
     description: 'Lofi music, ambient sounds, Pomodoro timer, anime room, coding workspace, XP rewards — free forever. No sign-up.',
     type: 'website',
-    url: 'https://focusworkspace.app',
+    url: 'https://www.focusworkspace.app',
     siteName: 'LofiSpace',
   },
   twitter: {
@@ -47,7 +47,7 @@ export default function HomePage() {
         type="SoftwareApplication"
         name="LofiSpace"
         description="Free online study room and focus workspace with lofi music, ambient sounds, Pomodoro timer and XP system."
-        url="https://focusworkspace.app"
+        url="https://www.focusworkspace.app"
         keywords={['online study room', 'focus workspace', 'lofi music', 'pomodoro timer', 'ambient sounds']}
       />
       <FaqJsonLd items={FAQ_EN} />

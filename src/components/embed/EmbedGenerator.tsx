@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { BG_PRESETS } from '@/lib/backgrounds'
 import { LOFI_STREAMS } from '@/lib/lofiStreams'
 
-const BASE = 'https://focusworkspace.app'
+const BASE = 'https://www.focusworkspace.app'
 
 const ACCENTS = [
   { label: 'Violet', hex: 'a78bfa' },

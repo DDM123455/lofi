@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'online study session', 'study together online', 'body doubling for studying',
     'study accountability', 'study session online', 'study partner online',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/study-with-me' },
+  alternates: { canonical: 'https://www.focusworkspace.app/study-with-me' },
   openGraph: {
     title: 'Study With Me Online — Free Virtual Study Space | LofiSpace',
     description: 'Study with me in a free virtual room with lofi music, Pomodoro timer and XP streaks. No sign-up.',
-    url: 'https://focusworkspace.app/study-with-me',
+    url: 'https://www.focusworkspace.app/study-with-me',
     type: 'website',
   },
   twitter: {
@@ -89,14 +89,14 @@ export default function StudyWithMePage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Study With Me', url: 'https://focusworkspace.app/study-with-me' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Study With Me', url: 'https://www.focusworkspace.app/study-with-me' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Study With Me"
         description="Free virtual study with me space with lofi music, Pomodoro timer, XP streaks and ambient sounds."
-        url="https://focusworkspace.app/study-with-me"
+        url="https://www.focusworkspace.app/study-with-me"
         keywords={['study with me', 'virtual study room', 'online study session', 'body doubling']}
       />
       <FaqJsonLd items={FAQ} />

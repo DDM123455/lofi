@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Lofi Timer for Studying — LofiSpace',
     description: 'A study timer with lofi music, ambient sounds and a task list built for students.',
     type: 'website',
-    url: 'https://focusworkspace.app/lofi-timer-for-studying',
+    url: 'https://www.focusworkspace.app/lofi-timer-for-studying',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Lofi Timer for Studying — LofiSpace',
     description: 'A study timer with lofi music, ambient sounds and a task list built for students.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/lofi-timer-for-studying' },
+  alternates: { canonical: 'https://www.focusworkspace.app/lofi-timer-for-studying' },
 }
 
 const FAQ = [
@@ -62,14 +62,14 @@ export default function LofiTimerForStudyingPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Lofi Timer for Studying', url: 'https://focusworkspace.app/lofi-timer-for-studying' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Lofi Timer for Studying', url: 'https://www.focusworkspace.app/lofi-timer-for-studying' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Lofi Timer for Studying"
         description="A student-focused study timer with lofi music, task tracking and a daily streak."
-        url="https://focusworkspace.app/lofi-timer-for-studying"
+        url="https://www.focusworkspace.app/lofi-timer-for-studying"
         applicationCategory="EducationalApplication"
         keywords={['lofi timer for studying', 'study timer', 'student pomodoro']}
       />

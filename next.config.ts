@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      // Canonical domain: non-www → www (defense-in-depth; also configured at the Vercel domain layer)
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'focusworkspace.app' }],
+        destination: 'https://www.focusworkspace.app/:path*',
+        permanent: true,
+      },
       // Phase 1: /embed → /workspace (308 permanent, preserves query params)
       {
         source: '/embed',

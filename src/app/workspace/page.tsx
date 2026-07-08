@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: 'LofiSpace — Free Online Focus Workspace',
     description: 'Lofi music + ambient sounds + Pomodoro timer + to-do list. Study smarter.',
     type: 'website',
-    url: 'https://focusworkspace.app/workspace',
+    url: 'https://www.focusworkspace.app/workspace',
   },
   twitter: {
     card: 'summary_large_image',

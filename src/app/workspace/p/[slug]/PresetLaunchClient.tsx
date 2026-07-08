@@ -103,7 +103,7 @@ export function PresetLaunchClient({ preset, workspaceUrl }: Props) {
 function SharePreset({ slug, title }: { slug: string; title: string }) {
   const url = typeof window !== 'undefined'
     ? `${window.location.origin}/workspace/p/${slug}`
-    : `https://focusworkspace.app/workspace/p/${slug}`
+    : `https://www.focusworkspace.app/workspace/p/${slug}`
 
   function copy() {
     navigator.clipboard.writeText(url).catch(() => {})

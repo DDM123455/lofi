@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     'woodland sounds', 'forest meditation sounds', 'bird sounds forest',
     'nature sounds studying', 'forest ambience', 'forest white noise',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/forest-sounds' },
+  alternates: { canonical: 'https://www.focusworkspace.app/forest-sounds' },
   openGraph: {
     title: 'Forest Sounds for Focus & Relaxation | LofiSpace',
     description: 'Free forest sounds — birds, rustling leaves, and natural ambient sounds for studying and relaxation. No sign-up.',
-    url: 'https://focusworkspace.app/forest-sounds',
+    url: 'https://www.focusworkspace.app/forest-sounds',
     type: 'website',
   },
   twitter: {
@@ -70,14 +70,14 @@ export default function ForestSoundsPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Forest Sounds', url: 'https://focusworkspace.app/forest-sounds' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Forest Sounds', url: 'https://www.focusworkspace.app/forest-sounds' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Forest Sounds"
         description="Free forest sounds online for studying, relaxation, and sleep. Natural ambient sounds — birds, wind, rustling leaves."
-        url="https://focusworkspace.app/forest-sounds"
+        url="https://www.focusworkspace.app/forest-sounds"
         keywords={['forest sounds', 'nature sounds', 'forest ambient', 'birdsong sounds']}
       />
       <FaqJsonLd items={FAQ} />

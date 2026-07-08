@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params
   const post = getPostBySlug(slug)
   if (!post) return {}
-  const url = `https://focusworkspace.app/blog/${post.slug}`
+  const url = `https://www.focusworkspace.app/blog/${post.slug}`
   return {
     title: post.title,
     description: post.excerpt,
@@ -40,14 +40,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   const related = BLOG_POSTS.filter(p => p.slug !== post.slug).slice(0, 3)
 
-  const postUrl = `https://focusworkspace.app/blog/${post.slug}`
+  const postUrl = `https://www.focusworkspace.app/blog/${post.slug}`
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
 
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Blog', url: 'https://focusworkspace.app/blog' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Blog', url: 'https://www.focusworkspace.app/blog' },
         { name: post.title, url: postUrl },
       ]} />
       <BlogPostingJsonLd
@@ -55,7 +55,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         description={post.excerpt}
         url={postUrl}
         publishedAt={post.publishedAt}
-        imageUrl="https://focusworkspace.app/logo.png"
+        dateModified={post.dateModified}
+        imageUrl="https://www.focusworkspace.app/logo.png"
       />
 
       {/* Breadcrumb */}

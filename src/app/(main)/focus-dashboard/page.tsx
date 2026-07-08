@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Focus Dashboard — LofiSpace',
     description: 'Today\'s focus time, streak, weekly chart, heatmap and top tasks. Free, no sign-up.',
     type: 'website',
-    url: 'https://focusworkspace.app/focus-dashboard',
+    url: 'https://www.focusworkspace.app/focus-dashboard',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Focus Dashboard — LofiSpace',
     description: 'Today\'s focus time, streak, weekly chart, heatmap and top tasks. Free, no sign-up.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/focus-dashboard' },
+  alternates: { canonical: 'https://www.focusworkspace.app/focus-dashboard' },
 }
 
 const FAQ = [
@@ -57,14 +57,14 @@ export default function FocusDashboardPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Focus Dashboard', url: 'https://focusworkspace.app/focus-dashboard' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Focus Dashboard', url: 'https://www.focusworkspace.app/focus-dashboard' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Focus Dashboard"
         description="A free focus dashboard with streaks, weekly chart, heatmap and top-task breakdown."
-        url="https://focusworkspace.app/focus-dashboard"
+        url="https://www.focusworkspace.app/focus-dashboard"
         applicationCategory="ProductivityApplication"
         keywords={['focus dashboard', 'productivity dashboard', 'focus time tracker']}
       />

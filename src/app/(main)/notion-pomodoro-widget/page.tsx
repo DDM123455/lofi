@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Notion Pomodoro Widget — LofiSpace',
     description: 'A real, working Pomodoro timer embedded inside Notion — with lofi music built in.',
     type: 'website',
-    url: 'https://focusworkspace.app/notion-pomodoro-widget',
+    url: 'https://www.focusworkspace.app/notion-pomodoro-widget',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Notion Pomodoro Widget — LofiSpace',
     description: 'A real, working Pomodoro timer embedded inside Notion — with lofi music built in.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/notion-pomodoro-widget' },
+  alternates: { canonical: 'https://www.focusworkspace.app/notion-pomodoro-widget' },
 }
 
 const FAQ = [
@@ -59,14 +59,14 @@ export default function NotionPomodoroWidgetPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Notion Pomodoro Widget', url: 'https://focusworkspace.app/notion-pomodoro-widget' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Notion Pomodoro Widget', url: 'https://www.focusworkspace.app/notion-pomodoro-widget' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Notion Pomodoro Widget"
         description="A configurable, embeddable Pomodoro timer with lofi music for Notion pages."
-        url="https://focusworkspace.app/notion-pomodoro-widget"
+        url="https://www.focusworkspace.app/notion-pomodoro-widget"
         applicationCategory="ProductivityApplication"
         keywords={['notion pomodoro widget', 'notion timer embed', 'notion focus timer']}
       />

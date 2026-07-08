@@ -10,11 +10,11 @@ export const metadata: Metadata = {
   title: 'Scene Gallery — 15+ Lofi Study Scenes & Ambient Backgrounds',
   description: 'Browse 15+ hand-crafted lofi ambient scenes: Tokyo Café Rain, Midnight Coding, Cozy Cabin and more. Pick your vibe and open your workspace instantly. Free.',
   keywords: ['lofi scene', 'ambient study backgrounds', 'study vibes', 'lofi backgrounds', 'aesthetic study room', 'virtual study environment', 'ambient workspace'],
-  alternates: { canonical: 'https://focusworkspace.app/scenes' },
+  alternates: { canonical: 'https://www.focusworkspace.app/scenes' },
   openGraph: {
     title: 'Scene Gallery — 15+ Lofi Study Scenes | LofiSpace',
     description: 'Browse 15+ lofi ambient scenes: Tokyo Café Rain, Midnight Coding, Cozy Cabin and more. Free — open in one click.',
-    url: 'https://focusworkspace.app/scenes',
+    url: 'https://www.focusworkspace.app/scenes',
     type: 'website',
   },
   twitter: {
@@ -28,12 +28,12 @@ export default function ScenesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Scene Gallery', url: 'https://focusworkspace.app/scenes' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Scene Gallery', url: 'https://www.focusworkspace.app/scenes' },
       ]} />
       <ItemListJsonLd items={SCENES.map(s => ({
         name: s.name,
-        url: `https://focusworkspace.app/workspace?scene=${s.id}`,
+        url: `https://www.focusworkspace.app/workspace?scene=${s.id}`,
         description: s.description,
       }))} />
 

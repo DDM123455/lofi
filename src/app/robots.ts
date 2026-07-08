@@ -16,6 +16,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: 'Google-Extended', disallow: ['/'] },
       { userAgent: 'CCBot', disallow: ['/'] },
     ],
-    sitemap: 'https://focusworkspace.app/sitemap.xml',
+    sitemap: 'https://www.focusworkspace.app/sitemap.xml',
   }
 }

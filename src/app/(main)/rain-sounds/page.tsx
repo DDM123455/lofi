@@ -12,11 +12,18 @@ export const metadata: Metadata = {
     'rain noise for studying', 'rainfall sounds', 'rain ambient', 'rain white noise',
     'rain sounds free', 'thunderstorm sounds', 'heavy rain sounds',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/rain-sounds' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/rain-sounds',
+    languages: {
+      en: 'https://www.focusworkspace.app/rain-sounds',
+      vi: 'https://www.focusworkspace.app/vi/tieng-mua-hoc-bai',
+      'x-default': 'https://www.focusworkspace.app/rain-sounds',
+    },
+  },
   openGraph: {
     title: 'Rain Sounds for Studying & Focus | LofiSpace',
     description: 'Free rain sounds — mix with lofi music and café noise for the perfect study atmosphere. No sign-up.',
-    url: 'https://focusworkspace.app/rain-sounds',
+    url: 'https://www.focusworkspace.app/rain-sounds',
     type: 'website',
   },
   twitter: {
@@ -75,14 +82,14 @@ export default function RainSoundsPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Rain Sounds', url: 'https://focusworkspace.app/rain-sounds' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Rain Sounds', url: 'https://www.focusworkspace.app/rain-sounds' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Rain Sounds"
         description="Free rain sounds online for studying, focus and relaxation. Mix with lofi music in an interactive ambient sound mixer."
-        url="https://focusworkspace.app/rain-sounds"
+        url="https://www.focusworkspace.app/rain-sounds"
         keywords={['rain sounds', 'rain sounds for studying', 'rain noise', 'ambient rain']}
       />
       <FaqJsonLd items={FAQ} />

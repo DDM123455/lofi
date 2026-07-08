@@ -3,16 +3,17 @@ import Link from 'next/link'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { PRESETS as WORKSPACE_PRESETS, presetWorkspaceUrl } from '@/lib/presets'
 import { EmbedGenerator } from '@/components/embed/EmbedGenerator'
+import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
   title: 'Lofi Widget for Notion — Free Embeddable Study Room',
   description: 'Embed a free lofi music player, ambient sounds mixer, and Pomodoro timer directly into your Notion pages. No sign-up. Works with any Notion /embed block.',
   keywords: ['notion widget', 'lofi notion widget', 'notion study room', 'embed lofi in notion', 'notion pomodoro timer', 'notion ambient sounds', 'notion productivity widget'],
-  alternates: { canonical: 'https://focusworkspace.app/notion-widget' },
+  alternates: { canonical: 'https://www.focusworkspace.app/notion-widget' },
   openGraph: {
     title: 'Lofi Widget for Notion — Free Embeddable Study Room | LofiSpace',
     description: 'Embed a free lofi music + ambient sounds + Pomodoro timer widget into Notion. One URL, zero setup.',
-    url: 'https://focusworkspace.app/notion-widget',
+    url: 'https://www.focusworkspace.app/notion-widget',
     type: 'website',
   },
   twitter: {
@@ -85,14 +86,14 @@ export default function NotionWidgetPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Notion Widget', url: 'https://focusworkspace.app/notion-widget' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Notion Widget', url: 'https://www.focusworkspace.app/notion-widget' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Notion Widget"
         description="Free embeddable lofi music player, ambient sounds mixer and Pomodoro timer for Notion pages."
-        url="https://focusworkspace.app/notion-widget"
+        url="https://www.focusworkspace.app/notion-widget"
         keywords={['notion widget', 'lofi notion embed', 'notion pomodoro timer', 'notion study room']}
       />
       <FaqJsonLd items={FAQ} />
@@ -204,6 +205,7 @@ export default function NotionWidgetPage() {
           <p className="mt-4 text-xs text-white/25">Free forever · No account needed · Works in any Notion /embed block</p>
         </section>
 
+        <RelatedPages exclude="/notion-widget" />
       </div>
     </>
   )

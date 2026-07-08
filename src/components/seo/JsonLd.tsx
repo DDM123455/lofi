@@ -1,4 +1,4 @@
-const BASE = 'https://focusworkspace.app'
+const BASE = 'https://www.focusworkspace.app'
 
 interface SoftwareAppProps {
   type: 'SoftwareApplication' | 'WebApplication'
@@ -67,11 +67,6 @@ export function WebsiteJsonLd() {
     url: BASE,
     description:
       'Free online study room with lofi music, ambient sounds, Pomodoro timer and productivity tools.',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${BASE}/blog?q={search_term_string}` },
-      'query-input': 'required name=search_term_string',
-    },
   }
 
   return (
@@ -146,6 +141,7 @@ interface BlogPostingProps {
   description: string
   url: string
   publishedAt: string
+  dateModified?: string
   imageUrl?: string
   authorName?: string
 }
@@ -155,6 +151,7 @@ export function BlogPostingJsonLd({
   description,
   url,
   publishedAt,
+  dateModified,
   imageUrl,
   authorName = 'LofiSpace',
 }: BlogPostingProps) {
@@ -165,7 +162,7 @@ export function BlogPostingJsonLd({
     description,
     url,
     datePublished: publishedAt,
-    dateModified: publishedAt,
+    dateModified: dateModified || publishedAt,
     author: {
       '@type': 'Organization',
       name: authorName,

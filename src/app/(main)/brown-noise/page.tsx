@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'brown noise free', 'brown noise for studying', 'brown noise sleep', 'brown noise anxiety',
     'brownian noise', 'brown noise generator online', 'deep brown noise', 'brown noise benefits',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/brown-noise' },
+  alternates: { canonical: 'https://www.focusworkspace.app/brown-noise' },
   openGraph: {
     title: 'Free Brown Noise Online — ADHD Focus & Deep Work | LofiSpace',
     description: 'Free brown noise for ADHD focus and deep work. Deep, warm low-frequency noise — mix with lofi music. No sign-up.',
-    url: 'https://focusworkspace.app/brown-noise',
+    url: 'https://www.focusworkspace.app/brown-noise',
     type: 'website',
   },
   twitter: {
@@ -73,14 +73,14 @@ export default function BrownNoisePage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Brown Noise', url: 'https://focusworkspace.app/brown-noise' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Brown Noise', url: 'https://www.focusworkspace.app/brown-noise' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Brown Noise"
         description="Free brown noise online for ADHD focus, deep work, and anxiety relief. Mix with lofi music and ambient sounds."
-        url="https://focusworkspace.app/brown-noise"
+        url="https://www.focusworkspace.app/brown-noise"
         keywords={['brown noise', 'brown noise online', 'brown noise adhd', 'brown noise for focus']}
       />
       <FaqJsonLd items={FAQ} />

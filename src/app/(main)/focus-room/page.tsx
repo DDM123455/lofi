@@ -15,14 +15,21 @@ export const metadata: Metadata = {
     title: 'Focus Room — Deep Work Workspace | LofiSpace',
     description: 'Minimal focus room with ambient sounds, Pomodoro timer and XP rewards. Enter flow state.',
     type: 'website',
-    url: 'https://focusworkspace.app/focus-room',
+    url: 'https://www.focusworkspace.app/focus-room',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Focus Room — LofiSpace',
     description: 'Minimal focus room with ambient sounds, Pomodoro timer and XP rewards.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/focus-room' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/focus-room',
+    languages: {
+      en: 'https://www.focusworkspace.app/focus-room',
+      vi: 'https://www.focusworkspace.app/vi/khong-gian-tap-trung',
+      'x-default': 'https://www.focusworkspace.app/focus-room',
+    },
+  },
 }
 
 const FAQ = [
@@ -61,14 +68,14 @@ export default function FocusRoomPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Focus Room', url: 'https://focusworkspace.app/focus-room' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Focus Room', url: 'https://www.focusworkspace.app/focus-room' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Focus Room"
         description="Minimal deep-focus workspace with ambient sounds, Pomodoro timer and XP progress tracking."
-        url="https://focusworkspace.app/focus-room"
+        url="https://www.focusworkspace.app/focus-room"
         keywords={['focus room', 'deep work', 'pomodoro', 'flow state', 'concentration']}
       />
       <FaqJsonLd items={FAQ} />

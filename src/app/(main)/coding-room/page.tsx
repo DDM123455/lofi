@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Coding Room — LofiSpace',
     description: 'Synthwave music, dark UI, coding cat companion. Focus workspace for developers.',
     type: 'website',
-    url: 'https://focusworkspace.app/coding-room',
+    url: 'https://www.focusworkspace.app/coding-room',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Coding Room — LofiSpace',
     description: 'Synthwave music, dark UI, coding cat companion. Focus workspace for developers.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/coding-room' },
+  alternates: { canonical: 'https://www.focusworkspace.app/coding-room' },
 }
 
 const FAQ = [
@@ -63,14 +63,14 @@ export default function CodingRoomPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Coding Room', url: 'https://focusworkspace.app/coding-room' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Coding Room', url: 'https://www.focusworkspace.app/coding-room' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Coding Room"
         description="Online coding focus room with synthwave music, city ambience and coding cat companion."
-        url="https://focusworkspace.app/coding-room"
+        url="https://www.focusworkspace.app/coding-room"
         applicationCategory="DeveloperApplication"
         keywords={['coding room', 'programming music', 'developer focus', 'synthwave coding']}
       />

@@ -14,11 +14,11 @@ export const metadata: Metadata = {
     'music for studying and concentration', 'instrumental study music',
     'study music free', 'chill study music', 'music while studying',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/study-music' },
+  alternates: { canonical: 'https://www.focusworkspace.app/study-music' },
   openGraph: {
     title: 'Study Music for Focus & Concentration | LofiSpace',
     description: 'Free lofi study music — chill beats and ambient soundscapes to help you concentrate. No sign-up.',
-    url: 'https://focusworkspace.app/study-music',
+    url: 'https://www.focusworkspace.app/study-music',
     type: 'website',
   },
   twitter: {
@@ -77,14 +77,14 @@ export default function StudyMusicPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Study Music', url: 'https://focusworkspace.app/study-music' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Study Music', url: 'https://www.focusworkspace.app/study-music' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Study Music"
         description="Free study music for focus and concentration. Lofi hip-hop, chill beats, and ambient soundscapes to help you study better."
-        url="https://focusworkspace.app/study-music"
+        url="https://www.focusworkspace.app/study-music"
         keywords={['study music', 'lofi study music', 'music for studying', 'concentration music']}
       />
       <FaqJsonLd items={FAQ} />

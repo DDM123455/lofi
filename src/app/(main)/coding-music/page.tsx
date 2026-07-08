@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     'music for programmers', 'coding beats', 'focus music for coding',
     'best music for coding', 'coding music free', 'background music for coding',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/coding-music' },
+  alternates: { canonical: 'https://www.focusworkspace.app/coding-music' },
   openGraph: {
     title: 'Coding Music for Programmers — Focus Beats & Synthwave | LofiSpace',
     description: 'Free coding music — synthwave, lofi beats, and ambient soundscapes for programmers in flow state. No sign-up.',
-    url: 'https://focusworkspace.app/coding-music',
+    url: 'https://www.focusworkspace.app/coding-music',
     type: 'website',
   },
   twitter: {
@@ -69,14 +69,14 @@ export default function CodingMusicPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Coding Music', url: 'https://focusworkspace.app/coding-music' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Coding Music', url: 'https://www.focusworkspace.app/coding-music' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Coding Music"
         description="Free coding music for programmers. Synthwave, lofi hip-hop, and chillhop beats to keep developers in flow state."
-        url="https://focusworkspace.app/coding-music"
+        url="https://www.focusworkspace.app/coding-music"
         keywords={['coding music', 'music for coding', 'programming music', 'synthwave coding']}
       />
       <FaqJsonLd items={FAQ} />

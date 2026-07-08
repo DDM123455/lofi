@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Lofi Pomodoro Timer — LofiSpace',
     description: '25-minute focus sessions with lofi music baked into the timer, not a separate tab.',
     type: 'website',
-    url: 'https://focusworkspace.app/lofi-pomodoro',
+    url: 'https://www.focusworkspace.app/lofi-pomodoro',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Lofi Pomodoro Timer — LofiSpace',
     description: '25-minute focus sessions with lofi music baked into the timer, not a separate tab.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/lofi-pomodoro' },
+  alternates: { canonical: 'https://www.focusworkspace.app/lofi-pomodoro' },
 }
 
 const FAQ = [
@@ -62,14 +62,14 @@ export default function LofiPomodoroPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Lofi Pomodoro', url: 'https://focusworkspace.app/lofi-pomodoro' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Lofi Pomodoro', url: 'https://www.focusworkspace.app/lofi-pomodoro' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Lofi Pomodoro Timer"
         description="Pomodoro timer with lofi music and ambient sounds mixed directly into the widget."
-        url="https://focusworkspace.app/lofi-pomodoro"
+        url="https://www.focusworkspace.app/lofi-pomodoro"
         applicationCategory="ProductivityApplication"
         keywords={['lofi pomodoro', 'pomodoro with music', 'lofi study timer']}
       />

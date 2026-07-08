@@ -44,6 +44,8 @@ export function Footer() {
               <li><Link href="/study-with-me"      className="hover:text-white/70 transition-colors">Study With Me</Link></li>
               <li><Link href="/study-music"        className="hover:text-white/70 transition-colors">Study Music</Link></li>
               <li><Link href="/coding-music"       className="hover:text-white/70 transition-colors">Coding Music</Link></li>
+              <li><Link href="/lofi-pomodoro"      className="hover:text-white/70 transition-colors">Lofi Pomodoro</Link></li>
+              <li><Link href="/ambient-focus-timer" className="hover:text-white/70 transition-colors">Ambient Focus Timer</Link></li>
             </ul>
           </div>
 
@@ -68,6 +70,10 @@ export function Footer() {
               <li><Link href="/workspace"           className="hover:text-white/70 transition-colors">Open Workspace</Link></li>
               <li><Link href="/scenes"              className="hover:text-white/70 transition-colors">Scene Gallery</Link></li>
               <li><Link href="/notion-widget"       className="hover:text-white/70 transition-colors">Notion Widget</Link></li>
+              <li><Link href="/notion-pomodoro-widget" className="hover:text-white/70 transition-colors">Notion Pomodoro Widget</Link></li>
+              <li><Link href="/dashboard"           className="hover:text-white/70 transition-colors">Focus Dashboard</Link></li>
+              <li><Link href="/pomodoro-streak-tracker" className="hover:text-white/70 transition-colors">Streak Tracker</Link></li>
+              <li><Link href="/lofi-timer-for-studying" className="hover:text-white/70 transition-colors">Lofi Study Timer</Link></li>
               <li><Link href="/website-for-studying" className="hover:text-white/70 transition-colors">Website for Studying</Link></li>
               <li><Link href="/blog"                className="hover:text-white/70 transition-colors">Blog</Link></li>
             </ul>

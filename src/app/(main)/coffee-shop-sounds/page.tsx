@@ -13,11 +13,11 @@ export const metadata: Metadata = {
     'cafe sounds online', 'coffee shop white noise', 'cafe ambience for focus',
     'coffee shop sounds free', 'study cafe sounds', 'coffeehouse sounds',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/coffee-shop-sounds' },
+  alternates: { canonical: 'https://www.focusworkspace.app/coffee-shop-sounds' },
   openGraph: {
     title: 'Coffee Shop Sounds for Studying & Focus | LofiSpace',
     description: 'Free coffee shop ambience — murmur, espresso machines, soft background noise. Mix with lofi music for the perfect study atmosphere.',
-    url: 'https://focusworkspace.app/coffee-shop-sounds',
+    url: 'https://www.focusworkspace.app/coffee-shop-sounds',
     type: 'website',
   },
   twitter: {
@@ -76,14 +76,14 @@ export default function CoffeeShopSoundsPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Coffee Shop Sounds', url: 'https://focusworkspace.app/coffee-shop-sounds' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Coffee Shop Sounds', url: 'https://www.focusworkspace.app/coffee-shop-sounds' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Coffee Shop Sounds"
         description="Free coffee shop sounds online for studying, work, and focus. Mix café ambience with lofi music in an interactive ambient sound mixer."
-        url="https://focusworkspace.app/coffee-shop-sounds"
+        url="https://www.focusworkspace.app/coffee-shop-sounds"
         keywords={['coffee shop sounds', 'cafe sounds for studying', 'coffee shop ambience', 'cafe background noise']}
       />
       <FaqJsonLd items={FAQ} />

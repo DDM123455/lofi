@@ -15,14 +15,14 @@ export const metadata: Metadata = {
     title: 'Ambient Focus Timer — LofiSpace',
     description: 'Layer rain, forest, café or fire under a Pomodoro cycle built for work, not just study.',
     type: 'website',
-    url: 'https://focusworkspace.app/ambient-focus-timer',
+    url: 'https://www.focusworkspace.app/ambient-focus-timer',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Ambient Focus Timer — LofiSpace',
     description: 'Layer rain, forest, café or fire under a Pomodoro cycle built for work, not just study.',
   },
-  alternates: { canonical: 'https://focusworkspace.app/ambient-focus-timer' },
+  alternates: { canonical: 'https://www.focusworkspace.app/ambient-focus-timer' },
 }
 
 const FAQ = [
@@ -62,14 +62,14 @@ export default function AmbientFocusTimerPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Ambient Focus Timer', url: 'https://focusworkspace.app/ambient-focus-timer' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Ambient Focus Timer', url: 'https://www.focusworkspace.app/ambient-focus-timer' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Ambient Focus Timer"
         description="A Pomodoro timer built around layered ambient sound for deep work and study."
-        url="https://focusworkspace.app/ambient-focus-timer"
+        url="https://www.focusworkspace.app/ambient-focus-timer"
         applicationCategory="ProductivityApplication"
         keywords={['ambient focus timer', 'ambient sound timer', 'deep work timer']}
       />

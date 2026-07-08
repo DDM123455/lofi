@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 
-const BASE = 'https://focusworkspace.app'
+const BASE = 'https://www.focusworkspace.app'
 
 // Use real dates per content type — Google ignores identical programmatic dates
 const D = (iso: string) => new Date(iso)
@@ -45,6 +45,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/notion-pomodoro-widget`,      lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
     { url: `${BASE}/lofi-timer-for-studying`,     lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
     { url: `${BASE}/ambient-focus-timer`,         lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
+    // Vietnamese landing pages (2026-07-08)
+    { url: `${BASE}/vi/phong-hoc-online`,         lastModified: D('2026-07-08'), changeFrequency: 'monthly', priority: 0.8  },
+    { url: `${BASE}/vi/dong-ho-pomodoro`,         lastModified: D('2026-07-08'), changeFrequency: 'monthly', priority: 0.8  },
+    { url: `${BASE}/vi/nhac-lofi-hoc-bai`,        lastModified: D('2026-07-08'), changeFrequency: 'monthly', priority: 0.8  },
+    { url: `${BASE}/vi/tieng-mua-hoc-bai`,        lastModified: D('2026-07-08'), changeFrequency: 'monthly', priority: 0.8  },
+    { url: `${BASE}/vi/am-thanh-trang-tap-trung`, lastModified: D('2026-07-08'), changeFrequency: 'monthly', priority: 0.8  },
+    { url: `${BASE}/vi/khong-gian-tap-trung`,     lastModified: D('2026-07-08'), changeFrequency: 'monthly', priority: 0.8  },
     // Blog index
     { url: `${BASE}/blog`,                        lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 0.8 },
   ]
@@ -53,7 +60,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map(post => ({
     url: `${BASE}/blog/${post.slug}`,
-    lastModified: new Date(post.publishedAt),
+    lastModified: new Date(post.dateModified || post.publishedAt),
     changeFrequency: 'monthly' as const,
     priority: 0.7,
   }))

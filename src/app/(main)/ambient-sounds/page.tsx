@@ -12,11 +12,11 @@ export const metadata: Metadata = {
     'nature sounds', 'background sounds for focus', 'white noise online', 'study sounds',
     'ambient sounds free', 'soundscape for studying', 'focus sounds',
   ],
-  alternates: { canonical: 'https://focusworkspace.app/ambient-sounds' },
+  alternates: { canonical: 'https://www.focusworkspace.app/ambient-sounds' },
   openGraph: {
     title: 'Free Ambient Sounds Mixer for Studying & Focus | LofiSpace',
     description: 'Mix rain, café, fire, ocean and more with lofi music. Free ambient sound mixer — no sign-up.',
-    url: 'https://focusworkspace.app/ambient-sounds',
+    url: 'https://www.focusworkspace.app/ambient-sounds',
     type: 'website',
   },
   twitter: {
@@ -70,14 +70,14 @@ export default function AmbientSoundsPage() {
   return (
     <>
       <BreadcrumbJsonLd items={[
-        { name: 'Home', url: 'https://focusworkspace.app' },
-        { name: 'Ambient Sounds', url: 'https://focusworkspace.app/ambient-sounds' },
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Ambient Sounds', url: 'https://www.focusworkspace.app/ambient-sounds' },
       ]} />
       <JsonLd
         type="WebApplication"
         name="LofiSpace Ambient Sounds Mixer"
         description="Free online ambient sounds mixer. Layer rain, café, fire, ocean and more with lofi music for studying and focus."
-        url="https://focusworkspace.app/ambient-sounds"
+        url="https://www.focusworkspace.app/ambient-sounds"
         keywords={['ambient sounds', 'ambient mixer', 'focus sounds', 'study sounds']}
       />
       <FaqJsonLd items={FAQ} />

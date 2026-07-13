@@ -14,7 +14,7 @@ import { SupportModal } from '@/components/support/SupportModal'
 
 type ClockStyle = 'digital'|'minimal'|'bold'|'analog'
 type BgType = 'gif'|'youtube'|'video'
-type PanelTab = 'music'|'sounds'|'scene'|'more'
+type PanelTab = 'music'|'sounds'|'more'
 type MoreTab = 'widgets'|'weather'|'pet'|'progress'|'share'
 interface Todo { id:string; text:string; done:boolean; estimate?:number; actual:number }
 interface WxData { city:string; temp:number; code:number; desc:string; emoji:string; feels:number|null; humidity:number|null; wind:number|null }
@@ -232,6 +232,7 @@ export function EmbedClient() {
   const [panel,       setPanel]       = useState(false)
   const [panelTab,    setPanelTab]    = useState<PanelTab>('music')
   const [moreTab,     setMoreTab]     = useState<MoreTab>('widgets')
+  const [openPopover, setOpenPopover] = useState<'youtube'|'background'|null>(null)
   const [now,         setNow]         = useState(new Date())
   const [mounted,     setMounted]     = useState(false)
   const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
@@ -664,6 +665,11 @@ export function EmbedClient() {
     background:active?accentSoft:'transparent',
     color:active?accent:'var(--dim)',
   })
+  const chip=(active:boolean):React.CSSProperties=>({
+    display:'flex',flexDirection:'column',alignItems:'center',gap:2,flexShrink:0,
+    padding:mob?'6px 9px':'8px 13px',border:'none',borderRadius:14,cursor:'pointer',transition:'all .16s ease',
+    background:active?accent:'var(--input)',color:active?'#16121f':'var(--text)',
+  })
   const wStyle=(drag:{pos:{x:number;y:number}|null},def:React.CSSProperties):React.CSSProperties=>({
     position:'absolute',touchAction:'none',userSelect:'none',
     ...(drag.pos?{left:drag.pos.x,top:drag.pos.y}:def),
@@ -675,6 +681,13 @@ export function EmbedClient() {
   const mob=vw<640
   const dbSz=mob?32:40
   const divider:React.CSSProperties={width:1,height:26,background:'var(--border)',margin:'0 2px',flexShrink:0}
+  // Nudge a focused input above the mobile keyboard — panels are absolutely positioned inside
+  // a scrollable root, so browsers don't always auto-scroll them into the visible viewport.
+  const focusScroll=(e:React.FocusEvent<HTMLInputElement>)=>{
+    if(!mob)return
+    const el=e.currentTarget
+    setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300)
+  }
   const bgGradient=getBgPresetByUrl(bgUrl)?.gradient ?? ['#0d0d14','#1a1a24']
 
   // On mobile, panel widths grow to near-full-viewport (see width:Math.min(N,vw-M) below),
@@ -689,32 +702,32 @@ export function EmbedClient() {
   }
 
   return (
-    <div style={{position:'fixed',inset:0,overflow:'hidden',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
+    <div style={{position:'fixed',inset:0,overflowY:mob?'auto':'hidden',overflowX:'hidden',WebkitOverflowScrolling:'touch',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
 
-      {/* ── Background ── */}
-      <div style={{position:'absolute',inset:0,background:`linear-gradient(160deg,${bgGradient[0]},${bgGradient[1]})`}}/>
+      {/* ── Background (fixed to the real viewport so it never scrolls with the stacked panels below) ── */}
+      <div style={{position:'fixed',inset:0,background:`linear-gradient(160deg,${bgGradient[0]},${bgGradient[1]})`}}/>
       {/* Crossfade base: last-shown background stays visible until the new one finishes loading */}
       {prevBg&&(prevBg.type==='video'
         ?<video key={`prev-${prevBg.url}`} src={prevBg.url} autoPlay loop muted playsInline aria-hidden
-            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+            style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
         :prevBg.type==='gif'
           // eslint-disable-next-line @next/next/no-img-element
           ?<img src={prevBg.url} alt="" aria-hidden
-              style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
+              style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
           :null)}
       {bgType==='video'
         ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} key={bgUrl} src={bgUrl} autoPlay loop muted playsInline preload="auto" aria-hidden
             onCanPlay={handleBgReady}
-            style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
+            style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'
           // eslint-disable-next-line @next/next/no-img-element
           ?<img ref={bgElRef as React.RefObject<HTMLImageElement>} src={bgUrl} alt="" aria-hidden onLoad={handleBgReady}
-              style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
-          :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} onLoad={handleBgReady} style={{position:'absolute',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none',opacity:bgReady?1:0,transition:'opacity .5s ease'}} allow="autoplay"/>
+              style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
+          :<iframe src={`https://www.youtube-nocookie.com/embed/${bgYtId}?autoplay=1&mute=1&loop=1&playlist=${bgYtId}&controls=0&playsinline=1&rel=0`} onLoad={handleBgReady} style={{position:'fixed',inset:'-10%',width:'120%',height:'120%',border:'none',pointerEvents:'none',opacity:bgReady?1:0,transition:'opacity .5s ease'}} allow="autoplay"/>
       }
-      <div style={{position:'absolute',inset:0,background:'#000',opacity:bgOpacity/100}}/>
-      {bgBlur>0&&<div style={{position:'absolute',inset:0,backdropFilter:`blur(${bgBlur}px)`}}/>}
-      {atmosphere!=='none'&&<div style={{position:'absolute',inset:0,background:atmOverlay[atmosphere],pointerEvents:'none'}}/>}
+      <div style={{position:'fixed',inset:0,background:'#000',opacity:bgOpacity/100}}/>
+      {bgBlur>0&&<div style={{position:'fixed',inset:0,backdropFilter:`blur(${bgBlur}px)`}}/>}
+      {atmosphere!=='none'&&<div style={{position:'fixed',inset:0,background:atmOverlay[atmosphere],pointerEvents:'none'}}/>}
 
       {/* ── Clock (draggable, top-left) ── */}
       {showClock&&(
@@ -739,16 +752,9 @@ export function EmbedClient() {
         </div>
       )}
 
-      {/* ── Theme switch (top-center) ── */}
-      <div style={{position:'absolute',top:mob?86:30,left:'50%',transform:'translateX(-50%)',zIndex:6,display:'flex',gap:4,padding:5,borderRadius:999,...glassPanel,boxShadow:'0 10px 30px rgba(0,0,0,.35)'}}>
-        {(['glass','warm'] as const).map(t=>(
-          <button key={t} onClick={()=>setTheme(t)} style={{padding:'7px 18px',border:'none',borderRadius:999,fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .16s ease',
-            background:theme===t?accent:'transparent',color:theme===t?'#16121f':'var(--dim)',
-            boxShadow:theme===t?`0 4px 14px ${accentGlow}`:'none'}}>
-            {t==='glass'?'Glass':'Warm'}
-          </button>
-        ))}
-      </div>
+      {/* Theme (Glass/Warm) is still switchable from the round icon button in the dock below —
+          the top-center pill selector was removed since /embed permanently redirects to
+          /workspace (see next.config.ts), so this is the only surface the app ever renders on. */}
 
       {/* ── Pomodoro panel (draggable, top-right) ── */}
       {showPom&&(
@@ -874,7 +880,12 @@ export function EmbedClient() {
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               <span style={{fontSize:11,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim)'}}>{t.todo_title}</span>
             </div>
-            <span style={{fontSize:12,fontWeight:600,color:accent}}>{doneTodos}/{todos.length}</span>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <span style={{fontSize:12,fontWeight:600,color:accent}}>{doneTodos}/{todos.length}</span>
+              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowNote(false)} style={{display:'flex',width:24,height:24,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
           <div style={{padding:'8px 15px 0',fontSize:10.5,color:'var(--dim2)',lineHeight:1.4}}>
             {activeTodoId&&todos.find(x=>x.id===activeTodoId)
@@ -894,17 +905,17 @@ export function EmbedClient() {
                 {(td.actual>0||td.estimate)&&(
                   <span style={{flexShrink:0,fontSize:10.5,fontWeight:600,color:isActive?accent:'var(--dim2)',whiteSpace:'nowrap'}}>🍅 {td.actual}{td.estimate?`/${td.estimate}`:''}</span>
                 )}
-                <button onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();removeTodo(td.id)}} style={{display:'flex',width:22,height:22,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer',opacity:.5}}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+                <button onPointerDown={e=>e.stopPropagation()} onClick={e=>{e.stopPropagation();removeTodo(td.id)}} title={t.todo_remove} style={{display:'flex',width:24,height:24,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer',opacity:.7}}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
               </div>
               )
             })}
           </div>
           <div onPointerDown={e=>e.stopPropagation()} style={{display:'flex',gap:8,padding:'11px 12px',borderTop:'1px solid var(--border)'}}>
-            <input value={todoInput} onChange={e=>setTodoInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} placeholder={t.todo_placeholder}
+            <input value={todoInput} onChange={e=>setTodoInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} onFocus={focusScroll} placeholder={t.todo_placeholder}
               style={{flex:1,minWidth:0,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
-            <input value={todoEstInput} onChange={e=>setTodoEstInput(e.target.value.replace(/\D/g,'').slice(0,2))} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} placeholder={t.todo_estimate_placeholder} inputMode="numeric" title={t.todo_estimate_placeholder}
+            <input value={todoEstInput} onChange={e=>setTodoEstInput(e.target.value.replace(/\D/g,'').slice(0,2))} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} onFocus={focusScroll} placeholder={t.todo_estimate_placeholder} inputMode="numeric" title={t.todo_estimate_placeholder}
               style={{width:36,flexShrink:0,padding:'9px 6px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',textAlign:'center',fontFamily:'inherit'}}/>
             <button onClick={addTodo} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -915,7 +926,7 @@ export function EmbedClient() {
 
       {/* ── Main player panel (bottom-center) ── */}
       {panel&&(
-        <div onClick={e=>e.stopPropagation()} style={{position:'absolute',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:5,width:'min(472px,calc(100vw - 24px))',...glassPanel,borderRadius:22,boxShadow:'0 22px 60px rgba(0,0,0,.42)',overflow:'hidden'}}>
+        <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:5,width:'min(472px,calc(100vw - 24px))',...glassPanel,borderRadius:22,boxShadow:'0 22px 60px rgba(0,0,0,.42)',overflow:'hidden'}}>
 
           {/* Tabs header */}
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 14px',borderBottom:'1px solid var(--border)'}}>
@@ -925,9 +936,6 @@ export function EmbedClient() {
               </button>
               <button onClick={()=>setPanelTab('sounds')} style={tabBtn(panelTab==='sounds')} title={t.tab_sounds}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 13c1.5 0 1.5-4 3-4s1.5 8 3 8 1.5-10 3-10 1.5 6 3 6 1.5-3 3-3"/></svg>
-              </button>
-              <button onClick={()=>setPanelTab('scene')} style={tabBtn(panelTab==='scene')} title={t.tab_scene}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-4.5-4.5L7 21"/></svg>
               </button>
               <button onClick={()=>setPanelTab('more')} style={tabBtn(panelTab==='more')} title={t.tab_settings}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
@@ -966,16 +974,11 @@ export function EmbedClient() {
                       {ytStatus==='ready'&&<span style={{fontSize:11,fontWeight:600,color:accent2}}>LIVE</span>}
                     </div>
                   )}
-                </div>
-                <div style={{marginTop:14,paddingTop:14,borderTop:'1px solid var(--border)'}}>
-                  <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8}}>{t.music_custom_yt}</div>
-                  <div style={{display:'flex',gap:8}}>
-                    <input value={customLofiInput} onChange={e=>setCustomLofiInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')applyCustomLofi()}} placeholder={t.music_custom_placeholder}
-                      style={{flex:1,padding:'10px 12px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
-                    <button onClick={applyCustomLofi} style={{padding:'0 18px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.music_play_btn}</button>
+                  <div style={{marginTop:10,padding:'9px 12px',borderRadius:11,background:'var(--input)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                    <span style={{fontSize:11.5,color:'var(--dim)'}}>{t.music_custom_yt}</span>
+                    <button onClick={()=>setOpenPopover('youtube')} style={{padding:'5px 12px',border:'none',borderRadius:8,background:accentSoft,color:accent,fontWeight:600,fontSize:12,cursor:'pointer',flexShrink:0}}>YouTube</button>
                   </div>
                 </div>
-                {ytStatus==='blocked'&&<p style={{fontSize:10,color:'#f97316',marginTop:8,lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'6px 8px',borderRadius:6}}>{t.music_yt_blocked}</p>}
               </div>
             )}
 
@@ -1000,72 +1003,6 @@ export function EmbedClient() {
                       </div>
                     )
                   })}
-                </div>
-              </div>
-            )}
-
-            {/* ── SCENE (background) ── */}
-            {panelTab==='scene'&&(
-              <div>
-                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_atm_title}</div>
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
-                  {([
-                    ['none','🌐',t.atm_none_label,t.atm_none_note],
-                    ['day','🌸',t.atm_day_label,t.atm_day_note],
-                    ['dusk','🌇',t.atm_dusk_label,t.atm_dusk_note],
-                    ['night','🌙',t.atm_night_label,t.atm_night_note],
-                    ['dim','🌑',t.atm_dim_label,t.atm_dim_note],
-                  ] as [string,string,string,string][]).map(([id,emoji,label,note])=>(
-                    <button key={id} onClick={()=>setAtmosphere(id as any)} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4,padding:12,border:`1px solid ${atmosphere===id?accent:'var(--border)'}`,borderRadius:12,background:atmosphere===id?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease',textAlign:'left'}}>
-                      <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:18}}>{emoji}</span><span style={{fontSize:12,fontWeight:600}}>{label}</span></div>
-                      <span style={{fontSize:10,color:'var(--dim)'}}>{note}</span>
-                    </button>
-                  ))}
-                </div>
-                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_bg_title}</div>
-                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
-                  {BG_PRESETS.map(g=>(
-                    <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType(bgTypeFromUrl(g.url))}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'14px 8px',border:`1px solid ${bgUrl===g.url&&bgType!=='youtube'?accent:'var(--border)'}`,borderRadius:14,background:bgUrl===g.url&&bgType!=='youtube'?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease'}}>
-                      <span style={{fontSize:22,lineHeight:1}}>{g.emoji}</span>
-                      <span style={{fontSize:11,fontWeight:600}}>{g.label}</span>
-                    </button>
-                  ))}
-                </div>
-                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_gif_title}</div>
-                <div style={{display:'flex',gap:8,marginBottom:12}}>
-                  <input type="text" value={customBg} onChange={e=>setCustomBg(e.target.value)} placeholder="https://… .gif"
-                    style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
-                  <button onClick={()=>{const u=customBg.trim();if(u){setBgUrl(u);setBgType(bgTypeFromUrl(u))}}} style={{padding:'0 16px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_gif_use}</button>
-                </div>
-                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_yt_title}</div>
-                <div style={{display:'flex',gap:8,marginBottom:10}}>
-                  <input type="text" value={bgYtInput} onChange={e=>setBgYtInput(e.target.value)} placeholder={t.scene_yt_placeholder}
-                    style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
-                  <button onClick={()=>{const id=parseYtId(bgYtInput);if(id){setBgYtId(id);setBgType('youtube')}}} style={{padding:'0 12px',border:'none',borderRadius:11,background:'#dc2626',color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_yt_btn}</button>
-                </div>
-                {bgType==='youtube'&&(
-                  <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,background:'rgba(220,38,38,0.1)',borderRadius:10,padding:'7px 12px',border:'1px solid rgba(220,38,38,0.3)'}}>
-                    <span style={{fontSize:11,color:'#fca5a5'}}>{t.scene_yt_active}</span>
-                    <button onClick={()=>setBgType('gif')} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.4)',fontSize:12,padding:0}}>{t.scene_yt_off}</button>
-                  </div>
-                )}
-                <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:4}}>
-                  <div>
-                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_dark_title}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <span style={{fontSize:11}}>☀️</span>
-                      <input type="range" min="0" max="90" value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
-                      <span style={{fontSize:11}}>🌑</span>
-                      <span style={{fontSize:10,color:'var(--dim2)',minWidth:28,textAlign:'right'}}>{bgOpacity}%</span>
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_blur_title}</div>
-                    <div style={{display:'flex',alignItems:'center',gap:8}}>
-                      <input type="range" min="0" max="20" value={bgBlur} onChange={e=>setBgBlur(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
-                      <span style={{fontSize:10,color:'var(--dim2)',minWidth:36,textAlign:'right'}}>{bgBlur}px</span>
-                    </div>
-                  </div>
                 </div>
               </div>
             )}
@@ -1306,6 +1243,106 @@ export function EmbedClient() {
         </div>
       )}
 
+      {/* ── YouTube popover (custom audio track, triggered from the dock) ── */}
+      {openPopover==='youtube'&&(
+        <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:9,width:'min(320px,calc(100vw - 24px))',padding:16,...glassPanel,borderRadius:20,boxShadow:'0 22px 60px rgba(0,0,0,.42)'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+            <span style={{fontSize:13,fontWeight:700}}>{t.music_custom_yt}</span>
+            <button onClick={()=>setOpenPopover(null)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          {lofiId==='custom'&&(
+            <div style={{display:'flex',alignItems:'center',gap:9,marginBottom:10,padding:'9px 12px',borderRadius:11,border:`1px solid ${accentSoft}`,background:accentSoft}}>
+              <span style={{width:8,height:8,borderRadius:'50%',background:accent2,flexShrink:0,boxShadow:`0 0 8px ${accent2}`}}/>
+              <span style={{fontSize:13,fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{customLofiId}</span>
+              {ytStatus==='ready'&&<span style={{fontSize:11,fontWeight:600,color:accent2}}>LIVE</span>}
+            </div>
+          )}
+          <div style={{display:'flex',gap:8}}>
+            <input autoFocus value={customLofiInput} onChange={e=>setCustomLofiInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')applyCustomLofi()}} onFocus={focusScroll} placeholder={t.music_custom_placeholder}
+              style={{flex:1,padding:'10px 12px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+            <button onClick={applyCustomLofi} style={{padding:'0 18px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.music_play_btn}</button>
+          </div>
+          {ytStatus==='blocked'&&<p style={{fontSize:10,color:'#f97316',marginTop:8,lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'6px 8px',borderRadius:6}}>{t.music_yt_blocked}</p>}
+        </div>
+      )}
+
+      {/* ── Background ("Nền") popover — presets, custom GIF/YouTube background, atmosphere, opacity, blur ── */}
+      {openPopover==='background'&&(
+        <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:9,width:'min(472px,calc(100vw - 24px))',...glassPanel,borderRadius:22,boxShadow:'0 22px 60px rgba(0,0,0,.42)',overflow:'hidden'}}>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--border)'}}>
+            <span style={{fontSize:13,fontWeight:700}}>{t.tab_scene}</span>
+            <button onClick={()=>setOpenPopover(null)} style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:8,cursor:'pointer'}}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+          <div style={{padding:'14px 16px',maxHeight:'60vh',overflowY:'auto'}}>
+            <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_atm_title}</div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
+              {([
+                ['none','🌐',t.atm_none_label,t.atm_none_note],
+                ['day','🌸',t.atm_day_label,t.atm_day_note],
+                ['dusk','🌇',t.atm_dusk_label,t.atm_dusk_note],
+                ['night','🌙',t.atm_night_label,t.atm_night_note],
+                ['dim','🌑',t.atm_dim_label,t.atm_dim_note],
+              ] as [string,string,string,string][]).map(([id,emoji,label,note])=>(
+                <button key={id} onClick={()=>setAtmosphere(id as any)} style={{display:'flex',flexDirection:'column',alignItems:'flex-start',gap:4,padding:12,border:`1px solid ${atmosphere===id?accent:'var(--border)'}`,borderRadius:12,background:atmosphere===id?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease',textAlign:'left'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:18}}>{emoji}</span><span style={{fontSize:12,fontWeight:600}}>{label}</span></div>
+                  <span style={{fontSize:10,color:'var(--dim)'}}>{note}</span>
+                </button>
+              ))}
+            </div>
+            <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_bg_title}</div>
+            <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
+              {BG_PRESETS.map(g=>(
+                <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType(bgTypeFromUrl(g.url))}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'14px 8px',border:`1px solid ${bgUrl===g.url&&bgType!=='youtube'?accent:'var(--border)'}`,borderRadius:14,background:bgUrl===g.url&&bgType!=='youtube'?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease'}}>
+                  <span style={{fontSize:22,lineHeight:1}}>{g.emoji}</span>
+                  <span style={{fontSize:11,fontWeight:600}}>{g.label}</span>
+                </button>
+              ))}
+            </div>
+            <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_gif_title}</div>
+            <div style={{display:'flex',gap:8,marginBottom:12}}>
+              <input type="text" value={customBg} onChange={e=>setCustomBg(e.target.value)} onFocus={focusScroll} placeholder="https://… .gif"
+                style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+              <button onClick={()=>{const u=customBg.trim();if(u){setBgUrl(u);setBgType(bgTypeFromUrl(u))}}} style={{padding:'0 16px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_gif_use}</button>
+            </div>
+            <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_yt_title}</div>
+            <div style={{display:'flex',gap:8,marginBottom:10}}>
+              <input type="text" value={bgYtInput} onChange={e=>setBgYtInput(e.target.value)} onFocus={focusScroll} placeholder={t.scene_yt_placeholder}
+                style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
+              <button onClick={()=>{const id=parseYtId(bgYtInput);if(id){setBgYtId(id);setBgType('youtube')}}} style={{padding:'0 12px',border:'none',borderRadius:11,background:'#dc2626',color:'#fff',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.scene_yt_btn}</button>
+            </div>
+            {bgType==='youtube'&&(
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10,background:'rgba(220,38,38,0.1)',borderRadius:10,padding:'7px 12px',border:'1px solid rgba(220,38,38,0.3)'}}>
+                <span style={{fontSize:11,color:'#fca5a5'}}>{t.scene_yt_active}</span>
+                <button onClick={()=>setBgType('gif')} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.4)',fontSize:12,padding:0}}>{t.scene_yt_off}</button>
+              </div>
+            )}
+            <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:4,marginBottom:14}}>
+              <div>
+                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_dark_title}</div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontSize:11}}>☀️</span>
+                  <input type="range" min="0" max="90" value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                  <span style={{fontSize:11}}>🌑</span>
+                  <span style={{fontSize:10,color:'var(--dim2)',minWidth:28,textAlign:'right'}}>{bgOpacity}%</span>
+                </div>
+              </div>
+              <div>
+                <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_blur_title}</div>
+                <div style={{display:'flex',alignItems:'center',gap:8}}>
+                  <input type="range" min="0" max="20" value={bgBlur} onChange={e=>setBgBlur(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                  <span style={{fontSize:10,color:'var(--dim2)',minWidth:36,textAlign:'right'}}>{bgBlur}px</span>
+                </div>
+              </div>
+            </div>
+            <a href="/scenes" target="_blank" rel="noopener noreferrer" style={{display:'block',textAlign:'center',fontSize:12,fontWeight:600,color:'var(--dim)',textDecoration:'underline'}}>{t.scene_view_all}</a>
+          </div>
+        </div>
+      )}
+
       {/* ── Companion (draggable) ── */}
       {companionType==='coding'&&(
         <div
@@ -1365,7 +1402,7 @@ export function EmbedClient() {
 
       {/* ── Calendar Modal ── */}
       {showCal&&(
-        <div onClick={()=>setShowCal(false)} style={{position:'absolute',inset:0,zIndex:20,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.42)',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)'}}>
+        <div onClick={()=>setShowCal(false)} style={{position:'fixed',inset:0,zIndex:20,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.42)',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)'}}>
           <div onClick={e=>e.stopPropagation()} style={{display:'flex',width:'min(660px,92vw)',maxHeight:'90vh',...glassPanel,borderRadius:24,boxShadow:'0 30px 80px rgba(0,0,0,.5)',overflow:'hidden'}}>
             {/* Calendar grid */}
             <div style={{flex:1,padding:'22px 24px',overflowY:'auto'}}>
@@ -1444,7 +1481,7 @@ export function EmbedClient() {
                 ))}
               </div>
               <div style={{display:'flex',gap:8,padding:12,borderTop:'1px solid var(--border)'}}>
-                <input value={calInput} onChange={e=>setCalInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addCalNote()}} placeholder={t.cal_placeholder}
+                <input value={calInput} onChange={e=>setCalInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addCalNote()}} onFocus={focusScroll} placeholder={t.cal_placeholder}
                   style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
                 <button onClick={addCalNote} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -1455,105 +1492,116 @@ export function EmbedClient() {
         </div>
       )}
 
-      {/* ── DOCK ── */}
-      <div className="lf-dock" style={{position:'absolute',left:'50%',bottom:mob?12:28,transform:'translateX(-50%)',zIndex:7,maxWidth:'calc(100vw - 16px)',overflowX:'auto',borderRadius:999,...glassPanel,boxShadow:'0 16px 44px rgba(0,0,0,.4)'}}>
-      <div style={{display:'flex',alignItems:'center',gap:mob?3:7,padding:mob?5:8,width:'max-content'}}>
+      {/* ── DOCK — grouped clusters: Play · Content (labeled chips) · Explore · Utility ── */}
+      <div className="lf-dock" style={{position:'fixed',left:'50%',bottom:mob?12:28,transform:'translateX(-50%)',zIndex:7,maxWidth:'calc(100vw - 16px)',overflowX:'auto',borderRadius:999,...glassPanel,boxShadow:'0 16px 44px rgba(0,0,0,.4)'}}>
+      <div style={{display:'flex',alignItems:'center',gap:mob?3:6,padding:mob?5:7,width:'max-content'}}>
 
         {/* Play/Pause */}
-        <button onClick={togglePlay} style={{display:'flex',width:mob?40:46,height:mob?40:46,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
+        <button onClick={togglePlay} style={{display:'flex',width:mob?40:48,height:mob?40:48,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
           {started&&playing
             ?<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
             :<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}
         </button>
 
-        {/* Ambient icons */}
+        {/* Ambient icons preview */}
         {ambCount>0&&(
-          <>
-            <div style={{display:'flex',gap:2,fontSize:14,padding:'0 2px'}}>
-              {Object.keys(ambVols).slice(0,3).map(id=>{const s=AMBIENT_SOUNDS.find(s=>s.id===id);return<span key={id}>{s?.icon}</span>})}
-              {ambCount>3&&<span style={{fontSize:10,color:'var(--dim)',lineHeight:'28px'}}>+{ambCount-3}</span>}
-            </div>
-            <div style={divider}/>
-          </>
+          <div style={{display:'flex',gap:2,fontSize:14,padding:'0 2px'}}>
+            {Object.keys(ambVols).slice(0,3).map(id=>{const s=AMBIENT_SOUNDS.find(s=>s.id===id);return<span key={id}>{s?.icon}</span>})}
+            {ambCount>3&&<span style={{fontSize:10,color:'var(--dim)',lineHeight:'28px'}}>+{ambCount-3}</span>}
+          </div>
         )}
 
-        {!ambCount&&<div style={divider}/>}
-
-        {/* Panel */}
-        <button onClick={()=>setPanel(v=>!v)} style={dockBtn(panel)} title={t.open_player}>
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-        </button>
-
-        {/* Pomodoro */}
-        <button onClick={()=>setShowPom(v=>!v)} style={dockBtn(showPom)} title="Pomodoro">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
-        </button>
-
-        {/* Notes */}
-        <button onClick={()=>setShowNote(v=>!v)} style={{...dockBtn(showNote),position:'relative'}} title={t.todo_title}>
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          {todos.length>0&&<span style={{position:'absolute',top:-2,right:-2,width:14,height:14,borderRadius:'50%',background:accent,fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,color:'#16121f'}}>{todos.length}</span>}
-        </button>
-
-        {/* Calendar */}
-        <button onClick={()=>setShowCal(v=>!v)} style={dockBtn(showCal)} title={t.cal_day_notes}>
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>
-        </button>
-
         <div style={divider}/>
 
-        {/* Scenes */}
-        <a href="/scenes" target="_blank" rel="noopener noreferrer" style={{...dockBtn(false),textDecoration:'none'}} title={t.tab_scene}>
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-        </a>
+        {/* Content cluster */}
+        <div style={{display:'flex',alignItems:'center',gap:mob?1:2}}>
+          <button onClick={()=>setPanel(v=>!v)} style={chip(panel)} title={t.tab_music}>
+            <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>{t.dock_music}</span>
+          </button>
 
-        {/* Blog */}
-        <a href="/blog" target="_blank" rel="noopener noreferrer" style={{...dockBtn(false),textDecoration:'none'}} title="Blog">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        </a>
+          <button onClick={()=>setOpenPopover(v=>v==='youtube'?null:'youtube')} style={chip(openPopover==='youtube')} title={t.music_custom_yt}>
+            <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none"><rect x="2.5" y="5.5" width="19" height="13" rx="4" stroke="currentColor" strokeWidth="1.8"/><path d="M10.5 9.2v5.6l5-2.8-5-2.8z" fill="currentColor"/></svg>
+            <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>YouTube</span>
+          </button>
 
-        {/* Share / Copy link */}
-        <button onClick={handleShare} style={{...dockBtn(copied),flexShrink:0}} title={t.share_copy}>
-          {copied
-            ?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-            :<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>}
-        </button>
+          <button onClick={()=>setOpenPopover(v=>v==='background'?null:'background')} style={chip(openPopover==='background')} title={t.tab_scene}>
+            <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-4.5-4.5L7 21"/></svg>
+            <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>{t.dock_background}</span>
+          </button>
 
-        <div style={divider}/>
+          <button onClick={()=>setShowPom(v=>!v)} style={chip(showPom)} title="Pomodoro">
+            <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg>
+            <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>Pomodoro</span>
+          </button>
 
-        {/* Theme toggle */}
-        <button onClick={()=>setTheme(th=>th==='glass'?'warm':'glass')} style={{display:'flex',width:dbSz,height:dbSz,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:'var(--input)',color:'var(--text)',cursor:'pointer'}} title={t.switch_theme}>
-          {theme==='glass'
-            ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-            :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>}
-        </button>
-        {/* Language toggle */}
-        <div style={divider}/>
-        <div style={{display:'flex',gap:2,padding:'0 2px',flexShrink:0}}>
-          {(['en','vi'] as const).map(l=>(
-            <button key={l} onClick={()=>setLang(l)} style={{display:'flex',height:dbSz,padding:'0 8px',alignItems:'center',justifyContent:'center',border:'none',borderRadius:8,cursor:'pointer',transition:'all .16s ease',fontSize:11,fontWeight:700,letterSpacing:.5,
-              background:lang===l?accentSoft:'transparent',color:lang===l?accent:'var(--dim)'}}>
-              {l.toUpperCase()}
-            </button>
-          ))}
+          <button onClick={()=>setShowNote(v=>!v)} style={{...chip(showNote),position:'relative'}} title={t.todo_title}>
+            <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>{t.dock_todo}</span>
+            {todos.length>0&&<span style={{position:'absolute',top:-2,right:-2,width:14,height:14,borderRadius:'50%',background:'#f0563e',fontSize:8,display:'flex',alignItems:'center',justifyContent:'center',fontWeight:700,color:'#fff'}}>{todos.length}</span>}
+          </button>
+
+          <button onClick={()=>setShowCal(v=>!v)} style={chip(showCal)} title={t.cal_day_notes}>
+            <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9h18M8 2.5v4M16 2.5v4"/></svg>
+            <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>{t.dock_calendar}</span>
+          </button>
         </div>
-        {/* Support */}
+
         <div style={divider}/>
-        <button onClick={()=>setShowSupport(true)} style={{...dockBtn(false),flexShrink:0,color:'#f472b6'}} title="Support LofiSpace 💜">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        </button>
+
+        {/* Explore cluster */}
+        <a href="/dashboard" target="_blank" rel="noopener noreferrer" style={{...chip(false),position:'relative',textDecoration:'none'}} title="Focus Dashboard">
+          <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="10" y="7" width="4" height="13" rx="1"/><rect x="17" y="3" width="4" height="17" rx="1"/></svg>
+          <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>Dashboard</span>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:'absolute',right:5,top:5,opacity:.6}}><path d="M7 17L17 7M9 7h8v8"/></svg>
+        </a>
+
+        <a href="/blog" target="_blank" rel="noopener noreferrer" style={{...chip(false),position:'relative',textDecoration:'none'}} title="Blog">
+          <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>Blog</span>
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:'absolute',right:5,top:5,opacity:.6}}><path d="M7 17L17 7M9 7h8v8"/></svg>
+        </a>
+
         <div style={divider}/>
-        {/* Fullscreen toggle */}
-        <button onClick={toggleFullscreen} style={{...dockBtn(isFullscreen),flexShrink:0}} title={isFullscreen?'Exit Fullscreen':'Fullscreen (F)'}>
-          {isFullscreen
-            ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 0 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
-            :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>}
-        </button>
+
+        {/* Utility cluster */}
+        <div style={{display:'flex',alignItems:'center',gap:1}}>
+          <button onClick={handleShare} style={{...dockBtn(copied),flexShrink:0}} title={t.share_copy}>
+            {copied
+              ?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              :<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>}
+          </button>
+
+          <button onClick={()=>setTheme(th=>th==='glass'?'warm':'glass')} style={{display:'flex',width:dbSz,height:dbSz,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:'transparent',color:'var(--dim)',cursor:'pointer'}} title={t.switch_theme}>
+            {theme==='glass'
+              ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+              :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>}
+          </button>
+
+          <div style={{display:'flex',gap:2,padding:'0 2px',flexShrink:0}}>
+            {(['en','vi'] as const).map(l=>(
+              <button key={l} onClick={()=>setLang(l)} style={{display:'flex',height:dbSz,padding:'0 8px',alignItems:'center',justifyContent:'center',border:'none',borderRadius:8,cursor:'pointer',transition:'all .16s ease',fontSize:11,fontWeight:700,letterSpacing:.5,
+                background:lang===l?accentSoft:'transparent',color:lang===l?accent:'var(--dim)'}}>
+                {l.toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <button onClick={()=>setShowSupport(true)} style={{...dockBtn(false),flexShrink:0,color:'#f472b6'}} title="Support LofiSpace 💜">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
+
+          <button onClick={toggleFullscreen} style={{...dockBtn(isFullscreen),flexShrink:0}} title={isFullscreen?'Exit Fullscreen':'Fullscreen (F)'}>
+            {isFullscreen
+              ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 0 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
+              :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>}
+          </button>
+        </div>
       </div>{/* end inner flex */}
       </div>{/* end dock */}
 
       {/* ── Branding ── */}
-      <a href="/" target="_blank" rel="noopener noreferrer" style={{position:'absolute',bottom:5,right:10,fontSize:9,color:'rgba(255,255,255,0.18)',textDecoration:'none',zIndex:5}}>
+      <a href="/" target="_blank" rel="noopener noreferrer" style={{position:'fixed',bottom:5,right:10,fontSize:9,color:'rgba(255,255,255,0.18)',textDecoration:'none',zIndex:5}}>
         Powered by LofiSpace
       </a>
 
@@ -1562,7 +1610,7 @@ export function EmbedClient() {
 
       {/* ── Onboarding tip (first visit only) ── */}
       {showOnboard&&(
-        <div onClick={dismissOnboard} style={{position:'absolute',bottom:mob?76:96,left:'50%',zIndex:30,cursor:'pointer',animation:'onboardIn 0.35s ease forwards',pointerEvents:'all'}}>
+        <div onClick={dismissOnboard} style={{position:'fixed',bottom:mob?76:96,left:'50%',zIndex:30,cursor:'pointer',animation:'onboardIn 0.35s ease forwards',pointerEvents:'all'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderRadius:14,background:'rgba(20,17,40,0.92)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:`1px solid ${accent}55`,boxShadow:`0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${accent}22`,whiteSpace:'nowrap',maxWidth:'calc(100vw - 32px)'}}>
             <span style={{fontSize:18,flexShrink:0}}>🎵</span>
             <div style={{minWidth:0}}>
@@ -1583,7 +1631,7 @@ export function EmbedClient() {
 
       {/* ── XP toast ── */}
       {xpToast&&(
-        <div key={xpToast.key} style={{position:'absolute',left:'50%',bottom:mob?72:96,zIndex:20,pointerEvents:'none',animation:'xpFloat 2.8s ease forwards',whiteSpace:'nowrap'}}>
+        <div key={xpToast.key} style={{position:'fixed',left:'50%',bottom:mob?72:96,zIndex:20,pointerEvents:'none',animation:'xpFloat 2.8s ease forwards',whiteSpace:'nowrap'}}>
           <div style={{display:'inline-flex',alignItems:'center',gap:6,padding:'7px 16px',borderRadius:999,background:'rgba(26,23,44,0.85)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:`1px solid ${accent}44`,boxShadow:`0 4px 20px ${accentGlow}`,color:'#fff',fontSize:14,fontWeight:700,letterSpacing:.3}}>
             <span style={{fontSize:16}}>⚡</span>
             <span style={{color:accent}}>+{xpToast.xp} XP</span>
@@ -1614,6 +1662,7 @@ export function EmbedClient() {
         input::placeholder,textarea::placeholder{color:var(--dim2,rgba(255,255,255,.3))}
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--track);border-radius:2px}
         .lf-dock::-webkit-scrollbar{display:none}.lf-dock{scrollbar-width:none;-ms-overflow-style:none}
+        @media (max-width:639px){.lf-dock{mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}}
       `}</style>
     </div>
   )

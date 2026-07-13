@@ -15,6 +15,12 @@ export interface Translations {
   tab_scene: string
   tab_settings: string
 
+  // Dock chip labels (short — must fit a small pill on mobile)
+  dock_music: string
+  dock_background: string
+  dock_todo: string
+  dock_calendar: string
+
   // Music tab
   music_custom_yt: string
   music_custom_placeholder: string
@@ -39,6 +45,7 @@ export interface Translations {
   scene_yt_off: string
   scene_dark_title: string
   scene_blur_title: string
+  scene_view_all: string
 
   // Atmosphere
   atm_none_label: string; atm_none_note: string
@@ -105,6 +112,7 @@ export interface Translations {
   todo_active_hint: string
   todo_active_label: string
   todo_active_none: string
+  todo_remove: string
 
   // Calendar
   cal_today: string
@@ -181,6 +189,11 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     tab_scene: 'Background',
     tab_settings: 'Settings',
 
+    dock_music: 'Music',
+    dock_background: 'Scene',
+    dock_todo: 'To-Do',
+    dock_calendar: 'Calendar',
+
     music_custom_yt: 'Custom YouTube',
     music_custom_placeholder: 'Paste URL or video ID…',
     music_play_btn: 'Play',
@@ -202,6 +215,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     scene_yt_off: 'Off ×',
     scene_dark_title: 'Background Darkness',
     scene_blur_title: 'Background Blur',
+    scene_view_all: 'View all scenes →',
 
     atm_none_label: 'Default',   atm_none_note: 'Transparent',
     atm_day_label: 'Daytime',    atm_day_note: 'Bright',
@@ -260,6 +274,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     todo_active_hint: 'Click a task to focus it — pomodoros you complete count toward it',
     todo_active_label: 'Focusing on',
     todo_active_none: 'No active task',
+    todo_remove: 'Remove',
 
     cal_today: 'Today',
     cal_day_notes: 'Day Notes',
@@ -363,6 +378,11 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     tab_scene: 'Hình nền',
     tab_settings: 'Cài đặt',
 
+    dock_music: 'Nhạc',
+    dock_background: 'Nền',
+    dock_todo: 'Việc',
+    dock_calendar: 'Lịch',
+
     music_custom_yt: 'YouTube tùy chỉnh',
     music_custom_placeholder: 'Dán URL hoặc video ID…',
     music_play_btn: 'Phát',
@@ -384,6 +404,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     scene_yt_off: 'Tắt ×',
     scene_dark_title: 'Độ tối nền',
     scene_blur_title: 'Blur nền',
+    scene_view_all: 'Xem tất cả cảnh nền →',
 
     atm_none_label: 'Mặc định',   atm_none_note: 'Trong suốt',
     atm_day_label: 'Ban ngày',    atm_day_note: 'Tươi sáng',
@@ -442,6 +463,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     todo_active_hint: 'Nhấn vào một việc để tập trung — pomodoro hoàn thành sẽ tính cho việc đó',
     todo_active_label: 'Đang tập trung',
     todo_active_none: 'Chưa chọn việc',
+    todo_remove: 'Xoá',
 
     cal_today: 'Hôm nay',
     cal_day_notes: 'Ghi chú ngày',

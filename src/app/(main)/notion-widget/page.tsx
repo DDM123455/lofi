@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { PRESETS as WORKSPACE_PRESETS, presetWorkspaceUrl } from '@/lib/presets'
 import { EmbedGenerator } from '@/components/embed/EmbedGenerator'
 import { RelatedPages } from '@/components/seo/RelatedPages'
@@ -9,7 +10,14 @@ export const metadata: Metadata = {
   title: 'Lofi Widget for Notion — Free Embeddable Study Room',
   description: 'Embed a free lofi music player, ambient sounds mixer, and Pomodoro timer directly into your Notion pages. No sign-up. Works with any Notion /embed block.',
   keywords: ['notion widget', 'lofi notion widget', 'notion study room', 'embed lofi in notion', 'notion pomodoro timer', 'notion ambient sounds', 'notion productivity widget'],
-  alternates: { canonical: 'https://www.focusworkspace.app/notion-widget' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/notion-widget',
+    languages: {
+      en: 'https://www.focusworkspace.app/notion-widget',
+      vi: 'https://www.focusworkspace.app/vi/widget-notion',
+      'x-default': 'https://www.focusworkspace.app/notion-widget',
+    },
+  },
   openGraph: {
     title: 'Lofi Widget for Notion — Free Embeddable Study Room | LofiSpace',
     description: 'Embed a free lofi music + ambient sounds + Pomodoro timer widget into Notion. One URL, zero setup.',
@@ -99,6 +107,10 @@ export default function NotionWidgetPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-12">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Notion Widget', url: 'https://www.focusworkspace.app/notion-widget' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-14 text-center">

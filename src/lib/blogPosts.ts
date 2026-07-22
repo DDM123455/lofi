@@ -17,7 +17,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'lofi-widget-notion-embed',
     title: 'How to Embed a Lofi Music Widget in Notion — Step by Step',
     excerpt: 'Turn your Notion workspace into an aesthetic, focus-ready study space by embedding a live lofi music and ambient sound widget. Takes under 2 minutes.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Notion Tips',
     readTime: 5,
     publishedAt: '2024-12-01',
@@ -27,7 +27,7 @@ export const BLOG_POSTS: BlogPost[] = [
 <p>Notion is one of the most popular knowledge and productivity tools in the world — but most people use it as a silent text editor. In 10 minutes you can turn it into a <strong>fully functional focus workspace</strong> with live lofi music and ambient sounds running directly inside the page.</p>
 
 <h2>Why add ambient sound to Notion?</h2>
-<p>Research from the University of Cambridge shows that gentle background music — especially lofi hip hop — can improve concentration on repetitive tasks by up to <strong>40%</strong>. Ambient sounds like rain or café noise add an additional "white noise" masking layer that drowns out distracting sounds in your environment.</p>
+<p>Lyric-free background music sidesteps the <a href="https://en.wikipedia.org/wiki/Irrelevant_speech_effect" target="_blank" rel="noopener noreferrer">irrelevant speech effect</a> — the well-documented tendency for language, even language you're not actively listening to, to interfere with tasks that involve reading or writing. Lofi hip hop's steady, wordless beat gives your brain a consistent backdrop without that interference. Ambient sounds like rain or café noise add an additional masking layer that drowns out distracting sounds in your environment.</p>
 <p>Combining Notion (your task and note organiser) with LofiSpace (your ambient sound layer) creates a single focused environment where everything you need is in one place.</p>
 
 <h2>Step 1: Set up your workspace on LofiSpace</h2>
@@ -71,7 +71,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'best-lofi-music-for-studying',
     title: 'Best Lofi Music for Studying — 8 Genres Ranked by Focus Effect',
     excerpt: 'Not all lofi is equal when it comes to studying. Here are 8 lofi music genres ranked by their focus effect, BPM, and best use case — plus the science behind why it works.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Music',
     readTime: 7,
     publishedAt: '2024-11-20',
@@ -83,8 +83,8 @@ export const BLOG_POSTS: BlogPost[] = [
 <h2>Why lofi music works for studying — the science</h2>
 <p>Lofi music hits the productivity sweet spot on three dimensions:</p>
 <ul>
-  <li><strong>No lyrics</strong>: lyrics activate your language-processing centre, which competes with reading and writing. Lofi avoids this entirely.</li>
-  <li><strong>Optimal BPM</strong>: most lofi sits at 70–90 BPM — close to resting heart rate, which promotes a calm, alert state without overstimulation.</li>
+  <li><strong>No lyrics</strong>: lyrics activate your language-processing centre, which competes with reading and writing — a well-documented phenomenon known as the <a href="https://en.wikipedia.org/wiki/Irrelevant_speech_effect" target="_blank" rel="noopener noreferrer">irrelevant speech effect</a>. Lofi avoids this entirely.</li>
+  <li><strong>Optimal BPM</strong>: most lofi sits at 70–90 BPM — close to resting heart rate. Music in this range is linked to a calmer physiological state through what researchers call <a href="https://en.wikipedia.org/wiki/Entrainment_(biomusicology)" target="_blank" rel="noopener noreferrer">rhythmic entrainment</a>, without overstimulation.</li>
   <li><strong>Vinyl crackle and texture</strong>: the lo-fi aesthetic creates warmth and familiarity. Many people associate it with safe, comfortable spaces — a psychological state that reduces the resistance to starting difficult tasks.</li>
 </ul>
 
@@ -141,7 +141,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'aesthetic-desk-setup-guide',
     title: 'Aesthetic Desk Setup Guide 2026 — From Lighting to Ambient Sound',
     excerpt: 'A complete, evergreen guide to building an aesthetic home desk setup that actually improves your focus: lighting, plants, cable management, monitor placement, and the ambient sound layer most people forget.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Lifestyle',
     readTime: 8,
     publishedAt: '2024-11-05',
@@ -223,14 +223,14 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'pomodoro-technique-guide',
     title: 'The Pomodoro Technique: How to Study 4 Hours and Achieve More Than 8',
     excerpt: 'A complete guide to the Pomodoro Technique — how it works, the science behind it, common mistakes, and how to combine it with ambient sound for maximum focus.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 6,
     publishedAt: '2024-10-15',
     coverGradient: ['#3d0000', '#7c1e00'],
     emoji: '🍅',
     content: `
-<p>The Pomodoro Technique was developed by Francesco Cirillo in the late 1980s. Named after his tomato-shaped kitchen timer (<em>pomodoro</em> is Italian for tomato), it is one of the most studied and validated productivity techniques in existence. The principle is simple; the implications for your study and work output are significant.</p>
+<p>The Pomodoro Technique was developed by <a href="https://en.wikipedia.org/wiki/Pomodoro_Technique" target="_blank" rel="noopener noreferrer">Francesco Cirillo</a> in the late 1980s, and is still documented today on his <a href="https://www.pomodorotechnique.com/" target="_blank" rel="noopener noreferrer">official Pomodoro Technique site</a>. Named after his tomato-shaped kitchen timer (<em>pomodoro</em> is Italian for tomato), it is one of the most widely adopted productivity techniques in existence. The principle is simple; the implications for your study and work output are significant.</p>
 
 <h2>How the Pomodoro Technique works</h2>
 <ol>
@@ -242,7 +242,7 @@ export const BLOG_POSTS: BlogPost[] = [
 </ol>
 
 <h2>Why it works — the cognitive science</h2>
-<p>The human prefrontal cortex — the region responsible for sustained attention and complex reasoning — cannot operate at peak output for more than 25–40 minutes without degradation. Attempting to power through beyond this point does not produce more work; it produces the same quantity of work at lower quality, while accumulating a cognitive debt that degrades the rest of your session.</p>
+<p>The human prefrontal cortex — the region responsible for sustained attention and complex reasoning — cannot sustain peak output indefinitely; attention and reasoning quality reliably decline the longer an uninterrupted task continues. Attempting to power through this decline does not produce more work; it produces the same quantity of work at lower quality, while accumulating a cognitive debt that degrades the rest of your session.</p>
 <p>The Pomodoro Technique structures work around this biological reality rather than fighting it. Key mechanisms:</p>
 <ul>
   <li><strong>Creates urgency without anxiety</strong>: the visible countdown activates mild time pressure — enough to override procrastination without triggering the stress response that impairs cognition</li>
@@ -295,7 +295,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'lofi-pomodoro-timer',
     title: 'Why Lofi Music Is the Best Soundtrack for the Pomodoro Technique',
     excerpt: 'Not all background music works the same way with timed work sessions. Here is why lofi hip hop specifically pairs so well with the Pomodoro method — BPM ranges, lyric interference, and how to build the habit.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 7,
     publishedAt: '2026-07-04',
@@ -354,7 +354,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'notion-pomodoro-widget',
     title: '5 Ways to Run a Pomodoro Timer Inside Notion',
     excerpt: 'From native Notion formulas to embedded external timers — a practical comparison of every way to run Pomodoro sessions without leaving your Notion workspace.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Notion Tips',
     readTime: 5,
     publishedAt: '2026-07-04',
@@ -406,7 +406,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'aesthetic-pomodoro-timer',
     title: 'What Makes a Pomodoro Timer "Aesthetic" — And Why It Actually Helps You Focus',
     excerpt: 'Aesthetic Pomodoro timers are not just decoration. The visual design of a timer changes how consistently people actually use it — here is the psychology behind it and a checklist for picking one.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 5,
     publishedAt: '2026-07-05',
@@ -457,7 +457,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'pomodoro-timer-for-students',
     title: 'How Students Should Use the Pomodoro Timer Differently Than Office Workers',
     excerpt: 'Class schedules, exam cramming, and study groups do not map cleanly onto a standard 25/5 office Pomodoro. Here is how to adapt the technique for actual student workloads.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Study Tips',
     readTime: 6,
     publishedAt: '2026-07-05',
@@ -504,7 +504,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'pomodoro-timer-for-coding',
     title: 'The Pomodoro Technique for Programmers: When 25 Minutes Is Too Short',
     excerpt: 'Debugging and flow state do not respect a 25-minute buzzer. Here is how developers actually adapt Pomodoro intervals, and when the standard timing still works.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 5,
     publishedAt: '2026-07-06',
@@ -551,7 +551,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'notion-study-widget',
     title: 'The Notion Study Widget Stack: What Actually Belongs on a Study Dashboard',
     excerpt: 'A single embedded timer is not a study dashboard. Here is the full set of widgets students actually use inside Notion, and how they fit together on one page.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Notion Tips',
     readTime: 5,
     publishedAt: '2026-07-06',
@@ -602,7 +602,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'notion-focus-widget',
     title: 'A Notion Focus Widget for Deep Work: Setup for Remote Workers and Knowledge Workers',
     excerpt: 'Study dashboards and focus dashboards solve different problems. Here is how to build a Notion focus widget aimed at deep work blocks, meeting-free time, and long-term output tracking.',
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Notion Tips',
     readTime: 5,
     publishedAt: '2026-07-07',
@@ -649,7 +649,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'rain-sounds-for-studying',
     title: 'Do Rain Sounds Actually Help You Study? The Science Explained',
     excerpt: "Millions of students loop rain sounds during study sessions, but is it just a placebo? Here's what's actually happening in your brain when rain plays in the background.",
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Study Tips',
     readTime: 7,
     publishedAt: '2026-07-04',
@@ -661,19 +661,19 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'brown-noise-vs-white-noise-for-focus',
     title: 'Brown Noise vs. White Noise for Focus: Which One Actually Works Better?',
     excerpt: "Both are sold as focus hacks online, but they have genuinely different frequency spectrums — and that difference determines which one suits your task.",
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Music',
     readTime: 7,
     publishedAt: '2026-07-04',
     coverGradient: ['#0f2027', '#203a43'],
     emoji: '🎧',
-    content: "<p>Brown noise had a moment on social media as a supposed productivity cheat code, often lumped together with white noise as if they're interchangeable. They aren't. The two have distinctly different frequency profiles, and that difference changes what each one is actually good at masking and how tiring it feels over a long session.</p><h2>The Actual Difference: Frequency Spectrum, Not Just Vibes</h2><p>White noise has equal energy at every frequency across the audible spectrum — it's the acoustic equivalent of static, with the hiss you'd associate with an untuned radio. Brown noise (technically Brownian or red noise) drops in energy by about 6 decibels per octave as frequency rises, so the bass and low-mid frequencies dominate and the sharp high end is almost gone. That's why brown noise sounds like a deep, steady rumble — closer to a waterfall heard from a distance, or the low hum of an aircraft cabin — while white noise sounds thinner and hissier.</p><h2>What the Research on Background Noise and Attention Actually Suggests</h2><p>One relevant idea from attention research is stochastic resonance: a weak internal signal (in this case, your brain's dopamine-related attention circuitry) can become easier to detect when a small amount of external noise is added to the system. This is part of why background noise sometimes helps people who are understimulated — including many people with ADHD — sustain focus better than dead silence does. The effect isn't about one specific noise color being scientifically 'proven best'; it's about finding the noise texture that provides enough stimulation without becoming a distraction itself. That threshold looks different from person to person, which is the real reason brown noise works wonders for some people and does nothing for others.</p><h2>Brown Noise: Best For...</h2><p>The lack of harsh high frequencies makes <a href='/brown-noise'>brown noise</a> noticeably less fatiguing over a three- or four-hour work block — there's no thin hiss wearing on your ears by hour two. It's also effective at smoothing over low-frequency environmental noise: traffic rumble, HVAC systems, a washing machine downstairs. People doing long writing sessions, coding marathons, or reading-heavy work often prefer it because the sound sits 'underneath' thought rather than beside it.</p><h2>White Noise: Best For...</h2><p>Because <a href='/white-noise'>white noise</a> carries energy across the full spectrum including the higher frequencies where consonant sounds (s, t, f, k) live, it's meaningfully better at masking nearby speech — the exact frequencies that make a conversation intelligible. If your distraction problem is an open-plan office, a shared apartment, or a call center-style environment where people are talking near you, white noise will cover that more effectively than brown noise's bass-heavy profile. It's also the more common choice for quick, short bursts of concentration since it doesn't require the same 'settling in' period.</p><h2>A Simple Test to Find Your Match</h2><p>Run each for one 25-minute session on similar tasks and note two things: how tired your ears feel afterward, and how often you noticed outside sound breaking through. If your ears feel fatigued but distractions were well-covered, you probably want brown noise for the low-frequency comfort. If distractions still crept in, especially voices, white noise's broader coverage is likely the better fit.</p><h2>Mixing Instead of Choosing</h2><p>You don't have to pick one permanently. In the <a href='/workspace'>LofiSpace workspace</a>, brown noise and white noise both sit alongside dozens of other ambient layers with independent volume control, so you can run brown noise as a steady base and layer in a touch of something else — <a href='/coffee-shop-sounds'>coffee shop ambience</a> or soft <a href='/lofi-music'>lofi</a> — depending on the task in front of you, and save the mix you land on for next time.</p><p>Neither noise color is objectively superior — the right answer depends on what's actually competing for your attention. Try both in the <a href='/workspace'>workspace</a> against your real work, not a hypothetical one, and let your ears settle the debate.</p>",
+    content: "<p>Brown noise had a moment on social media as a supposed productivity cheat code, often lumped together with white noise as if they're interchangeable. They aren't. The two have distinctly different frequency profiles, and that difference changes what each one is actually good at masking and how tiring it feels over a long session.</p><h2>The Actual Difference: Frequency Spectrum, Not Just Vibes</h2><p>White noise has equal energy at every frequency across the audible spectrum — it's the acoustic equivalent of static, with the hiss you'd associate with an untuned radio. Brown noise (technically Brownian or red noise) drops in energy by about 6 decibels per octave as frequency rises, so the bass and low-mid frequencies dominate and the sharp high end is almost gone. That's why brown noise sounds like a deep, steady rumble — closer to a waterfall heard from a distance, or the low hum of an aircraft cabin — while white noise sounds thinner and hissier.</p><h2>What the Research on Background Noise and Attention Actually Suggests</h2><p>One relevant idea from attention research is <a href='https://en.wikipedia.org/wiki/Stochastic_resonance' target='_blank' rel='noopener noreferrer'>stochastic resonance</a>: a weak internal signal (in this case, your brain's dopamine-related attention circuitry) can become easier to detect when a small amount of external noise is added to the system. A <a href='https://acamh.onlinelibrary.wiley.com/doi/abs/10.1111/j.1469-7610.2007.01749.x' target='_blank' rel='noopener noreferrer'>2007 study published in the Journal of Child Psychology and Psychiatry</a> found that background white noise measurably improved cognitive performance in children with ADHD while slightly hurting performance in a control group — part of why background noise sometimes helps people who are understimulated sustain focus better than dead silence does. The effect isn't about one specific noise color being scientifically 'proven best'; it's about finding the noise texture that provides enough stimulation without becoming a distraction itself. That threshold looks different from person to person, which is the real reason brown noise works wonders for some people and does nothing for others.</p><h2>Brown Noise: Best For...</h2><p>The lack of harsh high frequencies makes <a href='/brown-noise'>brown noise</a> noticeably less fatiguing over a three- or four-hour work block — there's no thin hiss wearing on your ears by hour two. It's also effective at smoothing over low-frequency environmental noise: traffic rumble, HVAC systems, a washing machine downstairs. People doing long writing sessions, coding marathons, or reading-heavy work often prefer it because the sound sits 'underneath' thought rather than beside it.</p><h2>White Noise: Best For...</h2><p>Because <a href='/white-noise'>white noise</a> carries energy across the full spectrum including the higher frequencies where consonant sounds (s, t, f, k) live, it's meaningfully better at masking nearby speech — the exact frequencies that make a conversation intelligible. If your distraction problem is an open-plan office, a shared apartment, or a call center-style environment where people are talking near you, white noise will cover that more effectively than brown noise's bass-heavy profile. It's also the more common choice for quick, short bursts of concentration since it doesn't require the same 'settling in' period.</p><h2>A Simple Test to Find Your Match</h2><p>Run each for one 25-minute session on similar tasks and note two things: how tired your ears feel afterward, and how often you noticed outside sound breaking through. If your ears feel fatigued but distractions were well-covered, you probably want brown noise for the low-frequency comfort. If distractions still crept in, especially voices, white noise's broader coverage is likely the better fit.</p><h2>Mixing Instead of Choosing</h2><p>You don't have to pick one permanently. In the <a href='/workspace'>LofiSpace workspace</a>, brown noise and white noise both sit alongside dozens of other ambient layers with independent volume control, so you can run brown noise as a steady base and layer in a touch of something else — <a href='/coffee-shop-sounds'>coffee shop ambience</a> or soft <a href='/lofi-music'>lofi</a> — depending on the task in front of you, and save the mix you land on for next time.</p><p>Neither noise color is objectively superior — the right answer depends on what's actually competing for your attention. Try both in the <a href='/workspace'>workspace</a> against your real work, not a hypothetical one, and let your ears settle the debate.</p>",
   },
   {
     slug: 'rain-ambience-for-focus',
     title: 'Rain Ambience for Focus: Designing a Sound Environment, Not Just Playing a Track',
     excerpt: "There's a difference between playing rain sounds to mask noise and building a rain ambience that puts your brain into focus mode. Here's how to do the second one.",
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 7,
     publishedAt: '2026-07-05',
@@ -685,7 +685,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'white-noise-for-studying',
     title: 'White Noise for Studying: How Much, When, and Why It Works (or Doesn’t)',
     excerpt: "White noise is a go-to study aid, but volume and timing matter more than most people realize. Here's the mechanism behind it and when it can actually backfire.",
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Study Tips',
     readTime: 7,
     publishedAt: '2026-07-05',
@@ -697,7 +697,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'ambient-sound-mixer-online',
     title: 'How to Build Your Own Focus Soundscape With an Online Ambient Sound Mixer',
     excerpt: "A single ambient sound loop fatigues fast. Here's how layering multiple sounds with an online mixer builds a soundscape that actually holds up over a long work session.",
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 8,
     publishedAt: '2026-07-06',
@@ -709,7 +709,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'lofi-music-for-studying',
     title: 'Why Lofi Music Actually Helps You Study: The Psychology Behind the Beats',
     excerpt: "Lofi didn't become the study genre by accident. Here's the actual psychology — tempo, texture, and repetition — behind why it works for focus.",
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Music',
     readTime: 7,
     publishedAt: '2026-07-06',
@@ -721,7 +721,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'focus-timer-for-deep-work',
     title: 'Choosing a Focus Timer for Deep Work: Pomodoro and Beyond',
     excerpt: "Not all focus timers suit all work. Here's how Pomodoro compares to longer deep work blocks and ultradian-based techniques, and how to match a timer to your task.",
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 7,
     publishedAt: '2026-07-07',
@@ -734,7 +734,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'best-lofi-study-room-online',
     title: `What Actually Makes the Best Lofi Study Room Online? A Practical Checklist`,
     excerpt: `Not every lofi study room online is built the same. Here's what actually separates a room you'll use for months from one you'll close in ten minutes.`,
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Study Tips',
     readTime: 6,
     publishedAt: '2026-07-05',
@@ -785,7 +785,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'study-with-me-website',
     title: `The Psychology Behind "Study With Me" Websites (And Why They Actually Work)`,
     excerpt: `Study-with-me videos turned into a genre almost by accident. Here's the research on why sitting alongside a stranger — even a virtual one — makes you more likely to finish your work.`,
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 5,
     publishedAt: '2026-07-06',
@@ -826,7 +826,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'virtual-study-room-for-students',
     title: `Virtual Study Rooms for Students: What Actually Helps at Each Stage`,
     excerpt: `A high schooler doing homework, a college student juggling five classes, and a grad student writing a thesis need different things from a virtual study room. Here's how the needs actually differ.`,
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Study Tips',
     readTime: 5,
     publishedAt: '2026-07-05',
@@ -865,7 +865,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'coding-music-for-developers',
     title: `How Developers Actually Choose Music While Coding: A Field Guide`,
     excerpt: `Not all code benefits from the same soundtrack. Here's why lyrics wreck some coding tasks but not others, and how flow state, working memory and task type shape what actually helps.`,
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Music',
     readTime: 6,
     publishedAt: '2026-07-07',
@@ -904,7 +904,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'online-study-room-with-lofi-music',
     title: `Anatomy of an Online Study Room With Lofi Music: How the Pieces Fit Together`,
     excerpt: `An online study room isn't just a beat and a background video. Here's how the environment, the timer, the task list and the progress tracking actually work as one system.`,
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 5,
     publishedAt: '2026-07-08',
@@ -935,7 +935,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: 'free-focus-workspace',
     title: `How to Build a Free Focus Workspace From Scratch (No Paid Apps Required)`,
     excerpt: `A lot of focus tools have quietly started paywalling streak tracking and sound packs. Here's how to put together a genuinely free focus workspace, piece by piece.`,
-    author: 'LofiSpace Team',
+    author: 'Alex Chen',
     category: 'Productivity',
     readTime: 5,
     publishedAt: '2026-07-07',

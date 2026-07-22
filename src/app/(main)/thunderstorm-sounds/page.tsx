@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -14,7 +15,14 @@ export const metadata: Metadata = {
     'thunderstorm white noise', 'thunder rain sounds', 'stormy weather sounds',
     'thunderstorm sounds for studying', 'thunder sounds online',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/thunderstorm-sounds' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/thunderstorm-sounds',
+    languages: {
+      en: 'https://www.focusworkspace.app/thunderstorm-sounds',
+      vi: 'https://www.focusworkspace.app/vi/am-thanh-mua-bao',
+      'x-default': 'https://www.focusworkspace.app/thunderstorm-sounds',
+    },
+  },
   openGraph: {
     title: 'Thunderstorm Sounds for Sleep & Focus | LofiSpace',
     description: 'Free thunderstorm sounds — heavy rain and distant thunder for deep focus or sleep. Mix with lofi music. No sign-up.',
@@ -83,6 +91,10 @@ export default function ThunderstormSoundsPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Thunderstorm Sounds', url: 'https://www.focusworkspace.app/thunderstorm-sounds' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

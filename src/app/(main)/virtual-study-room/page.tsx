@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -12,7 +13,14 @@ export const metadata: Metadata = {
     'virtual study hall', 'online study environment', 'aesthetic study room online',
     'free virtual study room', 'lofi study room', 'virtual library', 'study room with music',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/virtual-study-room' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/virtual-study-room',
+    languages: {
+      en: 'https://www.focusworkspace.app/virtual-study-room',
+      vi: 'https://www.focusworkspace.app/vi/phong-hoc-ao',
+      'x-default': 'https://www.focusworkspace.app/virtual-study-room',
+    },
+  },
   openGraph: {
     title: 'Virtual Study Room — Free Online Study Space | LofiSpace',
     description: 'Free virtual study room with lofi music, Pomodoro timer, XP streaks and beautiful animated scenes.',
@@ -157,6 +165,10 @@ export default function VirtualStudyRoomPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Virtual Study Room', url: 'https://www.focusworkspace.app/virtual-study-room' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

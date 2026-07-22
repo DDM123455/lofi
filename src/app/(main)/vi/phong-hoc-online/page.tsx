@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -78,6 +79,10 @@ export default function PhongHocOnlinePage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Phòng Học Online', url: 'https://www.focusworkspace.app/vi/phong-hoc-online' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { BlogFilter } from './BlogFilter'
 
 export const metadata: Metadata = {
@@ -25,6 +26,10 @@ export const metadata: Metadata = {
 export default function BlogPage() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
+      <Breadcrumb items={[
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Blog', url: 'https://www.focusworkspace.app/blog' },
+      ]} />
       <BreadcrumbJsonLd items={[
         { name: 'Home', url: 'https://www.focusworkspace.app' },
         { name: 'Blog', url: 'https://www.focusworkspace.app/blog' },

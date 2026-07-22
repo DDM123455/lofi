@@ -3,6 +3,8 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { BLOG_POSTS, getPostBySlug } from '@/lib/blogPosts'
 import { BlogPostingJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
+import { AuthorBio, AUTHOR_TITLE, AUTHOR_URL } from '@/components/seo/AuthorBio'
 
 export function generateStaticParams() {
   return BLOG_POSTS.map(p => ({ slug: p.slug }))
@@ -57,16 +59,16 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         publishedAt={post.publishedAt}
         dateModified={post.dateModified}
         imageUrl="https://www.focusworkspace.app/logo.png"
+        authorName={post.author}
+        authorTitle={AUTHOR_TITLE}
+        authorUrl={AUTHOR_URL}
       />
 
-      {/* Breadcrumb */}
-      <nav className="mb-8 flex items-center gap-2 text-sm text-white/30">
-        <Link href="/" className="hover:text-white/60">Home</Link>
-        <span>/</span>
-        <Link href="/blog" className="hover:text-white/60">Blog</Link>
-        <span>/</span>
-        <span className="text-white/50">{post.category}</span>
-      </nav>
+      <Breadcrumb items={[
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Blog', url: 'https://www.focusworkspace.app/blog' },
+        { name: post.title, url: postUrl },
+      ]} />
 
       {/* Hero */}
       <div
@@ -85,6 +87,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           {new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </span>
         <span className="text-xs text-white/30">{post.readTime} min read</span>
+        <span className="text-xs text-white/30">By {post.author}</span>
       </div>
 
       {/* Title */}
@@ -126,6 +129,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           Open Workspace — Free →
         </Link>
       </div>
+
+      <AuthorBio />
 
       {/* Related posts */}
       {related.length > 0 && (

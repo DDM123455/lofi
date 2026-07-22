@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 import DashboardClient from './DashboardClient'
 
@@ -11,7 +12,14 @@ export const metadata: Metadata = {
     'pomodoro dashboard', 'focus dashboard', 'pomodoro streak tracker', 'focus heatmap',
     'pomodoro stats', 'study streak tracker', 'productivity dashboard', 'focus time tracker',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/dashboard' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/dashboard',
+    languages: {
+      en: 'https://www.focusworkspace.app/dashboard',
+      vi: 'https://www.focusworkspace.app/vi/bang-thong-ke-hoc-tap',
+      'x-default': 'https://www.focusworkspace.app/dashboard',
+    },
+  },
   openGraph: {
     title: 'Focus Dashboard — Pomodoro Streaks, Heatmap & Stats | LofiSpace',
     description: 'Track your focus time, streak, weekly progress and a focus heatmap. Free, no sign-up.',
@@ -59,6 +67,12 @@ export default function DashboardPage() {
         keywords={['pomodoro dashboard', 'focus heatmap', 'streak tracker']}
       />
       <FaqJsonLd items={FAQ} />
+      <div className="mx-auto max-w-5xl px-4 pt-8">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Dashboard', url: 'https://www.focusworkspace.app/dashboard' },
+        ]} />
+      </div>
       <DashboardClient />
       <div className="mx-auto max-w-5xl px-4">
         <RelatedPages exclude="/dashboard" />

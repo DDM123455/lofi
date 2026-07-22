@@ -144,6 +144,8 @@ interface BlogPostingProps {
   dateModified?: string
   imageUrl?: string
   authorName?: string
+  authorTitle?: string
+  authorUrl?: string
 }
 
 export function BlogPostingJsonLd({
@@ -154,6 +156,8 @@ export function BlogPostingJsonLd({
   dateModified,
   imageUrl,
   authorName = 'LofiSpace',
+  authorTitle,
+  authorUrl,
 }: BlogPostingProps) {
   const schema = {
     '@context': 'https://schema.org',
@@ -164,9 +168,10 @@ export function BlogPostingJsonLd({
     datePublished: publishedAt,
     dateModified: dateModified || publishedAt,
     author: {
-      '@type': 'Organization',
+      '@type': 'Person',
       name: authorName,
-      url: BASE,
+      ...(authorTitle && { jobTitle: authorTitle }),
+      ...(authorUrl && { url: authorUrl }),
     },
     publisher: {
       '@type': 'Organization',

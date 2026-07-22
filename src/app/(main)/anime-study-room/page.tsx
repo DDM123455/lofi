@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -22,7 +23,14 @@ export const metadata: Metadata = {
     title: 'Anime Study Room — LofiSpace',
     description: 'Japanese aesthetic study space with lofi music, rain sounds & Pomodoro timer.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/anime-study-room' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/anime-study-room',
+    languages: {
+      en: 'https://www.focusworkspace.app/anime-study-room',
+      vi: 'https://www.focusworkspace.app/vi/phong-hoc-anime',
+      'x-default': 'https://www.focusworkspace.app/anime-study-room',
+    },
+  },
 }
 
 const FAQ = [
@@ -76,6 +84,10 @@ export default function AnimeStudyRoomPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Anime Study Room', url: 'https://www.focusworkspace.app/anime-study-room' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

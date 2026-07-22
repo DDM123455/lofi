@@ -5,6 +5,7 @@ import type { SceneCategory } from '@/lib/scenes'
 import { SceneGrid } from './SceneGrid'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 
 export const metadata: Metadata = {
   title: 'Scene Gallery — 15+ Lofi Study Scenes & Ambient Backgrounds',
@@ -27,6 +28,10 @@ export const metadata: Metadata = {
 export default function ScenesPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
+      <Breadcrumb items={[
+        { name: 'Home', url: 'https://www.focusworkspace.app' },
+        { name: 'Scene Gallery', url: 'https://www.focusworkspace.app/scenes' },
+      ]} />
       <BreadcrumbJsonLd items={[
         { name: 'Home', url: 'https://www.focusworkspace.app' },
         { name: 'Scene Gallery', url: 'https://www.focusworkspace.app/scenes' },

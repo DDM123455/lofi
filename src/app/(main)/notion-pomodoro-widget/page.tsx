@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
+import { PomodoroCompare } from '@/components/seo/PomodoroCompare'
 
 export const metadata: Metadata = {
   title: 'Notion Pomodoro Widget — Run a Timer Inside Your Notion Page',
@@ -22,7 +24,14 @@ export const metadata: Metadata = {
     title: 'Notion Pomodoro Widget — LofiSpace',
     description: 'A real, working Pomodoro timer embedded inside Notion — with lofi music built in.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/notion-pomodoro-widget' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/notion-pomodoro-widget',
+    languages: {
+      en: 'https://www.focusworkspace.app/notion-pomodoro-widget',
+      vi: 'https://www.focusworkspace.app/vi/widget-pomodoro-notion',
+      'x-default': 'https://www.focusworkspace.app/notion-pomodoro-widget',
+    },
+  },
 }
 
 const FAQ = [
@@ -73,6 +82,10 @@ export default function NotionPomodoroWidgetPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Notion Pomodoro Widget', url: 'https://www.focusworkspace.app/notion-pomodoro-widget' },
+        ]} />
         <div className="mb-16 text-center">
           <span className="mb-4 inline-block rounded-full bg-indigo-900/30 px-4 py-1 text-sm text-indigo-300 ring-1 ring-indigo-500/20">
             📝 Notion · Pomodoro · Lofi
@@ -159,6 +172,8 @@ export default function NotionPomodoroWidgetPage() {
             Open the Embed Generator →
           </Link>
         </div>
+
+        <PomodoroCompare exclude="/notion-pomodoro-widget" />
 
         <RelatedPages exclude="/notion-pomodoro-widget" />
       </div>

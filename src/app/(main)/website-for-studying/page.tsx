@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 
 export const metadata: Metadata = {
   title: 'Best Website for Studying — Free Study Room with Lofi',
@@ -13,7 +14,14 @@ export const metadata: Metadata = {
     'study app online', 'lofi study website', 'website to help study',
     'free online study room', 'study tools for students', 'study environment online',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/website-for-studying' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/website-for-studying',
+    languages: {
+      en: 'https://www.focusworkspace.app/website-for-studying',
+      vi: 'https://www.focusworkspace.app/vi/website-hoc-bai-mien-phi',
+      'x-default': 'https://www.focusworkspace.app/website-for-studying',
+    },
+  },
   openGraph: {
     title: 'Best Free Website for Studying | LofiSpace',
     description: 'Lofi music, ambient sounds, Pomodoro timer, and 15+ study scenes — all free in one browser tab. The study website students actually use.',
@@ -128,6 +136,10 @@ export default function WebsiteForStudyingPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Website for Studying', url: 'https://www.focusworkspace.app/website-for-studying' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

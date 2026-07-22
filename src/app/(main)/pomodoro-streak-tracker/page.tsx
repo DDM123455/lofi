@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
+import { PomodoroCompare } from '@/components/seo/PomodoroCompare'
 
 export const metadata: Metadata = {
   title: 'Pomodoro Streak Tracker — Daily Focus Streaks & Heatmap',
@@ -22,7 +24,14 @@ export const metadata: Metadata = {
     title: 'Pomodoro Streak Tracker — LofiSpace',
     description: 'Current streak, best streak, weekly progress and a 90-day focus heatmap. Free.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/pomodoro-streak-tracker' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/pomodoro-streak-tracker',
+    languages: {
+      en: 'https://www.focusworkspace.app/pomodoro-streak-tracker',
+      vi: 'https://www.focusworkspace.app/vi/theo-doi-chuoi-pomodoro',
+      'x-default': 'https://www.focusworkspace.app/pomodoro-streak-tracker',
+    },
+  },
 }
 
 const FAQ = [
@@ -80,6 +89,10 @@ export default function PomodoroStreakTrackerPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Pomodoro Streak Tracker', url: 'https://www.focusworkspace.app/pomodoro-streak-tracker' },
+        ]} />
         <div className="mb-16 text-center">
           <span className="mb-4 inline-block rounded-full bg-orange-900/30 px-4 py-1 text-sm text-orange-300 ring-1 ring-orange-500/20">
             🔥 Streaks · Heatmap · No Sign-up
@@ -162,6 +175,8 @@ export default function PomodoroStreakTrackerPage() {
             View Focus Dashboard →
           </Link>
         </div>
+
+        <PomodoroCompare exclude="/pomodoro-streak-tracker" />
 
         <RelatedPages exclude="/pomodoro-streak-tracker" />
       </div>

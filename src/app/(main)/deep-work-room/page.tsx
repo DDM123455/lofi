@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -22,7 +23,14 @@ export const metadata: Metadata = {
     title: 'Deep Work Room — LofiSpace',
     description: 'Minimal online room for deep work. Rain ambience, Pomodoro timer, XP system.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/deep-work-room' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/deep-work-room',
+    languages: {
+      en: 'https://www.focusworkspace.app/deep-work-room',
+      vi: 'https://www.focusworkspace.app/vi/khong-gian-deep-work',
+      'x-default': 'https://www.focusworkspace.app/deep-work-room',
+    },
+  },
 }
 
 const FAQ = [
@@ -74,6 +82,10 @@ export default function DeepWorkRoomPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Deep Work Room', url: 'https://www.focusworkspace.app/deep-work-room' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

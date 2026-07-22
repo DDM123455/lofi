@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
+import { PomodoroCompare } from '@/components/seo/PomodoroCompare'
 
 export const metadata: Metadata = {
   title: 'Ambient Focus Timer — Pomodoro Timer with Layered Ambient Sound',
@@ -22,7 +24,14 @@ export const metadata: Metadata = {
     title: 'Ambient Focus Timer — LofiSpace',
     description: 'Layer rain, forest, café or fire under a Pomodoro cycle built for work, not just study.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/ambient-focus-timer' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/ambient-focus-timer',
+    languages: {
+      en: 'https://www.focusworkspace.app/ambient-focus-timer',
+      vi: 'https://www.focusworkspace.app/vi/dong-ho-tap-trung-am-thanh',
+      'x-default': 'https://www.focusworkspace.app/ambient-focus-timer',
+    },
+  },
 }
 
 const FAQ = [
@@ -76,6 +85,10 @@ export default function AmbientFocusTimerPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Ambient Focus Timer', url: 'https://www.focusworkspace.app/ambient-focus-timer' },
+        ]} />
         <div className="mb-16 text-center">
           <span className="mb-4 inline-block rounded-full bg-emerald-900/30 px-4 py-1 text-sm text-emerald-300 ring-1 ring-emerald-500/20">
             🌿 Ambient Sound · Optional Music · Custom Timer
@@ -159,6 +172,8 @@ export default function AmbientFocusTimerPage() {
             Open Ambient Focus Timer — Free →
           </Link>
         </div>
+
+        <PomodoroCompare exclude="/ambient-focus-timer" />
 
         <RelatedPages exclude="/ambient-focus-timer" />
       </div>

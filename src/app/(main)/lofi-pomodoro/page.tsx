@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
+import { PomodoroCompare } from '@/components/seo/PomodoroCompare'
 
 export const metadata: Metadata = {
   title: 'Lofi Pomodoro Timer — Focus Sessions with Lofi Music',
@@ -22,7 +24,14 @@ export const metadata: Metadata = {
     title: 'Lofi Pomodoro Timer — LofiSpace',
     description: '25-minute focus sessions with lofi music baked into the timer, not a separate tab.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/lofi-pomodoro' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/lofi-pomodoro',
+    languages: {
+      en: 'https://www.focusworkspace.app/lofi-pomodoro',
+      vi: 'https://www.focusworkspace.app/vi/dong-ho-lofi-pomodoro',
+      'x-default': 'https://www.focusworkspace.app/lofi-pomodoro',
+    },
+  },
 }
 
 const FAQ = [
@@ -76,6 +85,10 @@ export default function LofiPomodoroPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Lofi Pomodoro', url: 'https://www.focusworkspace.app/lofi-pomodoro' },
+        ]} />
         <div className="mb-16 text-center">
           <span className="mb-4 inline-block rounded-full bg-violet-900/30 px-4 py-1 text-sm text-violet-300 ring-1 ring-violet-500/20">
             🎧 Lofi + Pomodoro, in one widget
@@ -158,6 +171,8 @@ export default function LofiPomodoroPage() {
             Open Lofi Pomodoro — Free →
           </Link>
         </div>
+
+        <PomodoroCompare exclude="/lofi-pomodoro" />
 
         <RelatedPages exclude="/lofi-pomodoro" />
       </div>

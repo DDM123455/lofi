@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -13,7 +14,14 @@ export const metadata: Metadata = {
     'cafe sounds online', 'coffee shop white noise', 'cafe ambience for focus',
     'coffee shop sounds free', 'study cafe sounds', 'coffeehouse sounds',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/coffee-shop-sounds' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/coffee-shop-sounds',
+    languages: {
+      en: 'https://www.focusworkspace.app/coffee-shop-sounds',
+      vi: 'https://www.focusworkspace.app/vi/am-thanh-quan-cafe',
+      'x-default': 'https://www.focusworkspace.app/coffee-shop-sounds',
+    },
+  },
   openGraph: {
     title: 'Coffee Shop Sounds for Studying & Focus | LofiSpace',
     description: 'Free coffee shop ambience — murmur, espresso machines, soft background noise. Mix with lofi music for the perfect study atmosphere.',
@@ -89,6 +97,10 @@ export default function CoffeeShopSoundsPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Coffee Shop Sounds', url: 'https://www.focusworkspace.app/coffee-shop-sounds' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -12,7 +13,14 @@ export const metadata: Metadata = {
     'online study session', 'study together online', 'body doubling for studying',
     'study accountability', 'study session online', 'study partner online',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/study-with-me' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/study-with-me',
+    languages: {
+      en: 'https://www.focusworkspace.app/study-with-me',
+      vi: 'https://www.focusworkspace.app/vi/hoc-cung-nhau-online',
+      'x-default': 'https://www.focusworkspace.app/study-with-me',
+    },
+  },
   openGraph: {
     title: 'Study With Me Online — Free Virtual Study Space | LofiSpace',
     description: 'Study with me in a free virtual room with lofi music, Pomodoro timer and XP streaks. No sign-up.',
@@ -102,6 +110,10 @@ export default function StudyWithMePage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Study With Me', url: 'https://www.focusworkspace.app/study-with-me' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

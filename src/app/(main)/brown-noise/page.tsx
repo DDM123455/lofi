@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -12,7 +13,14 @@ export const metadata: Metadata = {
     'brown noise free', 'brown noise for studying', 'brown noise sleep', 'brown noise anxiety',
     'brownian noise', 'brown noise generator online', 'deep brown noise', 'brown noise benefits',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/brown-noise' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/brown-noise',
+    languages: {
+      en: 'https://www.focusworkspace.app/brown-noise',
+      vi: 'https://www.focusworkspace.app/vi/tieng-on-nau',
+      'x-default': 'https://www.focusworkspace.app/brown-noise',
+    },
+  },
   openGraph: {
     title: 'Free Brown Noise Online — ADHD Focus & Deep Work | LofiSpace',
     description: 'Free brown noise for ADHD focus and deep work. Deep, warm low-frequency noise — mix with lofi music. No sign-up.',
@@ -86,6 +94,10 @@ export default function BrownNoisePage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Brown Noise', url: 'https://www.focusworkspace.app/brown-noise' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

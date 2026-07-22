@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -13,7 +14,14 @@ export const metadata: Metadata = {
     'instrumental focus music', 'focus music without lyrics', 'background music for studying',
     'music for concentration', 'brain focus music',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/focus-music' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/focus-music',
+    languages: {
+      en: 'https://www.focusworkspace.app/focus-music',
+      vi: 'https://www.focusworkspace.app/vi/nhac-tap-trung',
+      'x-default': 'https://www.focusworkspace.app/focus-music',
+    },
+  },
   openGraph: {
     title: 'Free Focus Music Online — Study & Concentration | LofiSpace',
     description: 'Free focus music for studying and deep work. Lofi, ambient, synthwave. No ads, no sign-up.',
@@ -127,6 +135,10 @@ export default function FocusMusicPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Focus Music', url: 'https://www.focusworkspace.app/focus-music' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

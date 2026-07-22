@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
+import { PomodoroCompare } from '@/components/seo/PomodoroCompare'
 
 export const metadata: Metadata = {
   title: 'Lofi Timer for Studying — Free Study Timer with Lofi Music',
@@ -22,7 +24,14 @@ export const metadata: Metadata = {
     title: 'Lofi Timer for Studying — LofiSpace',
     description: 'A study timer with lofi music, ambient sounds and a task list built for students.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/lofi-timer-for-studying' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/lofi-timer-for-studying',
+    languages: {
+      en: 'https://www.focusworkspace.app/lofi-timer-for-studying',
+      vi: 'https://www.focusworkspace.app/vi/dong-ho-lofi-hoc-bai',
+      'x-default': 'https://www.focusworkspace.app/lofi-timer-for-studying',
+    },
+  },
 }
 
 const FAQ = [
@@ -76,6 +85,10 @@ export default function LofiTimerForStudyingPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Lofi Timer for Studying', url: 'https://www.focusworkspace.app/lofi-timer-for-studying' },
+        ]} />
         <div className="mb-16 text-center">
           <span className="mb-4 inline-block rounded-full bg-pink-900/30 px-4 py-1 text-sm text-pink-300 ring-1 ring-pink-500/20">
             📚 Built for Study Sessions
@@ -157,6 +170,8 @@ export default function LofiTimerForStudyingPage() {
             Open Study Timer — Free →
           </Link>
         </div>
+
+        <PomodoroCompare exclude="/lofi-timer-for-studying" />
 
         <RelatedPages exclude="/lofi-timer-for-studying" />
       </div>

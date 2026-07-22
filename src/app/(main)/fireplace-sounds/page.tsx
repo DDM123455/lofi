@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -14,7 +15,14 @@ export const metadata: Metadata = {
     'fireplace sounds free', 'fire crackling sounds', 'fireplace white noise',
     'fire sounds for focus', 'fireplace asmr', 'crackling fire for sleep',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/fireplace-sounds' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/fireplace-sounds',
+    languages: {
+      en: 'https://www.focusworkspace.app/fireplace-sounds',
+      vi: 'https://www.focusworkspace.app/vi/am-thanh-lo-suoi',
+      'x-default': 'https://www.focusworkspace.app/fireplace-sounds',
+    },
+  },
   openGraph: {
     title: 'Fireplace Sounds for Focus & Relaxation | LofiSpace',
     description: 'Free crackling fireplace sounds — cosy hearth ambience for studying, relaxation, and sleep. Mix with lofi music. No sign-up.',
@@ -83,6 +91,10 @@ export default function FireplaceSoundsPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Fireplace Sounds', url: 'https://www.focusworkspace.app/fireplace-sounds' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -12,7 +13,14 @@ export const metadata: Metadata = {
     'nature sounds', 'background sounds for focus', 'white noise online', 'study sounds',
     'ambient sounds free', 'soundscape for studying', 'focus sounds',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/ambient-sounds' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/ambient-sounds',
+    languages: {
+      en: 'https://www.focusworkspace.app/ambient-sounds',
+      vi: 'https://www.focusworkspace.app/vi/am-thanh-nen',
+      'x-default': 'https://www.focusworkspace.app/ambient-sounds',
+    },
+  },
   openGraph: {
     title: 'Free Ambient Sounds Mixer for Studying & Focus | LofiSpace',
     description: 'Mix rain, café, fire, ocean and more with lofi music. Free ambient sound mixer — no sign-up.',
@@ -83,6 +91,10 @@ export default function AmbientSoundsPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Ambient Sounds', url: 'https://www.focusworkspace.app/ambient-sounds' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

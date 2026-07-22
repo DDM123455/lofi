@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -22,7 +23,14 @@ export const metadata: Metadata = {
     title: 'Focus Dashboard — LofiSpace',
     description: 'Today\'s focus time, streak, weekly chart, heatmap and top tasks. Free, no sign-up.',
   },
-  alternates: { canonical: 'https://www.focusworkspace.app/focus-dashboard' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/focus-dashboard',
+    languages: {
+      en: 'https://www.focusworkspace.app/focus-dashboard',
+      vi: 'https://www.focusworkspace.app/vi/gioi-thieu-bang-thong-ke',
+      'x-default': 'https://www.focusworkspace.app/focus-dashboard',
+    },
+  },
 }
 
 const FAQ = [
@@ -71,6 +79,10 @@ export default function FocusDashboardPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Focus Dashboard', url: 'https://www.focusworkspace.app/focus-dashboard' },
+        ]} />
         <div className="mb-16 text-center">
           <span className="mb-4 inline-block rounded-full bg-violet-900/30 px-4 py-1 text-sm text-violet-300 ring-1 ring-violet-500/20">
             📊 Free · No Sign-up · Stored Locally

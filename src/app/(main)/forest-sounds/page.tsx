@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -14,7 +15,14 @@ export const metadata: Metadata = {
     'woodland sounds', 'forest meditation sounds', 'bird sounds forest',
     'nature sounds studying', 'forest ambience', 'forest white noise',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/forest-sounds' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/forest-sounds',
+    languages: {
+      en: 'https://www.focusworkspace.app/forest-sounds',
+      vi: 'https://www.focusworkspace.app/vi/am-thanh-rung',
+      'x-default': 'https://www.focusworkspace.app/forest-sounds',
+    },
+  },
   openGraph: {
     title: 'Forest Sounds for Focus & Relaxation | LofiSpace',
     description: 'Free forest sounds — birds, rustling leaves, and natural ambient sounds for studying and relaxation. No sign-up.',
@@ -83,6 +91,10 @@ export default function ForestSoundsPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Forest Sounds', url: 'https://www.focusworkspace.app/forest-sounds' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

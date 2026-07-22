@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
@@ -13,7 +14,14 @@ export const metadata: Metadata = {
     'music for programmers', 'coding beats', 'focus music for coding',
     'best music for coding', 'coding music free', 'background music for coding',
   ],
-  alternates: { canonical: 'https://www.focusworkspace.app/coding-music' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/coding-music',
+    languages: {
+      en: 'https://www.focusworkspace.app/coding-music',
+      vi: 'https://www.focusworkspace.app/vi/nhac-lap-trinh',
+      'x-default': 'https://www.focusworkspace.app/coding-music',
+    },
+  },
   openGraph: {
     title: 'Coding Music for Programmers — Focus Beats & Synthwave | LofiSpace',
     description: 'Free coding music — synthwave, lofi beats, and ambient soundscapes for programmers in flow state. No sign-up.',
@@ -82,6 +90,10 @@ export default function CodingMusicPage() {
       <FaqJsonLd items={FAQ} />
 
       <div className="mx-auto max-w-4xl px-4 py-14">
+        <Breadcrumb items={[
+          { name: 'Home', url: 'https://www.focusworkspace.app' },
+          { name: 'Coding Music', url: 'https://www.focusworkspace.app/coding-music' },
+        ]} />
 
         {/* Hero */}
         <div className="mb-16 text-center">

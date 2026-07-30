@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
-import { BLOG_POSTS, getPostBySlug } from '@/lib/blogPosts'
+import { BLOG_POSTS, getPostBySlug, categorySlug } from '@/lib/blogPosts'
 import { BlogPostingJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { AuthorBio, AUTHOR_TITLE, AUTHOR_URL } from '@/components/seo/AuthorBio'
@@ -40,7 +40,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = getPostBySlug(slug)
   if (!post) notFound()
 
-  const related = BLOG_POSTS.filter(p => p.slug !== post.slug).slice(0, 3)
+  // Prefer posts from the same category so "Related Posts" is actually related,
+  // then fill any remaining slots from the rest of the blog.
+  const sameCategory = BLOG_POSTS.filter(p => p.slug !== post.slug && p.category === post.category)
+  const otherCategory = BLOG_POSTS.filter(p => p.slug !== post.slug && p.category !== post.category)
+  const related = [...sameCategory, ...otherCategory].slice(0, 3)
 
   const postUrl = `https://www.focusworkspace.app/blog/${post.slug}`
 
@@ -80,9 +84,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
       {/* Meta */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <span className="rounded-full bg-violet-900/40 px-3 py-1 text-xs text-violet-300">
+        <Link
+          href={`/blog/category/${categorySlug(post.category)}`}
+          className="rounded-full bg-violet-900/40 px-3 py-1 text-xs text-violet-300 hover:bg-violet-900/60 transition-colors"
+        >
           {post.category}
-        </span>
+        </Link>
         <span className="text-xs text-white/30">
           {new Date(post.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
         </span>

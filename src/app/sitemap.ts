@@ -1,16 +1,27 @@
 import type { MetadataRoute } from 'next'
-import { BLOG_POSTS } from '@/lib/blogPosts'
+import { BLOG_POSTS, BLOG_CATEGORIES } from '@/lib/blogPosts'
+import { BG_PRESETS } from '@/lib/backgrounds'
 
 const BASE = 'https://www.focusworkspace.app'
 
 // Use real dates per content type — Google ignores identical programmatic dates
 const D = (iso: string) => new Date(iso)
 
+// Scene backgrounds are animated mp4 loops (migrated off Giphy GIFs) — surface them to
+// Google Video Search via the sitemap's video extension. thumbnail_loc falls back to the
+// site logo: there's no per-preset poster frame yet (would need ffmpeg to extract one).
+const sceneVideos = BG_PRESETS.map(p => ({
+  title: p.label,
+  thumbnail_loc: `${BASE}/logo.png`,
+  description: `${p.label} — animated ambient background for lofi study sessions.`,
+  content_loc: `${BASE}${p.url}`,
+}))
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE,                                  lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 1.0 },
     // /workspace is noindexed (robots: {index:false}) — SEO value lives on landing pages, kept out of sitemap
-    { url: `${BASE}/scenes`,                      lastModified: D('2026-06-29'), changeFrequency: 'weekly',  priority: 0.85 },
+    { url: `${BASE}/scenes`,                      lastModified: D('2026-06-29'), changeFrequency: 'weekly',  priority: 0.85, videos: sceneVideos },
     // Core SEO landing pages
     { url: `${BASE}/online-study-room`,           lastModified: D('2026-06-29'), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE}/anime-study-room`,            lastModified: D('2026-06-29'), changeFrequency: 'monthly', priority: 0.9 },
@@ -81,6 +92,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/blog`,                        lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 0.8 },
   ]
 
+  const categoryRoutes: MetadataRoute.Sitemap = BLOG_CATEGORIES.map(c => ({
+    url: `${BASE}/blog/category/${c.slug}`,
+    lastModified: D('2026-07-30'),
+    changeFrequency: 'weekly',
+    priority: 0.6,
+  }))
+
   // /workspace/p/* preset pages are noindexed (doorway-page avoidance) — excluded from sitemap
 
   const blogRoutes: MetadataRoute.Sitemap = BLOG_POSTS.map(post => ({
@@ -90,5 +108,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }))
 
-  return [...staticRoutes, ...blogRoutes]
+  return [...staticRoutes, ...categoryRoutes, ...blogRoutes]
 }

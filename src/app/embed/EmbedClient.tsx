@@ -166,6 +166,7 @@ export function EmbedClient() {
   const [bgOpacity,   setBgOpacity]   = useState(initBgOp)
   const [bgBlur,      setBgBlur]      = useState(initBlur)
   const [bgReady,     setBgReady]     = useState(false)
+  const [showBgSpinner, setShowBgSpinner] = useState(false)
   const [prevBg,      setPrevBg]      = useState<{url:string;type:BgType}|null>(null)
   const [bgYtInput,   setBgYtInput]   = useState('')
   const [bgYtId,      setBgYtId]      = useState('')
@@ -253,6 +254,7 @@ export function EmbedClient() {
   const shownBgRef  = useRef<{url:string;type:BgType}|null>(null)
   const prevBgTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const bgElRef     = useRef<HTMLVideoElement|HTMLImageElement|null>(null)
+  const bgPrefetchedRef = useRef(false)
 
   // ── Game store ──────────────────────────────────────────────────────────
   const {
@@ -307,6 +309,7 @@ export function EmbedClient() {
   useEffect(()=>{ recordActivity() },[recordActivity])
   const handleBgReady=useCallback(()=>{
     setBgReady(true)
+    setShowBgSpinner(false)
     shownBgRef.current={url:bgUrl,type:bgType}
     if(prevBgTimer.current)clearTimeout(prevBgTimer.current)
     prevBgTimer.current=setTimeout(()=>setPrevBg(null),550)
@@ -315,6 +318,11 @@ export function EmbedClient() {
   // so switching backgrounds never drops to the bare gradient placeholder mid-transition
   useEffect(()=>{
     setBgReady(false)
+    // Large (multi-MB) preset videos can take a while to buffer on a cold cache — don't
+    // flash a spinner on the common fast/cached case, only surface it once the wait is
+    // long enough that the switch would otherwise look frozen.
+    setShowBgSpinner(false)
+    const spinnerTimer=setTimeout(()=>setShowBgSpinner(true),350)
     if(shownBgRef.current&&shownBgRef.current.url!==bgUrl){
       setPrevBg(shownBgRef.current)
       if(prevBgTimer.current)clearTimeout(prevBgTimer.current)
@@ -324,8 +332,19 @@ export function EmbedClient() {
     const el=bgElRef.current
     if(el instanceof HTMLVideoElement && el.readyState>=3) handleBgReady()
     else if(el instanceof HTMLImageElement && el.complete && el.naturalWidth>0) handleBgReady()
+    return ()=>clearTimeout(spinnerTimer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[bgUrl])
+  // Warm the HTTP cache for the other preset videos as soon as the user shows intent to
+  // switch (opens the Background popover), so the actual click resolves from cache instead
+  // of a cold multi-MB download. One-shot per session; skipped on constrained connections.
+  useEffect(()=>{
+    if(openPopover!=='background'||bgPrefetchedRef.current)return
+    bgPrefetchedRef.current=true
+    const conn=(navigator as any).connection
+    if(conn?.saveData||conn?.effectiveType==='2g'||conn?.effectiveType==='slow-2g')return
+    BG_PRESETS.forEach(p=>{ if(p.url!==bgUrl) fetch(p.url,{credentials:'omit'}).catch(()=>{}) })
+  },[openPopover,bgUrl])
   useEffect(()=>{
     if(pom.completions===0) return
     const activeTodo = activeTodoId ? todos.find(x=>x.id===activeTodoId) : undefined
@@ -728,6 +747,12 @@ export function EmbedClient() {
       <div style={{position:'fixed',inset:0,background:'#000',opacity:bgOpacity/100}}/>
       {bgBlur>0&&<div style={{position:'fixed',inset:0,backdropFilter:`blur(${bgBlur}px)`}}/>}
       {atmosphere!=='none'&&<div style={{position:'fixed',inset:0,background:atmOverlay[atmosphere],pointerEvents:'none'}}/>}
+      {showBgSpinner&&!bgReady&&(
+        <div style={{position:'fixed',top:20,left:'50%',transform:'translateX(-50%)',zIndex:6,display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderRadius:999,background:'rgba(0,0,0,.5)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)',color:'#fff',fontSize:12,fontWeight:600,pointerEvents:'none'}}>
+          <span style={{width:13,height:13,borderRadius:'50%',border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',animation:'spin .8s linear infinite'}}/>
+          {t.bg_loading}
+        </div>
+      )}
 
       {/* ── Clock (draggable, top-left) ── */}
       {showClock&&(

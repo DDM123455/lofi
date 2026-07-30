@@ -34,6 +34,7 @@ export interface Translations {
   sounds_title: string
 
   // Scene tab
+  bg_loading: string
   scene_atm_title: string
   scene_bg_title: string
   scene_gif_title: string
@@ -204,6 +205,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
 
     sounds_title: 'Ambient Sounds — mix your own vibe',
 
+    bg_loading: 'Loading scene…',
     scene_atm_title: 'Atmosphere — light & background',
     scene_bg_title: 'Backgrounds',
     scene_gif_title: 'Custom GIF',
@@ -393,6 +395,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
 
     sounds_title: 'Âm thanh nền — trộn theo ý bạn',
 
+    bg_loading: 'Đang tải cảnh nền…',
     scene_atm_title: 'Không khí — ánh sáng & cảnh nền',
     scene_bg_title: 'Hình nền',
     scene_gif_title: 'GIF tùy chỉnh',

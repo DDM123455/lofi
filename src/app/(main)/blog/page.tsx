@@ -42,7 +42,7 @@ export default function BlogPage() {
 
       {/* Header */}
       <div className="mb-10 text-center">
-        <h1 className="text-4xl font-bold text-white">Study Tips & Lofi Blog</h1>
+        <h1 className="text-4xl font-bold text-white">Study Tips, Focus Music & Productivity Guides</h1>
         <p className="mt-3 text-white/50">
           Study Tips · Lofi Music · Productivity · Aesthetic Workspace
         </p>

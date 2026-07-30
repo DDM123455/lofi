@@ -972,3 +972,22 @@ export const BLOG_POSTS: BlogPost[] = [
 export function getPostBySlug(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find(p => p.slug === slug)
 }
+
+// Single source of truth for blog categories — slug (used in /blog/category/[slug] URLs
+// and sitemap) mapped to the display label stored on each BlogPost.category.
+export const BLOG_CATEGORIES: { slug: string; label: string }[] = [
+  { slug: 'notion-tips',  label: 'Notion Tips' },
+  { slug: 'music',        label: 'Music' },
+  { slug: 'lifestyle',    label: 'Lifestyle' },
+  { slug: 'productivity', label: 'Productivity' },
+  { slug: 'study-tips',   label: 'Study Tips' },
+]
+
+export function getCategoryBySlug(slug: string) {
+  return BLOG_CATEGORIES.find(c => c.slug === slug)
+}
+
+export function categorySlug(label: string): string {
+  return BLOG_CATEGORIES.find(c => c.label === label)?.slug
+    ?? label.toLowerCase().replace(/\s+/g, '-')
+}

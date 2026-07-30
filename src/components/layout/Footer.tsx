@@ -76,6 +76,7 @@ export function Footer() {
               <li><Link href="/lofi-timer-for-studying" className="hover:text-white/70 transition-colors">Lofi Study Timer</Link></li>
               <li><Link href="/website-for-studying" className="hover:text-white/70 transition-colors">Website for Studying</Link></li>
               <li><Link href="/blog"                className="hover:text-white/70 transition-colors">Blog</Link></li>
+              <li><Link href="/about"               className="hover:text-white/70 transition-colors">About</Link></li>
             </ul>
           </div>
 

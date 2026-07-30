@@ -967,6 +967,112 @@ export const BLOG_POSTS: BlogPost[] = [
 <h2>Putting the Free Workspace Together</h2>
 <p>None of these six pieces individually needs to cost money: a browser-based timer, a layered ambient mix, a task list, local streak tracking, and a shareable, embeddable setup are all achievable without a subscription. What usually forces people toward a paid tool isn't a technical limitation — it's a product decision to lock the more engaging half of the experience (the full sound library, the history beyond a week) behind a paywall once you're invested. LofiSpace's <a href="/workspace">workspace</a> bundles all six pieces on one free page with no account required, precisely so a full focus setup doesn't end up scattered across four different tools with four different sign-ups.</p>`,
   },
+  {
+    slug: 'adhd-study-room-tools',
+    title: 'ADHD and Studying: The Tools and Techniques That Actually Help',
+    excerpt: 'Standard study advice assumes a brain that starts tasks easily and tunes out background noise. For ADHD, both of those assumptions are usually backwards — here is what tends to help instead.',
+    author: 'Alex Chen',
+    category: 'Study Tips',
+    readTime: 6,
+    publishedAt: '2026-07-30',
+    coverGradient: ['#1f1300', '#4d2600'],
+    emoji: '🎯',
+    content: `<p>Most study advice is written for a brain that starts tasks on command and finds silence easy to work in. For a lot of people with ADHD, both of those assumptions are backwards: starting is often the hardest part of the whole task, and true silence can make focus harder, not easier, because there's nothing to anchor attention against. This is a practical look at what tends to help instead — not a substitute for professional guidance, but a rundown of environmental and structural changes that are well-supported by how ADHD attention actually works.</p>
+
+<h2>Why "Just Focus" Isn't a Strategy</h2>
+<p>ADHD isn't a deficit of attention so much as a difficulty regulating it — trouble starting low-stimulation tasks, trouble stopping high-stimulation ones, and a tendency for the brain to seek novelty when a task isn't providing enough of it. Telling someone with ADHD to "just focus" is a bit like telling someone with poor eyesight to "just look harder" — the issue isn't effort, it's that the default setup isn't built for how their attention actually operates. The tools below work by changing the setup, not by asking for more willpower.</p>
+
+<h2>Body Doubling: Working Next to Someone (Even a Website)</h2>
+<p>Body doubling — working alongside another person, even silently, even on unrelated tasks — is one of the more consistently reported tools in ADHD communities, and it has a plausible mechanism: a visible witness raises the social cost of drifting off-task, which offsets some of the internal difficulty of self-starting. You don't need a study partner in the room for this to work; a <a href="/study-with-me">study with me</a> session or a shared virtual room provides a lighter version of the same effect, and it's available at 2am when no study partner is.</p>
+
+<h2>Sound as a Focus Anchor, Not a Distraction</h2>
+<p>Pure silence can be harder to work in with ADHD than a moderate, steady sound layer, because silence leaves attention nothing to hold onto besides the task itself — which is exactly the thing that's hard to hold onto. Steady, non-lyrical sound gives the brain something continuous to tune into in the background, which for many people actually makes it easier to stay anchored to a task rather than drift. <a href="/brown-noise">Brown noise</a> in particular gets mentioned often in ADHD communities specifically, likely because its low, rumbling frequency profile is less attention-grabbing than white noise's flatter hiss — worth testing both, since individual response varies a lot here.</p>
+
+<h2>Shorter Sessions, Visible Countdown</h2>
+<p>The standard 25-minute Pomodoro block is a reasonable starting point, but it's not a rule — for ADHD, a shorter first interval (10–15 minutes) often gets you through the hardest part, which is starting, without the session feeling too long to commit to. What matters more than the exact length is visibility: a running <a href="/pomodoro-timer">timer</a> you can actually see turns "work on this for a while," which is vague and easy to avoid, into a specific, bounded commitment with a clear end — much easier to start than an open-ended task.</p>
+
+<h2>Make the Reward Loop Visible</h2>
+<p>ADHD motivation responds more reliably to immediate, visible feedback than to distant rewards — a grade in three weeks doesn't compete well against a notification right now. A visible streak or point system exploits the same immediacy the other direction: completing a session produces a small, immediate, visible payoff (a streak tick, an XP bump) instead of the reward being deferred entirely to some future outcome. This is one reason gamified tracking — like the <a href="/dashboard">streak dashboard</a> built into LofiSpace — tends to land differently for ADHD than for neurotypical users: it's not just "nice to have," it's filling in the immediate-feedback loop that the task itself often doesn't provide on its own.</p>
+
+<h2>Reduce the Number of Decisions Before You Start</h2>
+<p>Every extra decision between "I should study" and actually studying — which app, which playlist, which tab — is a place where a easily-distracted attention span can exit the plan entirely. A single <a href="/workspace">workspace</a> that already has the timer, sound, and task list loaded and ready removes several of those decision points at once. Saving a specific configuration — scene, sound mix, timer length — to a bookmarked URL means "start studying" can mean one click instead of five minutes of setup, which matters disproportionately when the setup phase is where momentum most often gets lost.</p>
+
+<h2>Putting It Together</h2>
+<p>None of this is a cure, and everyone's ADHD responds differently — some people need silence after all, some need much longer sessions once they're in flow. But as a starting checklist: try a body-doubling session instead of working alone, try brown noise instead of silence, start with a shorter timer than you think you need, and use a visible streak or reward system instead of relying on distant motivation. The <a href="/adhd-focus-room">ADHD Focus Room</a> bundles these defaults — shorter default sessions, brown noise pre-loaded, visible streak tracking — into one free, no-signup setup, so the first attempt doesn't also require configuring five separate tools first.</p>`,
+  },
+  {
+    slug: 'gamification-studying-xp-streaks',
+    title: 'How Gamification Helps You Study: XP, Streaks, and Why Game Mechanics Work',
+    excerpt: 'Streaks and XP bars look like decoration, but they exploit a real, well-documented gap in how studying normally gets rewarded. Here is the actual mechanism, and where gamification stops helping.',
+    author: 'Alex Chen',
+    category: 'Productivity',
+    readTime: 5,
+    publishedAt: '2026-07-30',
+    coverGradient: ['#2a1454', '#151025'],
+    emoji: '🏆',
+    content: `<p>A streak counter and an XP bar look like decoration bolted onto a study app — a game-y skin on top of the actual work. But the reason gamified tracking keeps showing up in study and productivity tools isn't aesthetic; it's that studying has an unusually bad natural reward structure, and game mechanics are specifically designed to patch that gap. Here's the actual mechanism, and honestly, where it stops helping.</p>
+
+<h2>The Problem Gamification Is Solving</h2>
+<p>Studying suffers from a reward-timing mismatch: the effort happens today, but the payoff — a grade, a passed exam, a shipped feature — often arrives weeks later, if it's ever attributable to any single session at all. Human motivation, though, responds far more reliably to immediate feedback than to delayed, diffuse rewards; this is well established in behavioral psychology and is the same reason variable, immediate rewards are what make slot machines and social media notifications so effective at capturing attention. A streak or XP system isn't inventing a new incentive out of nowhere — it's importing an immediate feedback loop into a task that structurally doesn't have one.</p>
+
+<h2>Why Streaks Specifically Work</h2>
+<p>A streak does two things a plain to-do checkbox doesn't. First, it converts a single day's decision ("should I study today?") into a decision about an accumulated asset ("do I want to lose an 11-day streak?") — loss aversion is a stronger motivator than the prospect of an equivalent gain, so protecting an existing streak pulls harder than starting a new session would on its own. Second, a streak is visible proof of consistency over time, which is otherwise invisible — you can't see "I've been reasonably disciplined this month" the way you can see a number that's gone up for 11 days straight.</p>
+
+<h2>Why XP and Levels Work Differently Than Streaks</h2>
+<p>Where a streak rewards consistency, an XP system rewards volume and makes incremental progress legible in the moment. A two-hour study session and a five-minute one both "count" in a binary to-do list, which flattens effort that wasn't actually flat. An XP bar that fills proportionally gives credit for partial effort — you did something, and the system reflects that immediately, rather than requiring a full completed unit before any feedback shows up at all. This matters most on the days motivation is lowest, since partial credit for a short session is still visible progress, instead of a session that "doesn't count" next to a completed one.</p>
+
+<h2>Where It Stops Helping</h2>
+<p>Gamification has a real failure mode worth naming honestly: if the game layer becomes more compelling than the underlying task, you get streak-preservation without actual learning — opening the app for two minutes just to avoid breaking a number, rather than doing meaningful work. The fix isn't to remove the game layer, it's to tie it directly to real work rather than app opens: XP and streaks should track completed <a href="/pomodoro-timer">focus sessions</a> and finished tasks, not logins, so gaming the system and doing the work end up being the same action.</p>
+
+<h2>What This Looks Like in Practice</h2>
+<p>In LofiSpace's <a href="/dashboard">focus dashboard</a>, XP is awarded per completed Pomodoro session (tied to a real timer running to completion, not a button press), and the streak counter tracks days with at least one completed session rather than days the app was merely opened. The <a href="/pomodoro-streak-tracker">streak tracker</a> keeps that history visible without requiring an account — the data lives in your browser, and the whole point is that checking your progress takes one glance at the <a href="/workspace">workspace</a> rather than a separate app you have to remember exists.</p>
+
+<h2>The Honest Summary</h2>
+<p>Gamification works on studying for the same reason it works on fitness apps and language-learning apps: it imports an immediate, visible reward loop into an activity whose real payoff is too slow and too abstract to motivate day-to-day behavior on its own. It's not a trick, and it's not a substitute for actually wanting to learn the material — it's scaffolding for the days wanting isn't quite enough by itself, which is most days, for most people.</p>`,
+  },
+  {
+    slug: 'best-free-online-study-rooms-2026',
+    title: '15 Best Free Online Study Rooms in 2026 (No Sign-Up Required)',
+    excerpt: 'An honest, no-affiliate roundup of the online study rooms and virtual co-working tools worth trying in 2026 — what each one actually does well, and where it falls short.',
+    author: 'Alex Chen',
+    category: 'Study Tips',
+    readTime: 7,
+    publishedAt: '2026-07-30',
+    coverGradient: ['#101820', '#1f2a38'],
+    emoji: '🏫',
+    content: `<p>"Best online study room" lists tend to be either thin affiliate content or a single tool's own marketing page pretending to be a comparison. This is neither — an honest rundown of what's actually out there in 2026, what each tool does well, and where it genuinely falls short, so you can pick based on what you actually need rather than whichever one paid for placement.</p>
+
+<h2>What "Online Study Room" Actually Covers</h2>
+<p>The category splits into three real types, often blurred together in marketing copy: <strong>ambient/focus tools</strong> (music, sound, timers — no other people involved), <strong>virtual co-working rooms</strong> (video presence with other real students, "study with me" style), and <strong>productivity dashboards</strong> (task management and calendars with a study skin on top). Knowing which type you actually want narrows the list fast — most people asking for a "study room" mean the first category, but end up trying the second because it ranks higher.</p>
+
+<h2>Ambient / Focus Tools (No Video, No Other People)</h2>
+<ul>
+<li><strong>LofiSpace</strong> (this site) — lofi music, ambient sound mixing, a Pomodoro timer, XP/streak tracking, and a <a href="/notion-widget">Notion embed</a>, all on one free page with no account. Strongest at: consolidating several tools into one URL you can bookmark or embed. Weakest at: no video co-working — if you specifically want a visible study partner, it's not that.</li>
+<li><strong>Noisli</strong> — a clean, minimal ambient sound mixer. Strongest at simplicity and sound quality. Doesn't include a timer, task list, or gamification layer — it's a sound tool, not a workspace.</li>
+<li><strong>A Soft Murmur</strong> — one of the longest-running ambient sound mixers, similar scope to Noisli. Strongest at a loyal, established sound library. Also sound-only, no timer or task features.</li>
+<li><strong>Moodist</strong> — a newer, well-designed ambient sound mixer with a strong visual aesthetic. Similar tradeoff to the above two: excellent at sound, minimal beyond it.</li>
+</ul>
+
+<h2>Virtual Co-Working / "Study With Me" Rooms</h2>
+<ul>
+<li><strong>Study Together</strong> — real-time video co-working rooms with other students, plus leaderboards. Strongest at genuine social accountability and community. Requires a webcam and comfort with being on camera, which is a real barrier for some people, and rooms can be inconsistent in quality since they're user-hosted.</li>
+<li><strong>StudyStream</strong> — similar video co-working concept with a stronger built-in community layer and leaderboards. Same webcam tradeoff as Study Together.</li>
+<li><strong>Lofi Girl (YouTube livestream)</strong> — not a tool exactly, but the default "study with me" experience for millions of people via a 24/7 lofi livestream with a massive chat community. Strongest at pure ambience and community scale. No timer, task list, or personalization — it's a stream, not a workspace.</li>
+</ul>
+
+<h2>Full Productivity Dashboards</h2>
+<ul>
+<li><strong>LifeAt</strong> — the most feature-complete of the group: rooms, a Pomodoro timer, task management, and calendar integration. Strongest at breadth of features for people who want one tool to run their whole study/work life. Requires an account, and the free tier gates some rooms and features behind a paid plan.</li>
+<li><strong>Flocus</strong> — similar positioning to LifeAt, with a strong focus-time history and stats view. Same general tradeoff: more features, but an account and a paywall sit behind the deeper functionality.</li>
+<li><strong>Pomofocus.io</strong> — a focused, well-executed Pomodoro timer with task integration. Strongest at doing the timer specifically very well. No ambient sound library or scene backgrounds — it's a timer app, not an atmosphere.</li>
+</ul>
+
+<h2>How to Actually Choose</h2>
+<p>If you want a visible study partner and don't mind a webcam, a co-working room (Study Together, StudyStream) gives you something an ambient tool structurally can't. If you want zero setup and zero account, an ambient/focus tool — <a href="/online-study-room">an online study room</a> like LofiSpace, Noisli, or Moodist — gets you working in under a minute. If you're already deep into task management and calendars and want one app to run everything, LifeAt or Flocus's broader feature set is worth the account and, eventually, the subscription.</p>
+
+<h2>Where LofiSpace Specifically Fits</h2>
+<p>LofiSpace sits in the ambient/focus category, but bundles more of a full workspace into it than a pure sound mixer does: a <a href="/pomodoro-timer">Pomodoro timer</a>, a task list tied to sessions, and a free XP/streak system that most tools in this category don't include at all, without requiring the account or webcam that the co-working and dashboard categories do. It's not trying to replace LifeAt's calendar integration or Study Together's live video rooms — it's aimed specifically at "I want music, sound, a timer, and light gamification, right now, with no setup," which is a real and common use case none of the other categories serve directly.</p>`,
+  },
 ]
 
 export function getPostBySlug(slug: string): BlogPost | undefined {

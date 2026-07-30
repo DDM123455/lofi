@@ -22,6 +22,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: BASE,                                  lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 1.0 },
     // /workspace is noindexed (robots: {index:false}) — SEO value lives on landing pages, kept out of sitemap
     { url: `${BASE}/scenes`,                      lastModified: D('2026-06-29'), changeFrequency: 'weekly',  priority: 0.85, videos: sceneVideos },
+    { url: `${BASE}/about`,                       lastModified: D('2026-07-30'), changeFrequency: 'yearly',  priority: 0.5 },
     // Core SEO landing pages
     { url: `${BASE}/online-study-room`,           lastModified: D('2026-06-29'), changeFrequency: 'monthly', priority: 0.9 },
     { url: `${BASE}/anime-study-room`,            lastModified: D('2026-06-29'), changeFrequency: 'monthly', priority: 0.9 },

@@ -250,6 +250,7 @@ export function EmbedClient() {
   const ytRef     = useRef<HTMLDivElement>(null)
   const ytPlayer  = useRef<any>(null)
   const ytTimer   = useRef<ReturnType<typeof setTimeout>|null>(null)
+  const manualYtInit = useRef(false) // true once a real (user-driven) player init has started — stops the silent pre-init from racing it
   const noteTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const shownBgRef  = useRef<{url:string;type:BgType}|null>(null)
   const prevBgTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
@@ -391,7 +392,7 @@ export function EmbedClient() {
   // Pre-init YT player silently so first-play is instant
   useEffect(()=>{
     const tryPre=()=>{
-      if(!ytRef.current||ytPlayer.current)return
+      if(!ytRef.current||ytPlayer.current||manualYtInit.current)return
       const container=document.createElement('div')
       ytRef.current.appendChild(container)
       ytPlayer.current=new(window as any).YT.Player(container,{
@@ -456,6 +457,7 @@ export function EmbedClient() {
 
   const initYT = useCallback((ytId:string,vol:number)=>{
     if(!ytRef.current)return
+    manualYtInit.current=true // once the user (or doStart) has kicked off a real init, the silent pre-init must never create a competing player
     // Destroy existing player and reset container before creating new one
     try{ytPlayer.current?.destroy()}catch(_){}
     ytPlayer.current=null
@@ -522,6 +524,10 @@ export function EmbedClient() {
     try{ytPlayer.current?.destroy()}catch(_){};ytPlayer.current=null
     if(started){setPlaying(true);setTimeout(()=>initYT(id,lofiVol),80)}
   }
+  const retryYT=useCallback(()=>{
+    if(!started)return
+    setPlaying(true);initYT(activeYtId,lofiVol)
+  },[started,initYT,activeYtId,lofiVol])
   const dismissOnboard=()=>{
     setShowOnboard(false)
     localStorage.setItem('lofispace-onboarded','1')
@@ -989,6 +995,9 @@ export function EmbedClient() {
                         </div>
                         {live&&<span style={{display:'flex',alignItems:'center',gap:5,fontSize:11,fontWeight:600,letterSpacing:.5,color:accent2,flexShrink:0}}><span style={{width:6,height:6,borderRadius:'50%',background:accent2,animation:'lf-pulse 1.4s ease-in-out infinite'}}/>LIVE</span>}
                         {active&&ytStatus==='loading'&&<span style={{fontSize:10,color:'var(--dim2)',flexShrink:0}}>{t.music_connecting}</span>}
+                        {active&&ytStatus==='blocked'&&(
+                          <button onClick={e=>{e.stopPropagation();retryYT()}} style={{fontSize:10,fontWeight:600,color:'#f97316',background:'rgba(249,115,22,0.12)',border:'none',borderRadius:7,padding:'3px 8px',cursor:'pointer',flexShrink:0}}>{t.music_retry_btn}</button>
+                        )}
                       </div>
                     )
                   })}
@@ -997,7 +1006,14 @@ export function EmbedClient() {
                       <span style={{width:8,height:8,borderRadius:'50%',background:accent2,flexShrink:0,boxShadow:`0 0 8px ${accent2}`}}/>
                       <span style={{fontSize:14,fontWeight:600,flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.music_custom_yt}: {customLofiId}</span>
                       {ytStatus==='ready'&&<span style={{fontSize:11,fontWeight:600,color:accent2}}>LIVE</span>}
+                      {ytStatus==='loading'&&<span style={{fontSize:10,color:'var(--dim2)',flexShrink:0}}>{t.music_connecting}</span>}
+                      {ytStatus==='blocked'&&(
+                        <button onClick={retryYT} style={{fontSize:10,fontWeight:600,color:'#f97316',background:'rgba(249,115,22,0.12)',border:'none',borderRadius:7,padding:'3px 8px',cursor:'pointer',flexShrink:0}}>{t.music_retry_btn}</button>
+                      )}
                     </div>
+                  )}
+                  {ytStatus==='blocked'&&(
+                    <p style={{fontSize:10.5,color:'#f97316',margin:'2px 0 0',lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'7px 9px',borderRadius:8}}>{t.music_yt_blocked}</p>
                   )}
                   <div style={{marginTop:10,padding:'9px 12px',borderRadius:11,background:'var(--input)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
                     <span style={{fontSize:11.5,color:'var(--dim)'}}>{t.music_custom_yt}</span>
@@ -1289,7 +1305,12 @@ export function EmbedClient() {
               style={{flex:1,padding:'10px 12px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
             <button onClick={applyCustomLofi} style={{padding:'0 18px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.music_play_btn}</button>
           </div>
-          {ytStatus==='blocked'&&<p style={{fontSize:10,color:'#f97316',marginTop:8,lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'6px 8px',borderRadius:6}}>{t.music_yt_blocked}</p>}
+          {ytStatus==='blocked'&&(
+            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',borderRadius:6,background:'rgba(249,115,22,0.1)'}}>
+              <p style={{flex:1,fontSize:10,color:'#f97316',margin:0,lineHeight:1.5}}>{t.music_yt_blocked}</p>
+              <button onClick={retryYT} style={{fontSize:10,fontWeight:600,color:'#f97316',background:'rgba(249,115,22,0.18)',border:'none',borderRadius:7,padding:'4px 9px',cursor:'pointer',flexShrink:0}}>{t.music_retry_btn}</button>
+            </div>
+          )}
         </div>
       )}
 

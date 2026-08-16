@@ -27,6 +27,7 @@ export interface Translations {
   music_play_btn: string
   music_connecting: string
   music_yt_blocked: string
+  music_retry_btn: string
   music_now_playing: string
   music_paused: string
 
@@ -200,6 +201,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     music_play_btn: 'Play',
     music_connecting: 'connecting…',
     music_yt_blocked: '⚠ YouTube not ready. Synth audio is active.',
+    music_retry_btn: 'Retry',
     music_now_playing: 'Now Playing',
     music_paused: 'Paused',
 
@@ -390,6 +392,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     music_play_btn: 'Phát',
     music_connecting: 'đang kết nối…',
     music_yt_blocked: '⚠ YouTube chưa sẵn sàng. Âm thanh tổng hợp đang hoạt động.',
+    music_retry_btn: 'Thử lại',
     music_now_playing: 'Đang phát',
     music_paused: 'Tạm dừng',
 

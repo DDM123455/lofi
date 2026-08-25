@@ -132,6 +132,7 @@ export interface Translations {
 
   // Misc
   click_to_start: string
+  app_loading: string
   pom_done_toast: string
   switch_theme: string
   open_player: string
@@ -293,6 +294,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     progress_best: 'Best',
 
     click_to_start: 'Tap to start',
+    app_loading: 'Loading…',
     pom_done_toast: 'Pomodoro complete!',
     switch_theme: 'Switch theme',
     open_player: 'Player',
@@ -484,6 +486,7 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     progress_best: 'Kỷ lục',
 
     click_to_start: 'Nhấn để bắt đầu',
+    app_loading: 'Đang tải…',
     pom_done_toast: 'Pomodoro hoàn thành!',
     switch_theme: 'Đổi giao diện',
     open_player: 'Trình phát',

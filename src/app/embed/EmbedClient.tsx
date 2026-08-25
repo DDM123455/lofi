@@ -318,11 +318,22 @@ export function EmbedClient() {
   // Keep the last-shown background visible (crossfade base) until the new one has loaded,
   // so switching backgrounds never drops to the bare gradient placeholder mid-transition
   useEffect(()=>{
-    setBgReady(false)
-    // Large (multi-MB) preset videos can take a while to buffer on a cold cache — don't
-    // flash a spinner on the common fast/cached case, only surface it once the wait is
-    // long enough that the switch would otherwise look frozen.
     setShowBgSpinner(false)
+    // Known presets ship a pre-generated first-frame poster (tiny JPG) — the <video poster>
+    // attribute paints it immediately, well before the clip itself buffers, so there's no
+    // reason to keep showing the old background while we wait: that's what made switching
+    // feel slow/frozen. Skip the crossfade wait entirely for these.
+    if(getBgPresetByUrl(bgUrl)?.poster){
+      setBgReady(true)
+      shownBgRef.current={url:bgUrl,type:bgType}
+      if(prevBgTimer.current)clearTimeout(prevBgTimer.current)
+      setPrevBg(null)
+      return
+    }
+    setBgReady(false)
+    // Large/custom backgrounds (no poster) can take a while to buffer on a cold cache —
+    // don't flash a spinner on the common fast/cached case, only surface it once the wait
+    // is long enough that the switch would otherwise look frozen.
     const spinnerTimer=setTimeout(()=>setShowBgSpinner(true),350)
     if(shownBgRef.current&&shownBgRef.current.url!==bgUrl){
       setPrevBg(shownBgRef.current)
@@ -336,15 +347,29 @@ export function EmbedClient() {
     return ()=>clearTimeout(spinnerTimer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[bgUrl])
-  // Warm the HTTP cache for the other preset videos as soon as the user shows intent to
-  // switch (opens the Background popover), so the actual click resolves from cache instead
-  // of a cold multi-MB download. One-shot per session; skipped on constrained connections.
+  // Warm the cache for the other presets as soon as the user shows intent to switch (opens
+  // the Background popover), so the actual click resolves from cache instead of a cold
+  // download. One-shot per session; skipped on constrained connections.
   useEffect(()=>{
     if(openPopover!=='background'||bgPrefetchedRef.current)return
     bgPrefetchedRef.current=true
     const conn=(navigator as any).connection
     if(conn?.saveData||conn?.effectiveType==='2g'||conn?.effectiveType==='slow-2g')return
-    BG_PRESETS.forEach(p=>{ if(p.url!==bgUrl) fetch(p.url,{credentials:'omit'}).catch(()=>{}) })
+    const others=BG_PRESETS.filter(p=>p.url!==bgUrl)
+    // Posters are tiny (a few/tens of KB) — warm them all right away so every preset's
+    // instant-preview frame is ready the moment it's picked.
+    others.forEach(p=>{ fetch(p.poster,{credentials:'omit'}).catch(()=>{}) })
+    // Full clips are heavier — fetch a couple at a time (low priority) instead of firing
+    // all of them at once, so they don't saturate the connection pool and slow down
+    // whichever one the user actually clicks next.
+    let i=0
+    const next=()=>{
+      if(i>=others.length)return
+      const p=others[i++]
+      // 'priority' (Fetch Priority API) is ignored harmlessly by browsers that don't support it
+      fetch(p.url,{credentials:'omit',priority:'low'} as RequestInit).catch(()=>{}).finally(next)
+    }
+    next();next()
   },[openPopover,bgUrl])
   useEffect(()=>{
     if(pom.completions===0) return
@@ -404,10 +429,22 @@ export function EmbedClient() {
         },
       })
     }
-    // No artificial delay: start as soon as this effect runs (post-hydration) so the
-    // player is ready by the time a user actually clicks "Tap to start"
-    if((window as any).YT?.Player)tryPre()
-    else{const p=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{p?.();tryPre()}}
+    const armReady=()=>{
+      if((window as any).YT?.Player)tryPre()
+      else{const p=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{p?.();tryPre()}}
+    }
+    // Constructing the YT.Player here pulls in YouTube's own embed JS/CSS (~1MB) right
+    // away — on a cold load that competes for bandwidth with the app's own hydration JS
+    // and the autoplaying default background video, and was a likely cause of "no music
+    // until I reload a few times" (the click handler hadn't hydrated yet by the time users
+    // tapped "Click to Start"). Wait for the page's own load to finish, then use an idle
+    // slot, so this optimization no longer fights the critical first paint for bandwidth.
+    const idle=(cb:()=>void)=>{
+      if('requestIdleCallback' in window)(window as any).requestIdleCallback(cb,{timeout:4000})
+      else setTimeout(cb,1200)
+    }
+    if(document.readyState==='complete')idle(armReady)
+    else window.addEventListener('load',()=>idle(armReady),{once:true})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
   // Auto-detect weather on mount (skip if URL already has data)
@@ -714,6 +751,7 @@ export function EmbedClient() {
     setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300)
   }
   const bgGradient=getBgPresetByUrl(bgUrl)?.gradient ?? ['#0d0d14','#1a1a24']
+  const bgPoster=getBgPresetByUrl(bgUrl)?.poster
 
   // On mobile, panel widths grow to near-full-viewport (see width:Math.min(N,vw-M) below),
   // so the desktop two-column left/right placement collides. Stack them in one column instead.
@@ -741,7 +779,7 @@ export function EmbedClient() {
               style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
           :null)}
       {bgType==='video'
-        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} key={bgUrl} src={bgUrl} autoPlay loop muted playsInline preload="auto" aria-hidden
+        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} key={bgUrl} src={bgUrl} poster={bgPoster} autoPlay loop muted playsInline preload="auto" aria-hidden
             onCanPlay={handleBgReady}
             style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'
@@ -1436,13 +1474,21 @@ export function EmbedClient() {
         </div>
       )}
 
-      {/* ── Click to start ── */}
+      {/* ── Click to start ──
+          Rendered on the very first paint (not gated on `mounted`) so it isn't a layout
+          shift, but its onClick only does anything once React has hydrated. Before that,
+          a tap here used to be silently swallowed — on a slow/cold load that's what made
+          "no music, had to reload a few times" happen. Show it as an obviously non-
+          interactive loading state until `mounted` flips true, then swap to the real
+          clickable prompt, so there's never a dead-looking-clickable tap target. */}
       {!started&&(
-        <div onClick={doStart} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:14,background:'rgba(0,0,0,0.38)',backdropFilter:'blur(4px)',cursor:'pointer',zIndex:10}}>
-          <div style={{width:68,height:68,borderRadius:'50%',background:accent,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 0 40px ${accentGlow}`}}>
-            <svg viewBox="0 0 24 24" fill="white" width="30" height="30"><path d="M8 5v14l11-7z"/></svg>
+        <div onClick={mounted?doStart:undefined} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:14,background:'rgba(0,0,0,0.38)',backdropFilter:'blur(4px)',cursor:mounted?'pointer':'default',zIndex:10}}>
+          <div style={{width:68,height:68,borderRadius:'50%',background:accent,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 0 40px ${accentGlow}`,opacity:mounted?1:0.55,transition:'opacity .2s ease'}}>
+            {mounted
+              ?<svg viewBox="0 0 24 24" fill="white" width="30" height="30"><path d="M8 5v14l11-7z"/></svg>
+              :<div style={{width:22,height:22,border:'2.5px solid rgba(255,255,255,0.35)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>}
           </div>
-          <p style={{fontSize:13,color:'rgba(255,255,255,0.75)',letterSpacing:'0.04em',margin:0}}>{t.click_to_start}</p>
+          <p style={{fontSize:13,color:'rgba(255,255,255,0.75)',letterSpacing:'0.04em',margin:0}}>{mounted?t.click_to_start:t.app_loading}</p>
         </div>
       )}
 

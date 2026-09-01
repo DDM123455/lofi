@@ -85,6 +85,10 @@ export function Footer() {
         <div className="border-t border-white/5 pt-6 flex flex-col items-center justify-between gap-3 sm:flex-row">
           <p className="text-xs text-white/20">
             © {new Date().getFullYear()} LofiSpace. Free for everyone, forever.
+            <span className="mx-2 text-white/10">·</span>
+            <Link href="/privacy" className="hover:text-white/40 transition-colors">Privacy</Link>
+            <span className="mx-2 text-white/10">·</span>
+            <Link href="/terms" className="hover:text-white/40 transition-colors">Terms</Link>
           </p>
           <div className="flex items-center gap-4">
             <SupportButton />

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState, useCallback, useEffect } from 'react'
-import { AMBIENT_SOUNDS, LOFI_STREAMS } from '@/lib/lofiStreams'
+import { LOFI_STREAMS } from '@/lib/lofiStreams'
 
 // ── Pink noise synth (Voss-McCartney) ──────────────────────────────────
 function makePinkBuffer(ctx: AudioContext, secs = 8): AudioBuffer {
@@ -128,16 +128,6 @@ export function useAudioEngine(): AudioEngine {
     const node = buildSynthGraph(ctx, id)
     node.gain.gain.setTargetAtTime(vol * 0.6, ctx.currentTime, 0.1)
     synthRef.current[id] = node
-
-    const sound = AMBIENT_SOUNDS.find(s => s.id === id)
-    if (sound?.file) {
-      const audio = new Audio(sound.file); audio.loop=true; audio.volume=0
-      audio.addEventListener('canplaythrough', () => {
-        const n = synthRef.current[id]
-        if (n && ctxRef.current) { n.gain.gain.setTargetAtTime(0, ctxRef.current.currentTime, 0.3); setTimeout(() => { try{n.stop()}catch(_){}; delete synthRef.current[id] }, 600) }
-        html5Ref.current[id] = audio; audio.volume = vol * 0.6; audio.play().catch(() => {})
-      }, { once: true }); audio.load()
-    }
   }, [ensureCtx])
 
   const stopAmbient = useCallback((id: string) => {

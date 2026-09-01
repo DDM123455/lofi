@@ -8,6 +8,31 @@ export interface Translations {
   pom_pause: string
   pom_phase_focus: string
   pom_phase_break: string
+  pom_phase_long: string
+  pom_long: string
+  pom_skip: string
+  pom_timer_settings: string
+  pom_work_len: string
+  pom_break_len: string
+  pom_long_len: string
+  pom_cycles: string
+  pom_autostart: string
+  pom_today_done: string
+  pom_goal: string
+  pom_goal_reached: string
+  notif_break_title: string
+  notif_break_body: string
+  notif_focus_title: string
+  notif_focus_body: string
+  notif_long_title: string
+  zen_label: string
+  zen_hint: string
+  shortcuts_title: string
+  tip_playpause: string
+  tip_fullscreen: string
+  tip_fullscreen_exit: string
+  tip_support: string
+  tip_lang: string
 
   // Panel tabs (tooltips)
   tab_music: string
@@ -186,6 +211,31 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     pom_pause: 'Pause',
     pom_phase_focus: 'FOCUS',
     pom_phase_break: 'BREAK',
+    pom_phase_long: 'LONG BREAK',
+    pom_long: 'Long break',
+    pom_skip: 'Skip to next phase',
+    pom_timer_settings: 'Timer settings',
+    pom_work_len: 'Focus length',
+    pom_break_len: 'Break length',
+    pom_long_len: 'Long break length',
+    pom_cycles: 'Focus sessions before a long break',
+    pom_autostart: 'Auto-start next phase',
+    pom_today_done: 'today',
+    pom_goal: 'Daily goal',
+    pom_goal_reached: 'Daily goal reached! 🎉',
+    notif_break_title: 'Break time 🍵',
+    notif_break_body: 'Step away and rest your eyes.',
+    notif_focus_title: 'Back to focus 🎯',
+    notif_focus_body: 'New focus session started.',
+    notif_long_title: 'Long break 🌿',
+    zen_label: 'Zen',
+    zen_hint: 'Exit Zen mode (Z or Esc)',
+    shortcuts_title: 'Keyboard shortcuts',
+    tip_playpause: 'Play / Pause (Space)',
+    tip_fullscreen: 'Fullscreen (F)',
+    tip_fullscreen_exit: 'Exit fullscreen (F)',
+    tip_support: 'Support LofiSpace 💜',
+    tip_lang: 'Language',
 
     tab_music: 'Lofi Music',
     tab_sounds: 'Ambient Sounds',
@@ -378,6 +428,31 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     pom_pause: 'Tạm dừng',
     pom_phase_focus: 'TẬP TRUNG',
     pom_phase_break: 'GIẢI LAO',
+    pom_phase_long: 'NGHỈ DÀI',
+    pom_long: 'Nghỉ dài',
+    pom_skip: 'Chuyển sang phase kế',
+    pom_timer_settings: 'Cài đặt hẹn giờ',
+    pom_work_len: 'Thời lượng tập trung',
+    pom_break_len: 'Thời lượng nghỉ',
+    pom_long_len: 'Thời lượng nghỉ dài',
+    pom_cycles: 'Số phiên tập trung trước khi nghỉ dài',
+    pom_autostart: 'Tự động bắt đầu phase kế',
+    pom_today_done: 'hôm nay',
+    pom_goal: 'Mục tiêu ngày',
+    pom_goal_reached: 'Đã đạt mục tiêu hôm nay! 🎉',
+    notif_break_title: 'Giờ nghỉ 🍵',
+    notif_break_body: 'Đứng dậy và thư giãn mắt một chút.',
+    notif_focus_title: 'Quay lại tập trung 🎯',
+    notif_focus_body: 'Phiên tập trung mới đã bắt đầu.',
+    notif_long_title: 'Nghỉ dài 🌿',
+    zen_label: 'Zen',
+    zen_hint: 'Thoát chế độ Zen (Z hoặc Esc)',
+    shortcuts_title: 'Phím tắt',
+    tip_playpause: 'Phát / Tạm dừng (Space)',
+    tip_fullscreen: 'Toàn màn hình (F)',
+    tip_fullscreen_exit: 'Thoát toàn màn hình (F)',
+    tip_support: 'Ủng hộ LofiSpace 💜',
+    tip_lang: 'Ngôn ngữ',
 
     tab_music: 'Nhạc Lofi',
     tab_sounds: 'Âm thanh nền',

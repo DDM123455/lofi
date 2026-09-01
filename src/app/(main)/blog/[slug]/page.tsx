@@ -62,10 +62,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         url={postUrl}
         publishedAt={post.publishedAt}
         dateModified={post.dateModified}
-        imageUrl="https://www.focusworkspace.app/logo.png"
+        imageUrl={`${postUrl}/opengraph-image`}
         authorName={post.author}
         authorTitle={AUTHOR_TITLE}
         authorUrl={AUTHOR_URL}
+        articleSection={post.category}
+        wordCount={post.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length}
       />
 
       <Breadcrumb items={[

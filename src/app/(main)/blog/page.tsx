@@ -9,7 +9,13 @@ export const metadata: Metadata = {
   title: 'Study Tips & Lofi Advice Blog — LofiSpace',
   description: 'LofiSpace blog: how to study better, set up your workspace, use the Pomodoro technique, and find the best focus music for studying.',
   keywords: ['study tips', 'productivity blog', 'lofi music guide', 'pomodoro technique', 'ambient sound tips', 'focus workspace', 'study with me'],
-  alternates: { canonical: 'https://www.focusworkspace.app/blog' },
+  alternates: {
+    canonical: 'https://www.focusworkspace.app/blog',
+    types: {
+      'application/rss+xml': 'https://www.focusworkspace.app/blog/feed.xml',
+      'application/feed+json': 'https://www.focusworkspace.app/blog/feed.json',
+    },
+  },
   openGraph: {
     title: 'Study Tips & Lofi Advice Blog | LofiSpace',
     description: 'Guides on studying better, workspace setup, Pomodoro technique, and the best focus music.',

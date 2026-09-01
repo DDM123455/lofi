@@ -1,16 +1,18 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext } from 'react'
+import { preload, preconnect } from 'react-dom'
 import { getDayNightConfig } from '@/hooks/useDayNight'
 import { LOFI_STREAMS, AMBIENT_SOUNDS } from '@/lib/lofiStreams'
 import { BG_PRESETS, getBgPresetByUrl } from '@/lib/backgrounds'
-import { useGameStore, xpProgress, ACHIEVEMENT_DEFS } from '@/lib/gameStore'
+import { useGameStore, xpProgress, ACHIEVEMENT_DEFS, localDate } from '@/lib/gameStore'
 import { CodingCatVariant, CAT_VARIANT_META, type CatVariant } from '@/components/companion/CodingCatVariants'
 import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
 import { analytics } from '@/lib/analytics'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { SupportModal } from '@/components/support/SupportModal'
+import { LiveClock } from '@/components/workspace/LiveClock'
 
 type ClockStyle = 'digital'|'minimal'|'bold'|'analog'
 type BgType = 'gif'|'youtube'|'video'
@@ -18,6 +20,38 @@ type PanelTab = 'music'|'sounds'|'more'
 type MoreTab = 'widgets'|'weather'|'pet'|'progress'|'share'
 interface Todo { id:string; text:string; done:boolean; estimate?:number; actual:number }
 interface WxData { city:string; temp:number; code:number; desc:string; emoji:string; feels:number|null; humidity:number|null; wind:number|null }
+
+// Warm the critical media paths before hydration finishes:
+// - the default background clip starts downloading immediately instead of after first render
+// - TLS/DNS to YouTube's hosts is pre-negotiated so initYT() doesn't pay for it on click
+if(typeof window!=='undefined'){
+  try{
+    preload('/video/street-scene.mp4',{as:'video'})
+    preconnect('https://www.youtube.com')
+    preconnect('https://i.ytimg.com')
+    preconnect('https://www.google.com')
+  }catch{/* no-op */}
+}
+
+// Hover/focus tooltip for icon-only dock buttons. The bubble is rendered once at the top
+// level as position:fixed (via TipCtx) so it isn't clipped by the dock's horizontal
+// overflow container.
+type TipState = { label: string; x: number; y: number } | null
+const TipCtx = createContext<(t: TipState) => void>(() => {})
+function Tip({label,children}:{label:string;children:React.ReactNode}){
+  const setTip = useContext(TipCtx)
+  const ref = useRef<HTMLSpanElement>(null)
+  const show = () => {
+    const r = ref.current?.getBoundingClientRect()
+    if (r) setTip({ label, x: r.left + r.width / 2, y: r.top })
+  }
+  const hide = () => setTip(null)
+  return (
+    <span ref={ref} className="lf-tip" onMouseEnter={show} onMouseLeave={hide} onFocus={show} onBlur={hide}>
+      {children}
+    </span>
+  )
+}
 
 function bgTypeFromUrl(url:string):BgType {
   if(/\.(mp4|webm|mov)$/i.test(url)) return 'video'
@@ -75,11 +109,23 @@ function makePinkBuffer(ctx:AudioContext,secs=8):AudioBuffer {
   return buf
 }
 
+// One 8s pink-noise bed per AudioContext, shared by every ambient synth graph. Generating
+// it is ~700k iterations on the main thread — doing that once (instead of per sound, per
+// toggle) removes the click/jank when a sound is switched on. Each graph still gets its own
+// BufferSource node reading this buffer, so playback is independent.
+const pinkBufferCache = new WeakMap<AudioContext,AudioBuffer>()
+export function getPinkBuffer(ctx:AudioContext):AudioBuffer {
+  let b=pinkBufferCache.get(ctx)
+  if(!b){ b=makePinkBuffer(ctx,8); pinkBufferCache.set(ctx,b) }
+  return b
+}
+
 type SynthNode={gain:GainNode;stop:()=>void}
 function buildSynthGraph(ctx:AudioContext,id:string):SynthNode {
   const master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination)
   const stops:Array<()=>void>=[]
-  const ns=(s=8)=>{const src=ctx.createBufferSource();src.buffer=makePinkBuffer(ctx,s);src.loop=true;return src}
+  const pink=getPinkBuffer(ctx)
+  const ns=(_s?:number)=>{const src=ctx.createBufferSource();src.buffer=pink;src.loop=true;return src}
   const flt=(t:BiquadFilterType,f:number,q=1)=>{const n=ctx.createBiquadFilter();n.type=t;n.frequency.value=f;n.Q.value=q;return n}
   const gn=(v:number)=>{const g=ctx.createGain();g.gain.value=v;return g}
   const lfo=(r:number,dv:number,tgt:AudioParam)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.frequency.value=r;g.gain.value=dv;o.connect(g);g.connect(tgt);o.start();stops.push(()=>{try{o.stop()}catch(_){}})}
@@ -94,51 +140,138 @@ function buildSynthGraph(ctx:AudioContext,id:string):SynthNode {
   return{gain:master,stop:()=>stops.forEach(f=>f())}
 }
 
-function usePomodoro(workMin=25,breakMin=5){
-  const[phase,setPhase]=useState<'work'|'break'>('work')
-  const[secs,setSecs]=useState(workMin*60)
+type PomoPhase='work'|'break'|'long'
+interface PomoCfg{workMin:number;breakMin:number;longMin:number;cyclesBeforeLong:number;autoStart:boolean}
+const POMO_KEY='lofispace-pomodoro'
+const phaseSecs=(p:PomoPhase,c:PomoCfg)=>(p==='work'?c.workMin:p==='break'?c.breakMin:c.longMin)*60
+
+/**
+ * Wall-clock (endsAt) based Pomodoro. The remaining time is always derived from a target
+ * timestamp, so a throttled background tab never drifts. State survives reload via
+ * localStorage: a still-running phase resumes at the correct remaining time; a phase that
+ * elapsed while the tab was closed settles on the *next* phase, paused (no unattended XP).
+ * `completions` is a session-only counter that drives the XP side-effect in the parent — it
+ * is deliberately NOT persisted.
+ */
+function usePomodoro(init:PomoCfg){
+  const[cfg,setCfg]=useState<PomoCfg>(init)
+  const[phase,setPhase]=useState<PomoPhase>('work')
   const[on,setOn]=useState(false)
   const[completions,setCompletions]=useState(0)
-  const total=phase==='work'?workMin*60:breakMin*60
-  useEffect(()=>{
-    if(!on)return
-    const id=setInterval(()=>setSecs(s=>{
-      if(s<=1){
-        if(phase==='work') setCompletions(c=>c+1)
-        setPhase(p=>p==='work'?'break':'work')
-        return phase==='work'?breakMin*60:workMin*60
-      }
-      return s-1
-    }),1000)
-    return()=>clearInterval(id)
-  },[on,phase,workMin,breakMin])
-  const setMode=(mode:'work'|'break')=>{setOn(false);setPhase(mode);setSecs(mode==='work'?workMin*60:breakMin*60)}
-  return{
-    mm:String(Math.floor(secs/60)).padStart(2,'0'),
-    ss:String(secs%60).padStart(2,'0'),
-    on,toggle:()=>setOn(v=>!v),phase,completions,
-    progress:secs/total,
-    workMin,
-    reset:()=>{setOn(false);setPhase('work');setSecs(workMin*60)},
-    setMode,
-  }
-}
+  const[cycleCount,setCycleCount]=useState(0)
+  const[endsAt,setEndsAt]=useState<number|null>(null)
+  const[remaining,setRemaining]=useState(()=>phaseSecs('work',init))
+  const[hydrated,setHydrated]=useState(false)
 
-function AnalogClock({now,size=100,accent}:{now:Date;size?:number;accent:string}){
-  const cx=size/2,cy=size/2,r=size/2-4
-  const h=(now.getHours()%12+now.getMinutes()/60)/12*2*Math.PI-Math.PI/2
-  const m=(now.getMinutes()+now.getSeconds()/60)/60*2*Math.PI-Math.PI/2
-  const s=now.getSeconds()/60*2*Math.PI-Math.PI/2
-  return(
-    <svg width={size} height={size} style={{filter:'drop-shadow(0 2px 14px rgba(0,0,0,0.7))'}}>
-      <circle cx={cx} cy={cy} r={r} fill="rgba(0,0,0,0.4)" stroke="rgba(255,255,255,0.15)" strokeWidth={1.5}/>
-      {Array.from({length:12},(_,i)=>{const a=i/12*2*Math.PI;return<line key={i} x1={cx+Math.cos(a)*(r-5)} y1={cy+Math.sin(a)*(r-5)} x2={cx+Math.cos(a)*(r-1)} y2={cy+Math.sin(a)*(r-1)} stroke="rgba(255,255,255,0.3)" strokeWidth={i%3===0?1.5:0.7}/>})}
-      <line x1={cx} y1={cy} x2={cx+Math.cos(h)*r*0.52} y2={cy+Math.sin(h)*r*0.52} stroke="white" strokeWidth={3} strokeLinecap="round"/>
-      <line x1={cx} y1={cy} x2={cx+Math.cos(m)*r*0.76} y2={cy+Math.sin(m)*r*0.76} stroke="white" strokeWidth={2} strokeLinecap="round"/>
-      <line x1={cx} y1={cy} x2={cx+Math.cos(s)*r*0.86} y2={cy+Math.sin(s)*r*0.86} stroke={accent} strokeWidth={1.2} strokeLinecap="round"/>
-      <circle cx={cx} cy={cy} r={3} fill={accent}/>
-    </svg>
-  )
+  const cfgRef=useRef(cfg);   useEffect(()=>{cfgRef.current=cfg},[cfg])
+  const onRef=useRef(on);     useEffect(()=>{onRef.current=on},[on])
+  const phaseRef=useRef(phase);useEffect(()=>{phaseRef.current=phase},[phase])
+  const cycleRef=useRef(cycleCount);useEffect(()=>{cycleRef.current=cycleCount},[cycleCount])
+
+  // finished -> next phase. `countWork` gates whether a finished work phase increments the
+  // session completions counter (true for a natural finish, false for an explicit skip).
+  const advance=useCallback((finished:PomoPhase,{run,countWork}:{run:boolean;countWork:boolean})=>{
+    const c=cfgRef.current
+    let next:PomoPhase, nc=cycleRef.current
+    if(finished==='work'){
+      if(countWork)setCompletions(x=>x+1)
+      nc=cycleRef.current+1
+      if(nc>=c.cyclesBeforeLong){next='long';nc=0}else next='break'
+    }else next='work'
+    setCycleCount(nc); setPhase(next)
+    const dur=phaseSecs(next,c)
+    setRemaining(dur)
+    setEndsAt(run?Date.now()+dur*1000:null)
+    setOn(run)
+  },[])
+  const advanceRef=useRef(advance); useEffect(()=>{advanceRef.current=advance},[advance])
+
+  // Rehydrate once on mount
+  useEffect(()=>{
+    try{
+      const raw=localStorage.getItem(POMO_KEY)
+      if(raw){
+        const s=JSON.parse(raw)
+        const nc:PomoCfg=s.cfg?{...init,...s.cfg}:init
+        setCfg(nc)
+        const ph:PomoPhase=(s.phase==='work'||s.phase==='break'||s.phase==='long')?s.phase:'work'
+        setPhase(ph)
+        setCycleCount(typeof s.cycleCount==='number'?s.cycleCount:0)
+        if(s.on&&typeof s.endsAt==='number'&&s.endsAt>Date.now()){
+          setEndsAt(s.endsAt); setOn(true)
+          setRemaining(Math.max(1,Math.round((s.endsAt-Date.now())/1000)))
+        }else if(s.on&&typeof s.endsAt==='number'){
+          // elapsed while away — move to the next phase, paused, without crediting XP
+          let nx:PomoPhase, ncy=(typeof s.cycleCount==='number'?s.cycleCount:0)
+          if(ph==='work'){ncy+=1; if(ncy>=nc.cyclesBeforeLong){nx='long';ncy=0}else nx='break'}else nx='work'
+          setPhase(nx); setCycleCount(ncy); setOn(false); setEndsAt(null)
+          setRemaining(phaseSecs(nx,nc))
+        }else{
+          setOn(false); setEndsAt(null)
+          setRemaining(typeof s.remaining==='number'?s.remaining:phaseSecs(ph,nc))
+        }
+      }
+    }catch{/* ignore */}
+    setHydrated(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
+
+  // Persist (after hydration so we never clobber saved state with the initial defaults)
+  useEffect(()=>{
+    if(!hydrated)return
+    try{localStorage.setItem(POMO_KEY,JSON.stringify({cfg,phase,on,endsAt,remaining,cycleCount}))}catch{/* ignore */}
+  },[hydrated,cfg,phase,on,endsAt,remaining,cycleCount])
+
+  // Ticker — derives `remaining` from `endsAt`; flips phase when it hits zero
+  useEffect(()=>{
+    if(!on||endsAt==null)return
+    const tick=()=>{
+      const rem=Math.round((endsAt-Date.now())/1000)
+      if(rem<=0) advanceRef.current(phase,{run:cfgRef.current.autoStart,countWork:true})
+      else setRemaining(rem)
+    }
+    tick()
+    const id=setInterval(tick,250)
+    return()=>clearInterval(id)
+  },[on,endsAt,phase])
+
+  const toggle=useCallback(()=>{
+    if(onRef.current){
+      if(endsAt)setRemaining(Math.max(0,Math.round((endsAt-Date.now())/1000)))
+      setEndsAt(null); setOn(false)
+    }else{
+      setRemaining(r=>{ setEndsAt(Date.now()+r*1000); return r })
+      setOn(true)
+    }
+  },[endsAt])
+  const reset=useCallback(()=>{
+    setOn(false); setPhase('work'); setCycleCount(0); setEndsAt(null)
+    setRemaining(phaseSecs('work',cfgRef.current))
+  },[])
+  const setMode=useCallback((m:'work'|'break')=>{
+    setOn(false); setPhase(m); setEndsAt(null)
+    setRemaining(phaseSecs(m,cfgRef.current))
+  },[])
+  const skip=useCallback(()=>{
+    advanceRef.current(phaseRef.current,{run:onRef.current,countWork:false})
+  },[])
+  const patchCfg=useCallback((p:Partial<PomoCfg>)=>{
+    setCfg(c=>{
+      const nc={...c,...p}
+      if(!onRef.current)setRemaining(phaseSecs(phaseRef.current,nc))
+      return nc
+    })
+  },[])
+
+  const total=phaseSecs(phase,cfg)
+  return{
+    mm:String(Math.floor(Math.max(0,remaining)/60)).padStart(2,'0'),
+    ss:String(Math.max(0,remaining)%60).padStart(2,'0'),
+    on,toggle,phase,completions,cycleCount,
+    progress:Math.max(0,Math.min(1,remaining/total)),
+    workMin:cfg.workMin,cfg,
+    reset,setMode,skip,patchCfg,
+  }
 }
 
 export function EmbedClient() {
@@ -150,8 +283,11 @@ export function EmbedClient() {
   const initBgUrl  = hasBgParam ? decodeURIComponent(sp.get('bgv')!) : '/video/street-scene.mp4'
   const initBgOp   = Math.min(90, Math.max(0, parseInt(sp.get('bgo') ?? String(dn.overlay))))
   const initBlur   = Math.min(20, Math.max(0, parseInt(sp.get('bl') ?? '0')))
-  const initWorkMin  = Math.min(60, Math.max(1, parseInt(sp.get('pw') ?? '25') || 25))
+  const initWorkMin  = Math.min(90, Math.max(1, parseInt(sp.get('pw') ?? '25') || 25))
   const initBreakMin = Math.min(30, Math.max(1, parseInt(sp.get('pb') ?? '5') || 5))
+  const initLongMin  = Math.min(60, Math.max(1, parseInt(sp.get('plb') ?? '15') || 15))
+  const initCycles   = Math.min(8,  Math.max(2, parseInt(sp.get('pc') ?? '4') || 4))
+  const initAutoStart= sp.get('pas')!=='0'
   const urlAccent  = '#' + (sp.get('ac') ?? dn.accent.replace('#',''))
   const urlWx:WxData|null = (sp.get('city')&&sp.get('temp'))
     ? {city:sp.get('city')!,temp:parseInt(sp.get('temp')!),code:0,desc:sp.get('wdesc')??'',emoji:sp.get('wemoji')??'🌤️',feels:null,humidity:null,wind:null}
@@ -185,7 +321,7 @@ export function EmbedClient() {
 
   // Pomodoro
   const [showPom,     setShowPom]     = useState(sp.get('pom')!=='0')
-  const pom = usePomodoro(initWorkMin, initBreakMin)
+  const pom = usePomodoro({workMin:initWorkMin,breakMin:initBreakMin,longMin:initLongMin,cyclesBeforeLong:initCycles,autoStart:initAutoStart})
 
   // Note / Todo
   const [showNote,    setShowNote]    = useState(sp.get('note')!=='0')
@@ -234,7 +370,6 @@ export function EmbedClient() {
   const [panelTab,    setPanelTab]    = useState<PanelTab>('music')
   const [moreTab,     setMoreTab]     = useState<MoreTab>('widgets')
   const [openPopover, setOpenPopover] = useState<'youtube'|'background'|null>(null)
-  const [now,         setNow]         = useState(new Date())
   const [mounted,     setMounted]     = useState(false)
   const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
   const [copied,      setCopied]      = useState(false)
@@ -242,15 +377,20 @@ export function EmbedClient() {
   const [showSupport,  setShowSupport]  = useState(false)
   const [showOnboard,  setShowOnboard]  = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [zen,          setZen]          = useState(false)
+  const [showShortcuts,setShowShortcuts]= useState(false)
+  const [showPomCfg,   setShowPomCfg]   = useState(false)
+  const [tip,          setTip]          = useState<TipState>(null)
 
   // Refs
   const ctxRef    = useRef<AudioContext|null>(null)
   const synthRef  = useRef<Record<string,SynthNode>>({})
-  const html5Ref  = useRef<Record<string,HTMLAudioElement>>({})
   const ytRef     = useRef<HTMLDivElement>(null)
   const ytPlayer  = useRef<any>(null)
   const ytTimer   = useRef<ReturnType<typeof setTimeout>|null>(null)
   const manualYtInit = useRef(false) // true once a real (user-driven) player init has started — stops the silent pre-init from racing it
+  const ytAutoRetriedRef = useRef(false) // one free automatic re-init before we surface the manual Retry UI
+  const ytWarmRef = useRef<(()=>void)|null>(null) // pulls the silent pre-init forward on start-overlay hover
   const noteTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const shownBgRef  = useRef<{url:string;type:BgType}|null>(null)
   const prevBgTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
@@ -262,9 +402,11 @@ export function EmbedClient() {
     streak, bestStreak, xp, level, coins, totalPomodoros,
     companionMood, pendingAchievements, newLevelReached,
     completePomodoro, recordActivity, dismissAchievement, dismissLevelUp,
-    unlockedAchievements,
+    unlockedAchievements, dailyStats, dailyGoalPomodoros, setDailyGoal,
   } = useGameStore()
+  const todayPoms = dailyStats[localDate()]?.pomodoros ?? 0
   const [xpToast, setXpToast] = useState<{xp:number;key:number}|null>(null)
+  const [goalToast, setGoalToast] = useState<number|null>(null)
 
   useEffect(()=>{ setMounted(true); analytics.workspaceOpen() },[])
   useEffect(()=>{
@@ -319,6 +461,11 @@ export function EmbedClient() {
   // so switching backgrounds never drops to the bare gradient placeholder mid-transition
   useEffect(()=>{
     setShowBgSpinner(false)
+    // The <video> element is now reused (no key) — its src prop was just updated by React,
+    // but a bare src swap doesn't reliably kick off a fresh load in every browser, so do it
+    // explicitly. (Harmless for the <img> path, which reloads on src change by itself.)
+    const vel=bgElRef.current
+    if(vel instanceof HTMLVideoElement){ try{ vel.load() }catch{/* no-op */} }
     // Known presets ship a pre-generated first-frame poster (tiny JPG) — the <video poster>
     // attribute paints it immediately, well before the clip itself buffers, so there's no
     // reason to keep showing the old background while we wait: that's what made switching
@@ -347,30 +494,27 @@ export function EmbedClient() {
     return ()=>clearTimeout(spinnerTimer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[bgUrl])
-  // Warm the cache for the other presets as soon as the user shows intent to switch (opens
-  // the Background popover), so the actual click resolves from cache instead of a cold
-  // download. One-shot per session; skipped on constrained connections.
+  // When the user opens the Background popover, warm only the tiny poster JPGs so every
+  // preset shows an instant preview frame the moment it's picked. The heavy clips are NOT
+  // bulk-downloaded here any more (that was ~9 MB just for opening the popover, contending
+  // with the live audio stream) — each full clip is fetched on demand when its button is
+  // hovered/focused, via prefetchScene() below. The guard flips only after the posters
+  // actually resolve, so a flaky first attempt can retry on the next open.
   useEffect(()=>{
     if(openPopover!=='background'||bgPrefetchedRef.current)return
-    bgPrefetchedRef.current=true
     const conn=(navigator as any).connection
     if(conn?.saveData||conn?.effectiveType==='2g'||conn?.effectiveType==='slow-2g')return
-    const others=BG_PRESETS.filter(p=>p.url!==bgUrl)
-    // Posters are tiny (a few/tens of KB) — warm them all right away so every preset's
-    // instant-preview frame is ready the moment it's picked.
-    others.forEach(p=>{ fetch(p.poster,{credentials:'omit'}).catch(()=>{}) })
-    // Full clips are heavier — fetch a couple at a time (low priority) instead of firing
-    // all of them at once, so they don't saturate the connection pool and slow down
-    // whichever one the user actually clicks next.
-    let i=0
-    const next=()=>{
-      if(i>=others.length)return
-      const p=others[i++]
-      // 'priority' (Fetch Priority API) is ignored harmlessly by browsers that don't support it
-      fetch(p.url,{credentials:'omit',priority:'low'} as RequestInit).catch(()=>{}).finally(next)
-    }
-    next();next()
+    const posters=BG_PRESETS.filter(p=>p.url!==bgUrl).map(p=>p.poster)
+    Promise.allSettled(posters.map(u=>fetch(u,{credentials:'omit'})))
+      .then(()=>{ bgPrefetchedRef.current=true })
   },[openPopover,bgUrl])
+  // Pull a single scene's full clip into the HTTP cache when the user hovers/focuses its
+  // button, so the click that follows resolves instantly. Skipped on constrained connections.
+  const prefetchScene=useCallback((url:string)=>{
+    const conn=(navigator as any).connection
+    if(conn?.saveData||conn?.effectiveType==='2g'||conn?.effectiveType==='slow-2g')return
+    fetch(url,{credentials:'omit',priority:'low'} as RequestInit).catch(()=>{})
+  },[])
   useEffect(()=>{
     if(pom.completions===0) return
     const activeTodo = activeTodoId ? todos.find(x=>x.id===activeTodoId) : undefined
@@ -400,7 +544,6 @@ export function EmbedClient() {
     try{const cn=JSON.parse(localStorage.getItem('lofispace-calNotes')||'{}');if(cn&&typeof cn==='object')setCalNotes(cn)}catch(_){}
     const t=new Date();setCalSelected(`${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`)
   },[])
-  useEffect(()=>{ const t=setInterval(()=>setNow(new Date()),1000);return()=>clearInterval(t) },[])
   useEffect(()=>{
     if(typeof window==='undefined'||document.getElementById('yt-api'))return
     const s=document.createElement('script');s.id='yt-api';s.src='https://www.youtube.com/iframe_api';s.async=true
@@ -433,6 +576,9 @@ export function EmbedClient() {
       if((window as any).YT?.Player)tryPre()
       else{const p=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{p?.();tryPre()}}
     }
+    // Also let an explicit hover/focus over the "Click to start" overlay pull the pre-init
+    // forward — by the time the user's pointer reaches the button the player is usually warm.
+    ytWarmRef.current=armReady
     // Constructing the YT.Player here pulls in YouTube's own embed JS/CSS (~1MB) right
     // away — on a cold load that competes for bandwidth with the app's own hydration JS
     // and the autoplaying default background video, and was a likely cause of "no music
@@ -447,13 +593,15 @@ export function EmbedClient() {
     else window.addEventListener('load',()=>idle(armReady),{once:true})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
-  // Auto-detect weather on mount (skip if URL already has data)
+  // Auto-detect weather — deferred until the user has actually entered the workspace
+  // (clicked "start"), so geolocation + two cross-origin fetches never contend with the
+  // cold-load critical path. Skipped if the URL already carries weather data.
   useEffect(()=>{
-    if(urlWx)return
+    if(urlWx||!started)return
     const t=setTimeout(()=>detectWeather(),1200)
     return()=>clearTimeout(t)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[])
+  },[started])
 
   // ── Audio ──────────────────────────────────────────────────────────────
   const ensureCtx = useCallback(()=>{
@@ -467,19 +615,9 @@ export function EmbedClient() {
     const node=buildSynthGraph(ctx,id)
     node.gain.gain.setTargetAtTime((vol/100)*0.6,ctx.currentTime,0.1)
     synthRef.current[id]=node
-    const sound=AMBIENT_SOUNDS.find(s=>s.id===id)
-    if(sound?.file){
-      const audio=new Audio(sound.file);audio.loop=true;audio.volume=0
-      audio.addEventListener('canplaythrough',()=>{
-        const n=synthRef.current[id]
-        if(n&&ctxRef.current){n.gain.gain.setTargetAtTime(0,ctxRef.current.currentTime,0.3);setTimeout(()=>{try{n.stop()}catch(_){}; delete synthRef.current[id]},600)}
-        html5Ref.current[id]=audio;audio.volume=(vol/100)*0.6;audio.play().catch(()=>{})
-      },{once:true});audio.load()
-    }
   },[ensureCtx])
 
   const stopAmbient = useCallback((id:string)=>{
-    if(html5Ref.current[id]){html5Ref.current[id].pause();html5Ref.current[id].src='';delete html5Ref.current[id]}
     if(synthRef.current[id]&&ctxRef.current){
       synthRef.current[id].gain.gain.setTargetAtTime(0,ctxRef.current.currentTime,0.15)
       setTimeout(()=>{try{synthRef.current[id]?.stop()}catch(_){};delete synthRef.current[id]},300)
@@ -488,13 +626,13 @@ export function EmbedClient() {
 
   const setAmbVol = useCallback((id:string,vol:number)=>{
     const s=(vol/100)*0.6
-    if(html5Ref.current[id])html5Ref.current[id].volume=s
     if(synthRef.current[id]&&ctxRef.current)synthRef.current[id].gain.gain.setTargetAtTime(s,ctxRef.current.currentTime,0.05)
   },[])
 
-  const initYT = useCallback((ytId:string,vol:number)=>{
+  const initYT = useCallback((ytId:string,vol:number,userInitiated=false)=>{
     if(!ytRef.current)return
     manualYtInit.current=true // once the user (or doStart) has kicked off a real init, the silent pre-init must never create a competing player
+    if(userInitiated)ytAutoRetriedRef.current=false
     // Destroy existing player and reset container before creating new one
     try{ytPlayer.current?.destroy()}catch(_){}
     ytPlayer.current=null
@@ -503,33 +641,49 @@ export function EmbedClient() {
     ytRef.current.appendChild(container)
     setYtStatus('loading')
     if(ytTimer.current)clearTimeout(ytTimer.current)
-    ytTimer.current=setTimeout(()=>setYtStatus('blocked'),18000)
+    // A slow-but-fine connection can legitimately take a few seconds; a truly blocked embed
+    // never fires onReady. Give it 10s, then try one automatic re-init before surfacing the
+    // manual Retry UI — a large share of "blocked" cases clear on a second attempt.
+    const fail=()=>{
+      if(!ytAutoRetriedRef.current){
+        ytAutoRetriedRef.current=true
+        setTimeout(()=>initYTRef.current(ytId,vol),1500)
+      }else{
+        setYtStatus('blocked')
+      }
+    }
+    ytTimer.current=setTimeout(fail,10000)
     const create=()=>{
       if(!container)return
       ytPlayer.current=new(window as any).YT.Player(container,{
         height:'180',width:'320',videoId:ytId,
         playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
         events:{
-          onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);setYtStatus('ready');e.target.setVolume(vol);e.target.playVideo()},
-          onError:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);console.warn('YT error code:',e.data);setYtStatus('blocked')},
+          onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);ytAutoRetriedRef.current=false;setYtStatus('ready');e.target.setVolume(vol);e.target.playVideo()},
+          onError:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);console.warn('YT error code:',e.data);fail()},
         },
       })
     }
     if((window as any).YT?.Player){create()}
     else{const prev=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{prev?.();create()}}
   },[])
+  const initYTRef=useRef(initYT)
+  useEffect(()=>{ initYTRef.current=initYT },[initYT])
 
   const activeYtId = lofiId==='custom' ? customLofiId : (LOFI_STREAMS.find(s=>s.id===lofiId)?.youtubeId??'7NOSDKb0HlU')
 
   const doStart = useCallback(()=>{
     if(started)return
     const ctx=ensureCtx();ctx.resume().catch(()=>{})
+    // Ask for notification permission here — this is a genuine user gesture, so the prompt
+    // is allowed; used for the Pomodoro phase-change nudge when the tab is in the background.
+    try{ if(typeof Notification!=='undefined'&&Notification.permission==='default') Notification.requestPermission().catch(()=>{}) }catch{/* ignore */}
     Object.entries(ambVols).forEach(([id,vol])=>startAmbient(id,vol))
     if(ytPlayer.current&&ytStatus==='ready'){
       try{ytPlayer.current.unMute();ytPlayer.current.setVolume(lofiVol);ytPlayer.current.playVideo()}catch(_){}
       if(ytTimer.current)clearTimeout(ytTimer.current)
     }else{
-      initYT(activeYtId,lofiVol)
+      initYT(activeYtId,lofiVol,true)
     }
     setStarted(true);setPlaying(true)
   },[started,ensureCtx,ambVols,lofiVol,startAmbient,initYT,activeYtId,ytStatus])
@@ -539,12 +693,10 @@ export function EmbedClient() {
     const next=!playing;setPlaying(next)
     if(next){
       ctxRef.current?.resume();ytPlayer.current?.playVideo()
-      Object.keys(html5Ref.current).forEach(id=>html5Ref.current[id]?.play())
       const ctx=ctxRef.current
       if(ctx)Object.entries(synthRef.current).forEach(([id,n])=>n.gain.gain.setTargetAtTime((ambVols[id]??50)/100*0.6,ctx.currentTime,0.1))
     }else{
       try{ytPlayer.current?.pauseVideo()}catch(_){}
-      Object.keys(html5Ref.current).forEach(id=>html5Ref.current[id]?.pause())
       const ctx=ctxRef.current
       if(ctx)Object.values(synthRef.current).forEach(n=>n.gain.gain.setTargetAtTime(0,ctx.currentTime,0.1))
     }
@@ -552,18 +704,19 @@ export function EmbedClient() {
 
   const handleLofiVol=(v:number)=>{setLofiVol(v);if(started)try{ytPlayer.current?.setVolume(v)}catch(_){}}
   const handleLofiChange=(id:string)=>{
-    setLofiId(id);try{ytPlayer.current?.destroy()}catch(_){}; ytPlayer.current=null
-    if(started){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'7NOSDKb0HlU');setPlaying(true);setTimeout(()=>initYT(ytId,lofiVol),80)}
+    setLofiId(id)
+    // initYT() tears down any existing player at its top, so no separate destroy + timeout
+    // dance is needed — the old ~80ms gap between destroy() and init is gone.
+    if(started){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'7NOSDKb0HlU');setPlaying(true);initYT(ytId,lofiVol,true)}
   }
   const applyCustomLofi=()=>{
     const id=parseYtId(customLofiInput);if(!id)return
     setCustomLofiId(id);setLofiId('custom')
-    try{ytPlayer.current?.destroy()}catch(_){};ytPlayer.current=null
-    if(started){setPlaying(true);setTimeout(()=>initYT(id,lofiVol),80)}
+    if(started){setPlaying(true);initYT(id,lofiVol,true)}
   }
   const retryYT=useCallback(()=>{
     if(!started)return
-    setPlaying(true);initYT(activeYtId,lofiVol)
+    setPlaying(true);initYT(activeYtId,lofiVol,true)
   },[started,initYT,activeYtId,lofiVol])
   const dismissOnboard=()=>{
     setShowOnboard(false)
@@ -641,12 +794,101 @@ export function EmbedClient() {
     else document.exitFullscreen().catch(()=>{})
   },[])
 
+  // ── Global keyboard shortcuts ──────────────────────────────────────────
+  useEffect(()=>{
+    const onKey=(e:KeyboardEvent)=>{
+      if(e.metaKey||e.ctrlKey||e.altKey)return
+      const el=e.target as HTMLElement|null
+      if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.isContentEditable))return
+      switch(e.key){
+        case ' ': e.preventDefault(); togglePlay(); break
+        case 'f': case 'F': toggleFullscreen(); break
+        case 'p': case 'P': setShowPom(v=>!v); break
+        case 'n': case 'N': setShowNote(v=>!v); break
+        case 'z': case 'Z': setZen(v=>!v); break
+        case '?': setShowShortcuts(v=>!v); break
+        case 'Escape':
+          setShowShortcuts(false); setOpenPopover(null); setPanel(false)
+          setZen(false); setShowCal(false); setShowSupport(false)
+          break
+      }
+    }
+    window.addEventListener('keydown',onKey)
+    return ()=>window.removeEventListener('keydown',onKey)
+  },[togglePlay,toggleFullscreen])
+
+  // ── Pomodoro phase-change feedback (chime + notification + tab title) ────
+  const playChime=useCallback((rising:boolean)=>{
+    try{
+      const ctx=ensureCtx(); ctx.resume().catch(()=>{})
+      const now=ctx.currentTime
+      const g=ctx.createGain(); g.connect(ctx.destination)
+      g.gain.setValueAtTime(0.0001,now)
+      g.gain.exponentialRampToValueAtTime(0.22,now+0.03)
+      g.gain.exponentialRampToValueAtTime(0.0001,now+1.1)
+      const notes=rising?[587.33,880]:[880,587.33]
+      notes.forEach((f,i)=>{
+        const o=ctx.createOscillator(); o.type='sine'; o.frequency.value=f
+        o.connect(g); o.start(now+i*0.16); o.stop(now+i*0.16+0.5)
+      })
+    }catch{/* audio not ready — non-critical */}
+  },[ensureCtx])
+
+  const phaseInitRef=useRef(true)
+  useEffect(()=>{
+    if(phaseInitRef.current){ phaseInitRef.current=false; return }
+    const toFocus=pom.phase==='work'
+    playChime(!toFocus)
+    // Only nudge with a system notification when the tab isn't focused — otherwise the
+    // in-app UI + chime are enough and a popup would be noise.
+    if(typeof Notification!=='undefined' && Notification.permission==='granted' && document.visibilityState!=='visible'){
+      try{
+        const title=toFocus?t.notif_focus_title:(pom.phase==='long'?t.notif_long_title:t.notif_break_title)
+        const body=toFocus?t.notif_focus_body:t.notif_break_body
+        new Notification(title,{body,icon:'/logo.png',tag:'lofispace-pomodoro',silent:true})
+      }catch{/* ignore */}
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[pom.phase])
+
+  // Tab-title countdown while the timer runs
+  useEffect(()=>{
+    const base='LofiSpace — Focus Workspace'
+    if(pom.on){
+      const label=pom.phase==='work'?t.pom_phase_focus:pom.phase==='long'?t.pom_phase_long:t.pom_phase_break
+      document.title=`${pom.mm}:${pom.ss} · ${label}`
+    }else{
+      document.title=base
+    }
+    return ()=>{ document.title=base }
+  },[pom.on,pom.phase,pom.mm,pom.ss,t])
+
+  // Warn before an accidental tab close mid focus-session
+  useEffect(()=>{
+    if(!(pom.on&&pom.phase==='work'))return
+    const h=(e:BeforeUnloadEvent)=>{ e.preventDefault(); e.returnValue='' }
+    window.addEventListener('beforeunload',h)
+    return ()=>window.removeEventListener('beforeunload',h)
+  },[pom.on,pom.phase])
+
+  // Celebrate the moment today's pomodoro goal is met (once per calendar day)
+  const goalCelebratedRef=useRef('')
+  useEffect(()=>{
+    const today=localDate()
+    if(todayPoms>=dailyGoalPomodoros && todayPoms>0 && goalCelebratedRef.current!==today){
+      goalCelebratedRef.current=today
+      playChime(true)
+      setGoalToast(Date.now())
+      setTimeout(()=>setGoalToast(null),3200)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[todayPoms,dailyGoalPomodoros])
+
   const saveCalFn=(cn:Record<string,{id:number;text:string}[]>)=>{try{localStorage.setItem('lofispace-calNotes',JSON.stringify(cn))}catch(_){}}
   const addCalNote=()=>{const t=calInput.trim();if(!t)return;const arr=[...(calNotes[calSelected]||[]),{id:Date.now(),text:t}];const cn={...calNotes,[calSelected]:arr};saveCalFn(cn);setCalNotes(cn);setCalInput('')}
   const delCalNote=(key:string,nid:number)=>{const arr=(calNotes[key]||[]).filter(x=>x.id!==nid);const cn={...calNotes,[key]:arr};if(!arr.length)delete cn[key];saveCalFn(cn);setCalNotes(cn)}
 
   useEffect(()=>()=>{
-    Object.values(html5Ref.current).forEach(a=>{a.pause();a.src=''})
     Object.values(synthRef.current).forEach(n=>n.stop())
     ctxRef.current?.close();try{ytPlayer.current?.destroy()}catch(_){}
     if(ytTimer.current)clearTimeout(ytTimer.current)
@@ -692,14 +934,6 @@ export function EmbedClient() {
   ) as React.CSSProperties
 
   // ── Computed values ────────────────────────────────────────────────────
-  const pad=(n:number)=>String(n).padStart(2,'0')
-  const timeStr=mounted?`${pad(now.getHours())}:${pad(now.getMinutes())}`:'--:--'
-  const secStr=mounted?pad(now.getSeconds()):'00'
-  const dateStr=mounted
-    ? lang==='vi'
-      ? `${t.cal_days_long[now.getDay()]}, ${now.getDate()} tháng ${now.getMonth()+1}`
-      : `${t.cal_days_long[now.getDay()]}, ${t.cal_months[now.getMonth()].slice(0,3)} ${now.getDate()}`
-    : ''
   const pomCirc=2*Math.PI*62
   const pomDash=pomCirc*(1-pom.progress)
   const ambCount=Object.keys(ambVols).length
@@ -779,7 +1013,10 @@ export function EmbedClient() {
               style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
           :null)}
       {bgType==='video'
-        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} key={bgUrl} src={bgUrl} poster={bgPoster} autoPlay loop muted playsInline preload="auto" aria-hidden
+        // No React key: the element is reused across scene switches (src swapped + .load()ed
+        // imperatively in the bgUrl effect) so the decoder/buffer isn't torn down and rebuilt
+        // on every change. The <prevBg> layer above covers the visual gap while the new clip buffers.
+        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} src={bgUrl} poster={bgPoster} autoPlay loop muted playsInline preload="auto" aria-hidden
             onCanPlay={handleBgReady}
             style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'
@@ -803,20 +1040,7 @@ export function EmbedClient() {
         <div {...clockDrag.dp} style={{...wStyle(clockDrag,{left:36,top:30}),zIndex:5,cursor:'grab',position:'absolute'}}>
           <div style={{position:'relative'}}>
             <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowClock(false)} style={{position:'absolute',top:-8,right:-10,width:20,height:20,display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,.18)',borderRadius:'50%',background:'rgba(0,0,0,.45)',color:'rgba(255,255,255,.7)',cursor:'pointer',fontSize:11,lineHeight:1,zIndex:1,padding:0}}>×</button>
-            {clockStyle==='analog'
-              ?<AnalogClock now={now} size={110} accent={accent}/>
-              :clockStyle==='minimal'
-              ?<div style={{fontFamily:"'SF Mono',monospace",fontWeight:200,fontSize:'clamp(15px,3.5vw,24px)',letterSpacing:'0.12em',opacity:.8,textShadow:'0 1px 10px rgba(0,0,0,.9)'}}>{timeStr}</div>
-              :clockStyle==='bold'
-              ?<div style={{fontFamily:'system-ui,sans-serif',fontWeight:900,fontSize:'clamp(46px,12vw,90px)',lineHeight:.9,letterSpacing:'-0.03em',textShadow:'0 4px 28px rgba(0,0,0,.5)'}}>{timeStr}</div>
-              :<div>
-                <div style={{display:'flex',alignItems:'baseline',gap:8}}>
-                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:'clamp(34px,10vw,74px)',lineHeight:.9,letterSpacing:-2,textShadow:'0 3px 22px rgba(0,0,0,.45)'}}>{timeStr}</span>
-                  <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:600,fontSize:'clamp(14px,4vw,24px)',color:accent,textShadow:'0 2px 14px rgba(0,0,0,.4)'}}>{secStr}</span>
-                </div>
-                <div style={{marginTop:4,fontSize:14,fontWeight:500,letterSpacing:.3,opacity:.92,textShadow:'0 2px 10px rgba(0,0,0,.5)',textTransform:'capitalize'}}>{dateStr}</div>
-              </div>
-            }
+            <LiveClock clockStyle={clockStyle} accent={accent}/>
           </div>
         </div>
       )}
@@ -830,13 +1054,51 @@ export function EmbedClient() {
         <div style={{...wStyle(pomDrag,mob?{left:16,top:mobTop.pom}:{right:32,top:96}),zIndex:5,width:Math.min(236,vw-48),padding:'20px 20px 22px',...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)'}}>
           <div {...pomDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,cursor:'grab'}}>
             <span style={{fontSize:11,fontWeight:600,letterSpacing:1.4,textTransform:'uppercase',color:'var(--dim)'}}>Pomodoro</span>
-            <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPom(false)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
+            <div style={{display:'flex',alignItems:'center',gap:2}}>
+              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPomCfg(v=>!v)} title={t.pom_timer_settings} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:showPomCfg?accentSoft:'transparent',color:showPomCfg?accent:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.14.7.35 1 .61l.06.06A2 2 0 0 1 22 12z"/></svg>
+              </button>
+              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPom(false)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
           </div>
+          {showPomCfg&&(
+            <div onPointerDown={e=>e.stopPropagation()} style={{display:'flex',flexDirection:'column',gap:9,marginBottom:14,padding:'12px',borderRadius:12,background:'var(--input)',border:'1px solid var(--border)'}}>
+              {([
+                [t.pom_work_len, pom.cfg.workMin, (n:number)=>pom.patchCfg({workMin:Math.min(90,Math.max(1,n))}), 5],
+                [t.pom_break_len, pom.cfg.breakMin, (n:number)=>pom.patchCfg({breakMin:Math.min(30,Math.max(1,n))}), 1],
+                [t.pom_long_len, pom.cfg.longMin, (n:number)=>pom.patchCfg({longMin:Math.min(60,Math.max(1,n))}), 5],
+                [t.pom_cycles, pom.cfg.cyclesBeforeLong, (n:number)=>pom.patchCfg({cyclesBeforeLong:Math.min(8,Math.max(2,n))}), 1],
+              ] as [string,number,(n:number)=>void,number][]).map(([label,val,set,step])=>(
+                <div key={label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+                  <span style={{fontSize:10.5,color:'var(--dim)',lineHeight:1.3,flex:1}}>{label}</span>
+                  <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+                    <button onClick={()=>set(val-step)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>−</button>
+                    <span style={{fontSize:12,fontWeight:700,minWidth:20,textAlign:'center'}}>{val}</span>
+                    <button onClick={()=>set(val+step)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>+</button>
+                  </div>
+                </div>
+              ))}
+              <button onClick={()=>pom.patchCfg({autoStart:!pom.cfg.autoStart})} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:0,border:'none',background:'transparent',cursor:'pointer'}}>
+                <span style={{fontSize:10.5,color:'var(--dim)'}}>{t.pom_autostart}</span>
+                <span style={{width:34,height:20,padding:2,borderRadius:999,background:pom.cfg.autoStart?accent:'var(--track)',display:'flex',justifyContent:pom.cfg.autoStart?'flex-end':'flex-start',flexShrink:0}}>
+                  <span style={{width:16,height:16,borderRadius:'50%',background:'#fff'}}/>
+                </span>
+              </button>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,borderTop:'1px solid var(--border)',paddingTop:9}}>
+                <span style={{fontSize:10.5,color:'var(--dim)'}}>{t.pom_goal}</span>
+                <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
+                  <button onClick={()=>setDailyGoal(dailyGoalPomodoros-1)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>−</button>
+                  <span style={{fontSize:12,fontWeight:700,minWidth:20,textAlign:'center'}}>{dailyGoalPomodoros}</span>
+                  <button onClick={()=>setDailyGoal(dailyGoalPomodoros+1)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>+</button>
+                </div>
+              </div>
+            </div>
+          )}
           <div style={{display:'flex',gap:5,marginBottom:16}}>
             <button onClick={()=>pom.phase!=='work'&&pom.setMode('work')} style={seg(pom.phase==='work')}>{t.pom_focus}</button>
-            <button onClick={()=>pom.phase!=='break'&&pom.setMode('break')} style={seg(pom.phase==='break')}>{t.pom_break}</button>
+            <button onClick={()=>pom.phase==='work'&&pom.setMode('break')} style={seg(pom.phase!=='work')}>{pom.phase==='long'?t.pom_long:t.pom_break}</button>
           </div>
           {activeTodoId&&todos.find(x=>x.id===activeTodoId)&&(
             <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:14,padding:'7px 10px',borderRadius:10,background:accentSoft,fontSize:11.5,color:accent,fontWeight:600,overflow:'hidden'}}>
@@ -853,7 +1115,7 @@ export function EmbedClient() {
             </svg>
             <div style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center'}}>
               <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:36,letterSpacing:-1}}>{pom.mm}:{pom.ss}</span>
-              <span style={{fontSize:11,fontWeight:500,letterSpacing:1,textTransform:'uppercase',color:'var(--dim)'}}>{pom.phase==='work'?t.pom_phase_focus:t.pom_phase_break}</span>
+              <span style={{fontSize:11,fontWeight:500,letterSpacing:1,textTransform:'uppercase',color:'var(--dim)'}}>{pom.phase==='work'?t.pom_phase_focus:pom.phase==='long'?t.pom_phase_long:t.pom_phase_break}</span>
             </div>
           </div>
           <div style={{display:'flex',gap:8}}>
@@ -863,15 +1125,27 @@ export function EmbedClient() {
                 :<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}
               {pom.on?t.pom_pause:t.pom_start}
             </button>
-            <button onClick={pom.reset} style={{display:'flex',width:42,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:12,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
+            <button onClick={pom.skip} title={t.pom_skip} style={{display:'flex',width:42,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:12,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4 5v14l9-7zM15 5h3v14h-3z"/></svg>
+            </button>
+            <button onClick={pom.reset} title="Reset" style={{display:'flex',width:42,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:12,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
             </button>
+          </div>
+          {/* Today's progress toward the daily goal */}
+          <div style={{marginTop:14}}>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:'var(--dim2)',marginBottom:4}}>
+              <span>🍅 {todayPoms} {t.pom_today_done}</span><span>{todayPoms}/{dailyGoalPomodoros}</span>
+            </div>
+            <div style={{height:5,borderRadius:3,background:'var(--track)',overflow:'hidden'}}>
+              <div style={{height:'100%',width:`${Math.min(100,(todayPoms/Math.max(1,dailyGoalPomodoros))*100)}%`,background:`linear-gradient(90deg,${accent},${accentGlow})`,borderRadius:3,transition:'width .4s'}}/>
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Weather (draggable) ── */}
-      {showWx&&wxData&&(
+      {showWx&&wxData&&!zen&&(
         <div {...wxDrag.dp} style={{...wStyle(wxDrag,mob?{left:16,top:mobTop.wx}:{left:20,top:showClock&&clockStyle==='digital'?130:80}),cursor:'grab',zIndex:20,minWidth:160}}>
           <div style={{display:'flex',flexDirection:'column',gap:4,...glassPanel,borderRadius:16,padding:'10px 14px',boxShadow:'0 10px 28px rgba(0,0,0,.3)'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -894,7 +1168,7 @@ export function EmbedClient() {
       )}
 
       {/* ── Progress card (left) ── */}
-      {showStreak&&(
+      {showStreak&&!zen&&(
         <div style={{...wStyle(progressDrag,mob?{left:16,top:mobTop.streak}:{left:20,top:showWx&&wxData?290:showClock&&clockStyle==='digital'?172:90}),zIndex:5,width:Math.min(244,vw-40),padding:16,borderRadius:18,background:'rgba(26,23,44,0.55)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',border:'1px solid rgba(255,255,255,0.10)',color:'#fff',boxShadow:'0 14px 40px rgba(0,0,0,.34)'}}>
           {/* Header — drag handle */}
           <div {...progressDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,cursor:'grab'}}>
@@ -942,7 +1216,7 @@ export function EmbedClient() {
       )}
 
       {/* ── Notes panel (bottom-right) ── */}
-      {showNote&&(
+      {showNote&&!zen&&(
         <div style={{position:'absolute',zIndex:5,width:Math.min(264,vw-48),touchAction:'none',userSelect:'none',...(noteDrag.pos?{left:noteDrag.pos.x,top:noteDrag.pos.y}:mob?{left:16,top:mobTop.note}:{right:32,bottom:118}),...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)',overflow:'hidden'}}>
           <div {...noteDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 15px',borderBottom:'1px solid var(--border)',cursor:'grab'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
@@ -994,7 +1268,7 @@ export function EmbedClient() {
       )}
 
       {/* ── Main player panel (bottom-center) ── */}
-      {panel&&(
+      {panel&&!zen&&(
         <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:5,width:'min(472px,calc(100vw - 24px))',...glassPanel,borderRadius:22,boxShadow:'0 22px 60px rgba(0,0,0,.42)',overflow:'hidden'}}>
 
           {/* Tabs header */}
@@ -1323,7 +1597,7 @@ export function EmbedClient() {
       )}
 
       {/* ── YouTube popover (custom audio track, triggered from the dock) ── */}
-      {openPopover==='youtube'&&(
+      {openPopover==='youtube'&&!zen&&(
         <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:9,width:'min(320px,calc(100vw - 24px))',padding:16,...glassPanel,borderRadius:20,boxShadow:'0 22px 60px rgba(0,0,0,.42)'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
             <span style={{fontSize:13,fontWeight:700}}>{t.music_custom_yt}</span>
@@ -1353,7 +1627,7 @@ export function EmbedClient() {
       )}
 
       {/* ── Background ("Nền") popover — presets, custom GIF/YouTube background, atmosphere, opacity, blur ── */}
-      {openPopover==='background'&&(
+      {openPopover==='background'&&!zen&&(
         <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:9,width:'min(472px,calc(100vw - 24px))',...glassPanel,borderRadius:22,boxShadow:'0 22px 60px rgba(0,0,0,.42)',overflow:'hidden'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--border)'}}>
             <span style={{fontSize:13,fontWeight:700}}>{t.tab_scene}</span>
@@ -1380,7 +1654,7 @@ export function EmbedClient() {
             <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_bg_title}</div>
             <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8,marginBottom:14}}>
               {BG_PRESETS.map(g=>(
-                <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType(bgTypeFromUrl(g.url))}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'14px 8px',border:`1px solid ${bgUrl===g.url&&bgType!=='youtube'?accent:'var(--border)'}`,borderRadius:14,background:bgUrl===g.url&&bgType!=='youtube'?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease'}}>
+                <button key={g.id} onClick={()=>{setBgUrl(g.url);setBgType(bgTypeFromUrl(g.url))}} onPointerEnter={()=>prefetchScene(g.url)} onFocus={()=>prefetchScene(g.url)} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:5,padding:'14px 8px',border:`1px solid ${bgUrl===g.url&&bgType!=='youtube'?accent:'var(--border)'}`,borderRadius:14,background:bgUrl===g.url&&bgType!=='youtube'?accentSoft:'var(--input)',color:'var(--text)',cursor:'pointer',transition:'all .16s ease'}}>
                   <span style={{fontSize:22,lineHeight:1}}>{g.emoji}</span>
                   <span style={{fontSize:11,fontWeight:600}}>{g.label}</span>
                 </button>
@@ -1428,7 +1702,7 @@ export function EmbedClient() {
       )}
 
       {/* ── Companion (draggable) ── */}
-      {companionType==='coding'&&(
+      {companionType==='coding'&&!zen&&(
         <div
           {...catDrag.dp}
           style={{...wStyle(catDrag,mob?{right:12,bottom:76}:{left:32,bottom:88}),zIndex:5,cursor:'grab',lineHeight:0}}
@@ -1482,7 +1756,7 @@ export function EmbedClient() {
           interactive loading state until `mounted` flips true, then swap to the real
           clickable prompt, so there's never a dead-looking-clickable tap target. */}
       {!started&&(
-        <div onClick={mounted?doStart:undefined} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:14,background:'rgba(0,0,0,0.38)',backdropFilter:'blur(4px)',cursor:mounted?'pointer':'default',zIndex:10}}>
+        <div onClick={mounted?doStart:undefined} onPointerOver={()=>ytWarmRef.current?.()} style={{position:'absolute',inset:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:14,background:'rgba(0,0,0,0.38)',backdropFilter:'blur(4px)',cursor:mounted?'pointer':'default',zIndex:10}}>
           <div style={{width:68,height:68,borderRadius:'50%',background:accent,display:'flex',alignItems:'center',justifyContent:'center',boxShadow:`0 0 40px ${accentGlow}`,opacity:mounted?1:0.55,transition:'opacity .2s ease'}}>
             {mounted
               ?<svg viewBox="0 0 24 24" fill="white" width="30" height="30"><path d="M8 5v14l11-7z"/></svg>
@@ -1503,7 +1777,7 @@ export function EmbedClient() {
                 const {y,m}=calMonth
                 const firstDow=new Date(y,m,1).getDay()
                 const daysInMonth=new Date(y,m+1,0).getDate()
-                const todayKey=`${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`
+                const _td=new Date();const todayKey=`${_td.getFullYear()}-${_td.getMonth()}-${_td.getDate()}`
                 const wdShort=t.cal_days_short
                 const cells:React.ReactNode[]=[]
                 for(let i=0;i<firstDow;i++)cells.push(<div key={`e${i}`}/>)
@@ -1585,15 +1859,29 @@ export function EmbedClient() {
       )}
 
       {/* ── DOCK — grouped clusters: Play · Content (labeled chips) · Explore · Utility ── */}
-      <div className="lf-dock" style={{position:'fixed',left:'50%',bottom:mob?12:28,transform:'translateX(-50%)',zIndex:7,maxWidth:'calc(100vw - 16px)',overflowX:'auto',borderRadius:999,...glassPanel,boxShadow:'0 16px 44px rgba(0,0,0,.4)'}}>
+      {zen&&(
+        <button onClick={()=>setZen(false)} title={t.zen_hint} style={{position:'fixed',bottom:mob?14:24,left:'50%',transform:'translateX(-50%)',zIndex:8,display:'flex',alignItems:'center',gap:7,padding:'8px 16px',border:'1px solid var(--border)',borderRadius:999,...glassPanel,color:'var(--dim)',fontSize:12,fontWeight:600,cursor:'pointer'}}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          {t.zen_label} · Esc
+        </button>
+      )}
+      <TipCtx.Provider value={setTip}>
+      {tip&&(
+        <div style={{position:'fixed',left:tip.x,top:tip.y-10,transform:'translate(-50%,-100%)',zIndex:40,background:'rgba(20,17,40,.97)',color:'#fff',fontSize:11,fontWeight:600,letterSpacing:.2,whiteSpace:'nowrap',padding:'5px 9px',borderRadius:8,border:'1px solid rgba(255,255,255,.14)',boxShadow:'0 6px 20px rgba(0,0,0,.4)',pointerEvents:'none'}}>
+          {tip.label}
+        </div>
+      )}
+      <div className="lf-dock" style={{position:'fixed',left:'50%',bottom:mob?12:28,transform:'translateX(-50%)',zIndex:7,maxWidth:'calc(100vw - 16px)',overflowX:'auto',borderRadius:999,...glassPanel,boxShadow:'0 16px 44px rgba(0,0,0,.4)',display:zen?'none':undefined}}>
       <div style={{display:'flex',alignItems:'center',gap:mob?3:6,padding:mob?5:7,width:'max-content'}}>
 
         {/* Play/Pause */}
+        <Tip label={t.tip_playpause}>
         <button onClick={togglePlay} style={{display:'flex',width:mob?40:48,height:mob?40:48,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
           {started&&playing
             ?<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
             :<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}
         </button>
+        </Tip>
 
         {/* Ambient icons preview */}
         {ambCount>0&&(
@@ -1658,18 +1946,23 @@ export function EmbedClient() {
 
         {/* Utility cluster */}
         <div style={{display:'flex',alignItems:'center',gap:1}}>
+          <Tip label={t.share_copy}>
           <button onClick={handleShare} style={{...dockBtn(copied),flexShrink:0}} title={t.share_copy}>
             {copied
               ?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
               :<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>}
           </button>
+          </Tip>
 
+          <Tip label={t.switch_theme}>
           <button onClick={()=>setTheme(th=>th==='glass'?'warm':'glass')} style={{display:'flex',width:dbSz,height:dbSz,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:'transparent',color:'var(--dim)',cursor:'pointer'}} title={t.switch_theme}>
             {theme==='glass'
               ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
               :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>}
           </button>
+          </Tip>
 
+          <Tip label={t.tip_lang}>
           <div style={{display:'flex',gap:2,padding:'0 2px',flexShrink:0}}>
             {(['en','vi'] as const).map(l=>(
               <button key={l} onClick={()=>setLang(l)} style={{display:'flex',height:dbSz,padding:'0 8px',alignItems:'center',justifyContent:'center',border:'none',borderRadius:8,cursor:'pointer',transition:'all .16s ease',fontSize:11,fontWeight:700,letterSpacing:.5,
@@ -1678,19 +1971,38 @@ export function EmbedClient() {
               </button>
             ))}
           </div>
+          </Tip>
 
-          <button onClick={()=>setShowSupport(true)} style={{...dockBtn(false),flexShrink:0,color:'#f472b6'}} title="Support LofiSpace 💜">
+          <Tip label={t.tip_support}>
+          <button onClick={()=>setShowSupport(true)} style={{...dockBtn(false),flexShrink:0,color:'#f472b6'}} title={t.tip_support}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           </button>
+          </Tip>
 
-          <button onClick={toggleFullscreen} style={{...dockBtn(isFullscreen),flexShrink:0}} title={isFullscreen?'Exit Fullscreen':'Fullscreen (F)'}>
+          <Tip label={zen?t.zen_hint:`${t.zen_label} (Z)`}>
+          <button onClick={()=>setZen(v=>!v)} style={{...dockBtn(zen),flexShrink:0}} title={zen?t.zen_hint:`${t.zen_label} (Z)`}>
+            {/* leaf — "hide everything but the timer" */}
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+          </button>
+          </Tip>
+
+          <Tip label={t.shortcuts_title}>
+          <button onClick={()=>setShowShortcuts(true)} style={{...dockBtn(showShortcuts),flexShrink:0}} title={t.shortcuts_title}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+          </button>
+          </Tip>
+
+          <Tip label={isFullscreen?t.tip_fullscreen_exit:t.tip_fullscreen}>
+          <button onClick={toggleFullscreen} style={{...dockBtn(isFullscreen),flexShrink:0}} title={isFullscreen?t.tip_fullscreen_exit:t.tip_fullscreen}>
             {isFullscreen
               ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 0 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
               :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>}
           </button>
+          </Tip>
         </div>
       </div>{/* end inner flex */}
       </div>{/* end dock */}
+      </TipCtx.Provider>
 
       {/* ── Branding ── */}
       <a href="/" target="_blank" rel="noopener noreferrer" style={{position:'fixed',bottom:5,right:10,fontSize:9,color:'rgba(255,255,255,0.18)',textDecoration:'none',zIndex:5}}>
@@ -1732,6 +2044,30 @@ export function EmbedClient() {
         </div>
       )}
 
+      {/* ── Daily goal toast ── */}
+      {goalToast&&(
+        <div key={goalToast} style={{position:'fixed',left:'50%',bottom:mob?72:96,zIndex:20,pointerEvents:'none',animation:'xpFloat 3.2s ease forwards',whiteSpace:'nowrap'}}>
+          <div style={{display:'inline-flex',alignItems:'center',gap:8,padding:'8px 18px',borderRadius:999,background:'rgba(26,23,44,0.9)',backdropFilter:'blur(12px)',WebkitBackdropFilter:'blur(12px)',border:`1px solid ${accent}55`,boxShadow:`0 4px 24px ${accentGlow}`,color:'#fff',fontSize:14,fontWeight:700}}>
+            {t.pom_goal_reached}
+          </div>
+        </div>
+      )}
+
+      {/* ── Keyboard shortcuts cheatsheet ── */}
+      {showShortcuts&&(
+        <div onClick={()=>setShowShortcuts(false)} style={{position:'fixed',inset:0,zIndex:40,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(0,0,0,.42)',backdropFilter:'blur(3px)',WebkitBackdropFilter:'blur(3px)'}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:'min(320px,90vw)',padding:'18px 20px',...glassPanel,borderRadius:18,boxShadow:'0 24px 60px rgba(0,0,0,.5)'}}>
+            <div style={{fontSize:13,fontWeight:700,marginBottom:12}}>{t.shortcuts_title}</div>
+            {([['Space','▶ / ⏸'],['F','Fullscreen'],['P','Pomodoro'],['N','To-Do'],['Z','Zen mode'],['Esc','Close / exit']] as [string,string][]).map(([k,d])=>(
+              <div key={k} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'6px 0',fontSize:12,color:'var(--dim)'}}>
+                <span>{d}</span>
+                <kbd style={{fontFamily:'monospace',fontSize:11,fontWeight:700,padding:'2px 8px',borderRadius:6,background:'var(--input)',border:'1px solid var(--border)',color:'var(--text)'}}>{k}</kbd>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Game notifications ── */}
       {pendingAchievements.length>0&&(
         <AchievementToast key={pendingAchievements[0]} achievementId={pendingAchievements[0]} onDismiss={dismissAchievement} accent={accent}/>
@@ -1754,6 +2090,7 @@ export function EmbedClient() {
         input::placeholder,textarea::placeholder{color:var(--dim2,rgba(255,255,255,.3))}
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--track);border-radius:2px}
         .lf-dock::-webkit-scrollbar{display:none}.lf-dock{scrollbar-width:none;-ms-overflow-style:none}
+        .lf-tip{display:inline-flex;flex-shrink:0}
         @media (max-width:639px){.lf-dock{mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}}
       `}</style>
     </div>

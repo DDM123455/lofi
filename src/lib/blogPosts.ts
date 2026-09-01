@@ -20,7 +20,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Notion Tips',
     readTime: 5,
-    publishedAt: '2024-12-01',
+    publishedAt: '2026-06-28',
     coverGradient: ['#1a1a2e', '#16213e'],
     emoji: '📓',
     content: `
@@ -74,7 +74,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Music',
     readTime: 7,
-    publishedAt: '2024-11-20',
+    publishedAt: '2026-06-24',
     coverGradient: ['#16213e', '#0f3460'],
     emoji: '🎵',
     content: `
@@ -144,7 +144,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Lifestyle',
     readTime: 8,
-    publishedAt: '2024-11-05',
+    publishedAt: '2026-06-26',
     dateModified: '2026-07-08',
     coverGradient: ['#2d1b69', '#11062d'],
     emoji: '🖥️',
@@ -226,7 +226,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Productivity',
     readTime: 6,
-    publishedAt: '2024-10-15',
+    publishedAt: '2026-06-22',
     coverGradient: ['#3d0000', '#7c1e00'],
     emoji: '🍅',
     content: `

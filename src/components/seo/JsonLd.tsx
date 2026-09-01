@@ -146,6 +146,8 @@ interface BlogPostingProps {
   authorName?: string
   authorTitle?: string
   authorUrl?: string
+  wordCount?: number
+  articleSection?: string
 }
 
 export function BlogPostingJsonLd({
@@ -158,6 +160,8 @@ export function BlogPostingJsonLd({
   authorName = 'LofiSpace',
   authorTitle,
   authorUrl,
+  wordCount,
+  articleSection,
 }: BlogPostingProps) {
   const schema = {
     '@context': 'https://schema.org',
@@ -181,6 +185,8 @@ export function BlogPostingJsonLd({
     },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
     ...(imageUrl ? { image: { '@type': 'ImageObject', url: imageUrl } } : {}),
+    ...(wordCount ? { wordCount } : {}),
+    ...(articleSection ? { articleSection } : {}),
   }
 
   return (

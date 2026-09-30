@@ -109,8 +109,12 @@ interface GameStore {
   sessions: FocusSession[]
   dailyStats: Record<string, DailyStat>
 
+  // Preferences
+  dailyGoalPomodoros: number
+
   // Actions
   completePomodoro: (minutes?: number, task?: { id: string; title: string }) => void
+  setDailyGoal: (n: number) => void
   setCompanionMood: (mood: CompanionMood) => void
   setCompanionMessage: (msg: string | null) => void
   setRoomTheme: (theme: RoomTheme) => void
@@ -143,6 +147,9 @@ export const useGameStore = create<GameStore>()(
       newLevelReached: null,
       sessions: [],
       dailyStats: {},
+      dailyGoalPomodoros: 8,
+
+      setDailyGoal: (n) => set({ dailyGoalPomodoros: Math.max(1, Math.min(24, Math.round(n) || 1)) }),
 
       recordActivity: () => {
         const state = get()

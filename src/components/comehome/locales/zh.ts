@@ -1,0 +1,126 @@
+import type { HomeCopy } from '../copy'
+
+const zh: HomeCopy = {
+  mode_focus: '专注',
+  mode_home: '回家',
+  mode_switch_label: '空间模式',
+  sound_on: '轻柔声音：开',
+  sound_off: '声音：关',
+  sound_hint: '点一下，听点小雨',
+  back: '返回',
+  menu: '菜单',
+  close: '关闭',
+  sky_open: '你的星空',
+
+  welcome_title: '欢迎回家。',
+  welcome_sub: '在这里，你什么都不用做。',
+  welcome_q: '今天过得怎么样？',
+  moods: { heavy: '很累', okay: '还行', good: '不错', lovely: '很好' },
+  mood_reply: {
+    heavy: '听起来今天承受了很多。我们慢慢来。',
+    okay: '还行，就已经足够了。',
+    good: '真好。我们就这样轻轻地。',
+    lovely: '让这份感觉多停留一会儿吧。',
+  },
+  mood_skip: '跳过',
+
+  need_q: '你现在需要什么？',
+  hub_groups: { out: '倾吐出来', settle: '安顿下来', sleep: '准备入睡' },
+  cards: {
+    mind: { title: '清空思绪', desc: '把一切写下来，然后放下。' },
+    one: { title: '今天的一件事', desc: '留作一颗星，或者放下。' },
+    rest: { title: '只是休息', desc: '一个温暖的房间，什么都不用做。' },
+    calm: { title: '平静下来', desc: '两分钟的缓慢呼吸。' },
+    quiet: { title: '一点安静', desc: '只有你选的声音。' },
+    company: { title: '有人陪着', desc: '街对面亮着灯的窗户。' },
+    sleep: { title: '准备睡觉', desc: '五分钟，慢慢淡出。' },
+    sky: { title: '你的星空', desc: '你留下的美好时刻，化作星星。' },
+  },
+  exp_titles: { mind: '清空思绪', one: '一件事', rest: '休息', calm: '平静', quiet: '安静', company: '陪伴', sleep: '入睡', sky: '你的星空' },
+  suggested: '适合今晚',
+
+  steps: { write: '写下', choose: '选择', release: '放下' },
+  ctrl_enter: 'Ctrl + Enter 继续',
+  next: '下一步',
+  edit: '修改',
+
+  mind_title: '此刻是什么占据着你的脑海？',
+  mind_sub: '写什么都可以，不用整理。',
+  mind_placeholder: '明天的截止日期\n钱\n和老板开会\n得学 Kafka\n生日礼物\n好累\n不知道自己在干什么...',
+  mind_choose_title: '你想怎样放下它？',
+  mind_choose_sub: '选一个今晚感觉对的方式。',
+  mind_release: '放下',
+  mind_privacy: '你写下的内容不会离开这台设备，也不会被保存到任何地方。',
+  rituals: {
+    sky: { name: '飞向星空', desc: '每一份担忧升起，化作一颗小星星。', after: '你不必在今晚解决所有事。' },
+    river: { name: '顺水漂走', desc: '折成纸船，让流水带走。', after: '它已经漂远了，就让它继续走吧。' },
+    burn: { name: '烧掉它', desc: '看着它化为余烬和灰。', after: '现在只剩灰烬了，再没有什么要背负。' },
+    wind: { name: '随风而去', desc: '一阵风把它卷起、吹散。', after: '风已经带走了，你的手可以歇一歇了。' },
+    rain: { name: '融进雨里', desc: '墨迹晕开，被雨水冲走。', after: '冲干净了。明天重新开始。' },
+  },
+
+  after_menu: '做点别的',
+  after_rest: '在房间里休息',
+  done_tonight: '今晚就到这里',
+
+  one_title: '跟我说说今天的一件事。',
+  one_prefix: '今天我…',
+  one_placeholder: '开了一个特别难的会。',
+  one_choose_title: '你想怎么处理它？',
+  one_keep: '留住这个时刻',
+  one_keep_desc: '它会变成你星空里的一颗星（只保存在这个浏览器里）。',
+  one_go_label: '或者放下它',
+  one_after_keep: '留下了。它现在住在你的星空里。',
+  one_privacy: '留下的时刻只保存在这个浏览器里。',
+
+  sky_title: '你的星空',
+  sky_empty: '这里还什么都没有。在下面写下一个美好时刻，它就会成为你的第一颗星。',
+  sky_forget: '放下这颗星',
+  sky_hint: '每颗星都是你留下的一个时刻。点一下就能读。',
+  sky_add_label: '想留住的美好时刻',
+  sky_add_placeholder: '想留住的美好时刻…',
+  sky_add: '添加星星',
+  sky_added: '你的星空里多了一颗新星。',
+
+  rest_hint: '什么都不用做。碰一碰这里的东西，它们会有回应。',
+  rest_objects: { lamp: '台灯', window: '窗户 — 下雨', curtain: '窗帘', tea: '一杯茶', fire: '壁炉' },
+  room_label: '夜里安静的公寓',
+
+  calm_lines: [
+    '慢慢吸一口气。',
+    '放松你的肩膀。',
+    '你已经到家了。',
+    '你不必在今晚解决所有事。',
+  ],
+  calm_in: '吸气',
+  calm_out: '呼气',
+
+  quiet_title: '只要你想听的声音。',
+  quiet_master: '总音量',
+  quiet_volume: '音量',
+  quiet_sounds: { rain: '雨', wind: '风', fire: '壁炉', cafe: '咖啡馆', wave: '海', city: '夜晚的城市', forest: '森林' },
+
+  company_lines: [
+    '街对面也有人还没睡。',
+    '又有一扇窗亮起了灯。',
+    '度过漫长一天的，不只是你。',
+    '大家都在慢慢歇下来，一扇窗接着一扇窗。',
+    '休息一下没关系的。',
+  ],
+  company_label: '对面楼里亮着灯的窗户',
+
+  sleep_intro: '让一切都慢下来吧。',
+  sleep_main: '明天的烦恼，就留给明天。',
+  sleep_eyes: '让眼皮慢慢变重。',
+  sleep_night: '晚安。',
+  close_ws: '关闭空间',
+
+  final_1: '今天你已经做得够多了。',
+  final_2: '剩下的，明天再说。',
+  final_night: '晚安。',
+  closed_title: '晚安。',
+  closed_sub: '声音已关闭。你随时可以关掉这个标签页。',
+  closed_reopen: '再回来',
+}
+
+export default zh

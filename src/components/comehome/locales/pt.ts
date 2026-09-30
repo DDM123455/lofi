@@ -1,0 +1,126 @@
+import type { HomeCopy } from '../copy'
+
+const pt: HomeCopy = {
+  mode_focus: 'Foco',
+  mode_home: 'Voltar pra casa',
+  mode_switch_label: 'Modo do espaço',
+  sound_on: 'Som suave ligado',
+  sound_off: 'Som desligado',
+  sound_hint: 'Toque para ouvir uma chuva leve',
+  back: 'Voltar',
+  menu: 'Menu',
+  close: 'Fechar',
+  sky_open: 'Seu céu',
+
+  welcome_title: 'Bem-vindo de volta pra casa.',
+  welcome_sub: 'Aqui você não precisa fazer nada.',
+  welcome_q: 'Como foi o seu dia?',
+  moods: { heavy: 'Pesado', okay: 'Ok', good: 'Bom', lovely: 'Lindo' },
+  mood_reply: {
+    heavy: 'Parece que foi muita coisa. Vamos com calma.',
+    okay: 'Ok já é o suficiente.',
+    good: 'Que bom. Vamos manter tudo leve.',
+    lovely: 'Vamos guardar isso por um momento.',
+  },
+  mood_skip: 'Pular',
+
+  need_q: 'Do que você precisa agora?',
+  hub_groups: { out: 'Pôr pra fora', settle: 'Se aconchegar', sleep: 'Desacelerar' },
+  cards: {
+    mind: { title: 'Esvaziar a cabeça', desc: 'Escreva tudo e depois deixe ir.' },
+    one: { title: 'Uma coisa de hoje', desc: 'Guarde como estrela ou deixe ir.' },
+    rest: { title: 'Só descansar', desc: 'Um quarto aconchegante. Nada para fazer.' },
+    calm: { title: 'Se acalmar', desc: 'Dois minutos de respiração lenta.' },
+    quiet: { title: 'Um pouco de silêncio', desc: 'Só os sons que você escolher.' },
+    company: { title: 'Um pouco de companhia', desc: 'Janelas acesas do outro lado da rua.' },
+    sleep: { title: 'Preparar para dormir', desc: 'Cinco minutos, apagando devagar.' },
+    sky: { title: 'Seu céu', desc: 'Os bons momentos que você guardou, como estrelas.' },
+  },
+  exp_titles: { mind: 'Esvaziar a cabeça', one: 'Uma coisa', rest: 'Descanso', calm: 'Calma', quiet: 'Silêncio', company: 'Companhia', sleep: 'Dormir', sky: 'Seu céu' },
+  suggested: 'para esta noite',
+
+  steps: { write: 'Escrever', choose: 'Escolher', release: 'Deixar ir' },
+  ctrl_enter: 'Ctrl + Enter para continuar',
+  next: 'Próximo',
+  edit: 'Editar',
+
+  mind_title: 'O que está ocupando espaço na sua cabeça?',
+  mind_sub: 'Escreva qualquer coisa. Não precisa organizar.',
+  mind_placeholder: 'prazo amanhã\ndinheiro\nreunião com o chefe\npreciso aprender Kafka\npresente de aniversário\nestou cansado\nnão sei o que estou fazendo...',
+  mind_choose_title: 'Como você quer deixar isso ir?',
+  mind_choose_sub: 'Escolha o que parecer certo esta noite.',
+  mind_release: 'Deixar ir',
+  mind_privacy: 'Nada do que você escreve sai deste aparelho. Não fica salvo em lugar nenhum.',
+  rituals: {
+    sky: { name: 'Até as estrelas', desc: 'Cada preocupação sobe e vira uma estrelinha.', after: 'Você não precisa resolver tudo esta noite.' },
+    river: { name: 'Rio abaixo', desc: 'Dobrado em barquinhos de papel e levado pela água.', after: 'Já foi rio abaixo. Deixe seguir.' },
+    burn: { name: 'Queimar', desc: 'Veja virar brasa e cinza.', after: 'Agora é cinza. Não sobrou nada para carregar.' },
+    wind: { name: 'Ao vento', desc: 'Uma rajada leva e espalha tudo.', after: 'O vento levou. Suas mãos podem descansar.' },
+    rain: { name: 'Na chuva', desc: 'A tinta borra e escorre.', after: 'Lavado. Amanhã começa limpo.' },
+  },
+
+  after_menu: 'Outra coisa',
+  after_rest: 'Descansar no quarto',
+  done_tonight: 'Por hoje chega',
+
+  one_title: 'Me conte uma coisa de hoje.',
+  one_prefix: 'Hoje eu…',
+  one_placeholder: 'tive uma reunião bem difícil.',
+  one_choose_title: 'O que você quer fazer com isso?',
+  one_keep: 'Guardar este momento',
+  one_keep_desc: 'Vira uma estrela no seu céu (só neste navegador).',
+  one_go_label: 'Ou deixe ir',
+  one_after_keep: 'Guardado. Agora vive no seu céu.',
+  one_privacy: 'Momentos guardados ficam só neste navegador.',
+
+  sky_title: 'Seu céu',
+  sky_empty: 'Ainda não há nada aqui. Escreva um bom momento abaixo e ele vira sua primeira estrela.',
+  sky_forget: 'Deixar esta ir',
+  sky_hint: 'Cada estrela é um momento que você guardou. Toque para ler.',
+  sky_add_label: 'Um bom momento para guardar',
+  sky_add_placeholder: 'Um bom momento para guardar…',
+  sky_add: 'Adicionar estrela',
+  sky_added: 'Uma nova estrela apareceu no seu céu.',
+
+  rest_hint: 'Nada para fazer. As coisas aqui reagem se você tocar nelas.',
+  rest_objects: { lamp: 'Luminária', window: 'Janela — chuva', curtain: 'Cortina', tea: 'Xícara de chá', fire: 'Lareira' },
+  room_label: 'Um apartamento tranquilo à noite',
+
+  calm_lines: [
+    'Respire devagar.',
+    'Solte os ombros.',
+    'Você está em casa agora.',
+    'Você não precisa resolver tudo esta noite.',
+  ],
+  calm_in: 'inspire',
+  calm_out: 'expire',
+
+  quiet_title: 'Só os sons que você quiser.',
+  quiet_master: 'Volume geral',
+  quiet_volume: 'volume',
+  quiet_sounds: { rain: 'Chuva', wind: 'Vento', fire: 'Lareira', cafe: 'Café', wave: 'Mar', city: 'Cidade à noite', forest: 'Floresta' },
+
+  company_lines: [
+    'Alguém do outro lado da rua também ainda está acordado.',
+    'Mais uma luz acabou de acender.',
+    'Você não é o único que teve um dia longo.',
+    'Todo mundo está desacelerando, uma janela de cada vez.',
+    'Tudo bem descansar.',
+  ],
+  company_label: 'Janelas acesas no prédio do outro lado da rua',
+
+  sleep_intro: 'Vamos desacelerar tudo.',
+  sleep_main: 'Os problemas de amanhã podem ficar para amanhã.',
+  sleep_eyes: 'Deixe os olhos ficarem pesados.',
+  sleep_night: 'Boa noite.',
+  close_ws: 'Fechar o espaço',
+
+  final_1: 'Você fez o suficiente hoje.',
+  final_2: 'O resto pode ficar para amanhã.',
+  final_night: 'Boa noite.',
+  closed_title: 'Boa noite.',
+  closed_sub: 'O som está desligado. Pode fechar esta aba quando quiser.',
+  closed_reopen: 'Entrar de novo',
+}
+
+export default pt

@@ -25,7 +25,10 @@ const withBundleAnalyzer = createBundleAnalyzer({
 //   injects a script tag with src https://www.clarity.ms/tag/<id>).
 // - connect-src mirrors the analytics/ad vendors above since GA4, Clarity and AdSense
 //   all beacon data back over fetch/XHR/sendBeacon from those same origins
-//   (plus region-sharded https://*.google-analytics.com for GA4).
+//   (plus region-sharded https://*.google-analytics.com for GA4). GA4 also sends hits to
+//   https://www.google.com/g/collect and *.analytics.google.com — without those the hits
+//   were being blocked on every page under this policy. Clarity's tag loads its script
+//   from scripts.clarity.ms and uploads to a sharded *.clarity.ms collector.
 // - frame-src 'self': the only live <iframe> rendered on non-/workspace/-/embed pages is
 //   the embed-code live preview (src/components/embed/EmbedGenerator.tsx), which points at
 //   our own /embed route (same-origin). The actual YouTube IFrame API/player
@@ -40,10 +43,10 @@ const withBundleAnalyzer = createBundleAnalyzer({
 //   or dynamic <base> rewriting.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms",
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms https://*.clarity.ms",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms",
+  "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms https://*.clarity.ms https://www.google.com https://*.analytics.google.com",
   "frame-src 'self'",
   "font-src 'self'",
   "object-src 'none'",

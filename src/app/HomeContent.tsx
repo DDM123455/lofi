@@ -128,6 +128,27 @@ export function HomeContent() {
           </div>
         </section>
 
+        {/* ── Come Home (evening mode) ────────────────────────────── */}
+        <section className="border-b border-white/5 bg-gradient-to-b from-transparent via-[#1a1219]/60 to-transparent py-20">
+          <div className="mx-auto max-w-3xl px-4 text-center">
+            <div className="mb-4 text-4xl" aria-hidden>🌙</div>
+            <h2 className="mb-4 text-3xl font-bold text-white">
+              {t.home_ch_title}
+            </h2>
+            <p className="mx-auto mb-8 max-w-xl text-white/55">
+              {t.home_ch_desc}
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/workspace?mode=home" className="rounded-full bg-amber-200/90 px-7 py-3 font-semibold text-[#2a1a14] transition-colors hover:bg-amber-100">
+                {t.home_ch_btn}
+              </Link>
+              <Link href="/come-home" className="rounded-full border border-white/15 px-7 py-3 text-white/70 transition-colors hover:border-white/30 hover:text-white">
+                {t.home_ch_more}
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* ── Blog highlights ─────────────────────────────────────── */}
         <section className="border-b border-white/5 py-20">
           <div className="mx-auto max-w-5xl px-4">

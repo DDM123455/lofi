@@ -6,20 +6,22 @@ export interface LofiStream {
 }
 
 export const LOFI_STREAMS: LofiStream[] = [
-  { id: 'lofi1', label: 'Lofi Hip-Hop Radio', youtubeId: 'jfKfPfyJRdk' }, // Lofi Girl — stable long-running stream
+  { id: 'lofi1', label: 'Lofi Hip-Hop Radio', youtubeId: 'rFZHOHl-L8A' }, // Lofi Girl "beats to relax/study to" — the old jfKfPfyJRdk stream is UNPLAYABLE since 2026
   { id: 'lofi2', label: 'Synthwave Chill',    youtubeId: '4xDzrJKXOOY' }, // verified working
   { id: 'lofi4', label: 'Chillhop Radio',     youtubeId: '7NOSDKb0HlU' }, // Chillhop Music — stable long-running stream
 ]
 
+// Ambient beds are generated in-browser with the Web Audio API (see buildSynthGraph in
+// EmbedClient) — there are no .mp3 assets to ship or 404 on.
 export const AMBIENT_SOUNDS = [
-  { id: 'rain',    label: 'Rain',        icon: '🌧️', file: '/sounds/rain.mp3'    },
-  { id: 'wave',    label: 'Ocean Waves', icon: '🌊', file: '/sounds/waves.mp3'   },
-  { id: 'cafe',    label: 'Café',        icon: '☕', file: '/sounds/cafe.mp3'    },
-  { id: 'fire',    label: 'Campfire',    icon: '🔥', file: '/sounds/fire.mp3'    },
-  { id: 'wind',    label: 'Wind',        icon: '🍃', file: '/sounds/wind.mp3'    },
-  { id: 'thunder', label: 'Thunder',     icon: '⛈️', file: '/sounds/thunder.mp3' },
-  { id: 'forest',  label: 'Forest',      icon: '🌳', file: '/sounds/forest.mp3'  },
-  { id: 'city',    label: 'City',        icon: '🏙️', file: '/sounds/city.mp3'    },
+  { id: 'rain',    label: 'Rain',        icon: '🌧️' },
+  { id: 'wave',    label: 'Ocean Waves', icon: '🌊' },
+  { id: 'cafe',    label: 'Café',        icon: '☕' },
+  { id: 'fire',    label: 'Campfire',    icon: '🔥' },
+  { id: 'wind',    label: 'Wind',        icon: '🍃' },
+  { id: 'thunder', label: 'Thunder',     icon: '⛈️' },
+  { id: 'forest',  label: 'Forest',      icon: '🌳' },
+  { id: 'city',    label: 'City',        icon: '🏙️' },
 ] as const
 
 export type AmbientId = typeof AMBIENT_SOUNDS[number]['id']

@@ -1,3 +1,5 @@
+import { EVENING_POSTS } from './blogPostsEvening'
+
 export interface BlogPost {
   slug: string
   title: string
@@ -10,9 +12,15 @@ export interface BlogPost {
   coverGradient: [string, string]
   emoji: string
   content: string // HTML string
+  /** Optional <title>/OG title when it should differ from the on-page H1. */
+  seoTitle?: string
+  /** Visible FAQ section at the end of the post, also emitted as FAQPage JSON-LD. */
+  faq?: { q: string; a: string }[]
+  /** Which end-of-post CTA to show. Defaults to the focus workspace. */
+  cta?: 'workspace' | 'come-home'
 }
 
-export const BLOG_POSTS: BlogPost[] = [
+const CORE_POSTS: BlogPost[] = [
   {
     slug: 'lofi-widget-notion-embed',
     title: 'How to Embed a Lofi Music Widget in Notion — Step by Step',
@@ -20,7 +28,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Notion Tips',
     readTime: 5,
-    publishedAt: '2024-12-01',
+    publishedAt: '2026-06-28',
     coverGradient: ['#1a1a2e', '#16213e'],
     emoji: '📓',
     content: `
@@ -74,7 +82,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Music',
     readTime: 7,
-    publishedAt: '2024-11-20',
+    publishedAt: '2026-06-24',
     coverGradient: ['#16213e', '#0f3460'],
     emoji: '🎵',
     content: `
@@ -144,7 +152,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Lifestyle',
     readTime: 8,
-    publishedAt: '2024-11-05',
+    publishedAt: '2026-06-26',
     dateModified: '2026-07-08',
     coverGradient: ['#2d1b69', '#11062d'],
     emoji: '🖥️',
@@ -226,7 +234,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: 'Alex Chen',
     category: 'Productivity',
     readTime: 6,
-    publishedAt: '2024-10-15',
+    publishedAt: '2026-06-22',
     coverGradient: ['#3d0000', '#7c1e00'],
     emoji: '🍅',
     content: `
@@ -1075,6 +1083,10 @@ export const BLOG_POSTS: BlogPost[] = [
   },
 ]
 
+// Evening Reset posts go after the core posts so the homepage's "latest 3" teaser and
+// existing listing order stay exactly as they were.
+export const BLOG_POSTS: BlogPost[] = [...CORE_POSTS, ...EVENING_POSTS]
+
 export function getPostBySlug(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find(p => p.slug === slug)
 }
@@ -1087,6 +1099,7 @@ export const BLOG_CATEGORIES: { slug: string; label: string }[] = [
   { slug: 'lifestyle',    label: 'Lifestyle' },
   { slug: 'productivity', label: 'Productivity' },
   { slug: 'study-tips',   label: 'Study Tips' },
+  { slug: 'evening-reset', label: 'Evening Reset' },
 ]
 
 export function getCategoryBySlug(slug: string) {

@@ -1,0 +1,126 @@
+import type { HomeCopy } from '../copy'
+
+const ko: HomeCopy = {
+  mode_focus: '집중',
+  mode_home: '집으로',
+  mode_switch_label: '공간 모드',
+  sound_on: '잔잔한 소리 켜짐',
+  sound_off: '소리 꺼짐',
+  sound_hint: '탭하면 잔잔한 빗소리가 나와요',
+  back: '뒤로',
+  menu: '메뉴',
+  close: '닫기',
+  sky_open: '나의 하늘',
+
+  welcome_title: '어서 와요, 집이에요.',
+  welcome_sub: '여기서는 아무것도 하지 않아도 돼요.',
+  welcome_q: '오늘 하루는 어땠어요?',
+  moods: { heavy: '무거웠어요', okay: '그럭저럭', good: '괜찮았어요', lovely: '좋았어요' },
+  mood_reply: {
+    heavy: '많이 힘들었겠어요. 천천히 가요.',
+    okay: '그럭저럭이면 충분해요.',
+    good: '다행이에요. 이대로 편안하게 가요.',
+    lovely: '그 기분, 잠깐 더 간직해요.',
+  },
+  mood_skip: '건너뛰기',
+
+  need_q: '지금 무엇이 필요하세요?',
+  hub_groups: { out: '털어놓기', settle: '편히 쉬기', sleep: '잠들 준비' },
+  cards: {
+    mind: { title: '머릿속 비우기', desc: '모두 적은 다음, 놓아 보내요.' },
+    one: { title: '오늘의 한 가지', desc: '별로 간직하거나, 놓아 보내요.' },
+    rest: { title: '그냥 쉬기', desc: '아늑한 방. 할 일은 없어요.' },
+    calm: { title: '마음 가라앉히기', desc: '2분 동안 천천히 숨쉬기.' },
+    quiet: { title: '조용한 시간', desc: '내가 고른 소리만.' },
+    company: { title: '누군가 곁에', desc: '길 건너편의 불 켜진 창문들.' },
+    sleep: { title: '잠들 준비', desc: '5분 동안 천천히 잦아들어요.' },
+    sky: { title: '나의 하늘', desc: '간직한 좋은 순간들이 별이 되어요.' },
+  },
+  exp_titles: { mind: '머릿속 비우기', one: '한 가지', rest: '쉬기', calm: '차분히', quiet: '고요', company: '곁에', sleep: '잠', sky: '나의 하늘' },
+  suggested: '오늘 밤 추천',
+
+  steps: { write: '쓰기', choose: '고르기', release: '놓아주기' },
+  ctrl_enter: 'Ctrl + Enter로 계속',
+  next: '다음',
+  edit: '수정',
+
+  mind_title: '지금 머릿속을 차지하고 있는 건 뭔가요?',
+  mind_sub: '아무거나 적어요. 정리하지 않아도 돼요.',
+  mind_placeholder: '내일 마감\n돈 문제\n팀장님과 미팅\nKafka 공부해야 함\n생일 선물\n너무 피곤해\n내가 뭘 하고 있는지 모르겠어...',
+  mind_choose_title: '어떻게 놓아 보낼까요?',
+  mind_choose_sub: '오늘 밤 마음이 가는 걸로 골라요.',
+  mind_release: '놓아주기',
+  mind_privacy: '적은 내용은 이 기기 밖으로 나가지 않고, 어디에도 저장되지 않아요.',
+  rituals: {
+    sky: { name: '별이 되어', desc: '걱정 하나하나가 떠올라 작은 별이 돼요.', after: '오늘 밤 모든 걸 해결하지 않아도 돼요.' },
+    river: { name: '강물에 띄워', desc: '종이배로 접어 물결에 실어 보내요.', after: '이제 멀리 흘러갔어요. 그대로 보내 줘요.' },
+    burn: { name: '태워 버리기', desc: '불씨와 재가 되는 걸 지켜봐요.', after: '이제 재만 남았어요. 더 짊어질 건 없어요.' },
+    wind: { name: '바람에 실어', desc: '한 줄기 바람이 들어 올려 흩어 놓아요.', after: '바람이 가져갔어요. 손을 쉬어도 돼요.' },
+    rain: { name: '빗물에 녹여', desc: '잉크가 번지고 씻겨 내려가요.', after: '씻겨 내려갔어요. 내일은 새로 시작해요.' },
+  },
+
+  after_menu: '다른 것 하기',
+  after_rest: '방에서 쉬기',
+  done_tonight: '오늘 밤은 여기까지',
+
+  one_title: '오늘 있었던 일 하나만 들려줘요.',
+  one_prefix: '오늘 나는…',
+  one_placeholder: '정말 힘든 회의를 했어.',
+  one_choose_title: '이걸 어떻게 하고 싶어요?',
+  one_keep: '이 순간 간직하기',
+  one_keep_desc: '나의 하늘에 별이 돼요 (이 브라우저에서만).',
+  one_go_label: '아니면 놓아주기',
+  one_after_keep: '간직했어요. 이제 당신의 하늘에서 빛나요.',
+  one_privacy: '간직한 순간은 이 브라우저에만 남아요.',
+
+  sky_title: '나의 하늘',
+  sky_empty: '아직 아무것도 없어요. 아래에 좋은 순간을 적으면 첫 번째 별이 돼요.',
+  sky_forget: '이 별 놓아주기',
+  sky_hint: '별 하나하나가 당신이 간직한 순간이에요. 탭해서 읽어 보세요.',
+  sky_add_label: '간직하고 싶은 좋은 순간',
+  sky_add_placeholder: '간직하고 싶은 좋은 순간…',
+  sky_add: '별 추가',
+  sky_added: '당신의 하늘에 새 별이 떴어요.',
+
+  rest_hint: '할 일은 없어요. 여기 있는 물건들은 만지면 반응해요.',
+  rest_objects: { lamp: '스탠드', window: '창문 — 비', curtain: '커튼', tea: '차 한 잔', fire: '벽난로' },
+  room_label: '밤의 조용한 방',
+
+  calm_lines: [
+    '천천히 숨을 들이쉬어요.',
+    '어깨에 힘을 빼요.',
+    '이제 집에 왔어요.',
+    '오늘 밤 모든 걸 해결하지 않아도 돼요.',
+  ],
+  calm_in: '들이쉬고',
+  calm_out: '내쉬고',
+
+  quiet_title: '원하는 소리만.',
+  quiet_master: '전체 볼륨',
+  quiet_volume: '볼륨',
+  quiet_sounds: { rain: '비', wind: '바람', fire: '벽난로', cafe: '카페', wave: '바다', city: '밤의 도시', forest: '숲' },
+
+  company_lines: [
+    '길 건너에도 아직 깨어 있는 사람이 있어요.',
+    '방금 창문 하나에 불이 또 켜졌어요.',
+    '긴 하루를 보낸 건 당신만이 아니에요.',
+    '모두 창문 하나씩, 천천히 하루를 마무리하고 있어요.',
+    '쉬어도 괜찮아요.',
+  ],
+  company_label: '건너편 건물의 불 켜진 창문들',
+
+  sleep_intro: '모든 걸 천천히 늦춰 봐요.',
+  sleep_main: '내일 걱정은 내일 해도 돼요.',
+  sleep_eyes: '눈꺼풀이 무거워지도록 두세요.',
+  sleep_night: '잘 자요.',
+  close_ws: '공간 닫기',
+
+  final_1: '오늘 충분히 잘했어요.',
+  final_2: '나머지는 내일로 미뤄도 돼요.',
+  final_night: '잘 자요.',
+  closed_title: '잘 자요.',
+  closed_sub: '소리가 꺼졌어요. 언제든 이 탭을 닫아도 돼요.',
+  closed_reopen: '다시 들어가기',
+}
+
+export default ko

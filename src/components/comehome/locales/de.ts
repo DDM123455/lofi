@@ -1,0 +1,126 @@
+import type { HomeCopy } from '../copy'
+
+const de: HomeCopy = {
+  mode_focus: 'Fokus',
+  mode_home: 'Nach Hause',
+  mode_switch_label: 'Arbeitsbereich-Modus',
+  sound_on: 'Leiser Klang an',
+  sound_off: 'Ton aus',
+  sound_hint: 'Tippen für leisen Regen',
+  back: 'Zurück',
+  menu: 'Menü',
+  close: 'Schließen',
+  sky_open: 'Dein Himmel',
+
+  welcome_title: 'Willkommen zu Hause.',
+  welcome_sub: 'Hier musst du gar nichts tun.',
+  welcome_q: 'Wie war dein Tag?',
+  moods: { heavy: 'Schwer', okay: 'Okay', good: 'Gut', lovely: 'Schön' },
+  mood_reply: {
+    heavy: 'Klingt nach ganz schön viel. Lass uns langsam machen.',
+    okay: 'Okay ist genug.',
+    good: 'Schön. Lass es uns sanft halten.',
+    lovely: 'Lass uns das kurz festhalten.',
+  },
+  mood_skip: 'Überspringen',
+
+  need_q: 'Was brauchst du gerade?',
+  hub_groups: { out: 'Rauslassen', settle: 'Ankommen', sleep: 'Runterfahren' },
+  cards: {
+    mind: { title: 'Kopf frei machen', desc: 'Alles aufschreiben und dann loslassen.' },
+    one: { title: 'Eine Sache von heute', desc: 'Als Stern behalten oder loslassen.' },
+    rest: { title: 'Einfach ausruhen', desc: 'Ein gemütliches Zimmer. Nichts zu tun.' },
+    calm: { title: 'Zur Ruhe kommen', desc: 'Zwei Minuten langsames Atmen.' },
+    quiet: { title: 'Etwas Stille', desc: 'Nur die Geräusche, die du wählst.' },
+    company: { title: 'Etwas Gesellschaft', desc: 'Erleuchtete Fenster auf der anderen Straßenseite.' },
+    sleep: { title: 'Bereit fürs Schlafen', desc: 'Fünf Minuten, die langsam ausklingen.' },
+    sky: { title: 'Dein Himmel', desc: 'Schöne Momente, die du behalten hast – als Sterne.' },
+  },
+  exp_titles: { mind: 'Kopf frei', one: 'Eine Sache', rest: 'Ruhe', calm: 'Gelassenheit', quiet: 'Stille', company: 'Gesellschaft', sleep: 'Schlaf', sky: 'Dein Himmel' },
+  suggested: 'für heute Abend',
+
+  steps: { write: 'Schreiben', choose: 'Wählen', release: 'Loslassen' },
+  ctrl_enter: 'Strg + Enter zum Fortfahren',
+  next: 'Weiter',
+  edit: 'Bearbeiten',
+
+  mind_title: 'Was nimmt gerade Platz in deinem Kopf ein?',
+  mind_sub: 'Schreib irgendwas. Du musst es nicht ordnen.',
+  mind_placeholder: 'Deadline morgen\nGeld\nMeeting mit dem Chef\nich muss Kafka lernen\nGeburtstagsgeschenk\nich bin müde\nich weiß nicht, was ich eigentlich mache...',
+  mind_choose_title: 'Wie möchtest du es loslassen?',
+  mind_choose_sub: 'Nimm, was sich heute Abend richtig anfühlt.',
+  mind_release: 'Loslassen',
+  mind_privacy: 'Nichts, was du schreibst, verlässt dieses Gerät. Es wird nirgends gespeichert.',
+  rituals: {
+    sky: { name: 'Zu den Sternen', desc: 'Jede Sorge steigt auf und wird zu einem kleinen Stern.', after: 'Du musst heute Nacht nicht alles lösen.' },
+    river: { name: 'Den Fluss hinab', desc: 'Zu Papierbooten gefaltet und davongetragen.', after: 'Es treibt jetzt flussabwärts. Lass es weiterziehen.' },
+    burn: { name: 'Verbrennen', desc: 'Sieh zu, wie es zu Glut und Asche wird.', after: 'Jetzt ist es Asche. Nichts mehr zu tragen.' },
+    wind: { name: 'Dem Wind überlassen', desc: 'Eine Böe erfasst es und verweht es.', after: 'Der Wind hat es. Deine Hände dürfen ruhen.' },
+    rain: { name: 'In den Regen', desc: 'Die Tinte verläuft und wird fortgespült.', after: 'Weggespült. Morgen beginnt frisch.' },
+  },
+
+  after_menu: 'Etwas anderes',
+  after_rest: 'Im Zimmer ausruhen',
+  done_tonight: 'Für heute reicht es',
+
+  one_title: 'Erzähl mir eine Sache von heute.',
+  one_prefix: 'Heute habe ich…',
+  one_placeholder: 'ein richtig schwieriges Meeting gehabt.',
+  one_choose_title: 'Was möchtest du damit machen?',
+  one_keep: 'Diesen Moment behalten',
+  one_keep_desc: 'Er wird ein Stern an deinem Himmel (nur in diesem Browser).',
+  one_go_label: 'Oder loslassen',
+  one_after_keep: 'Behalten. Er lebt jetzt an deinem Himmel.',
+  one_privacy: 'Behaltene Momente bleiben nur in diesem Browser.',
+
+  sky_title: 'Dein Himmel',
+  sky_empty: 'Noch nichts hier. Schreib unten einen schönen Moment auf – er wird dein erster Stern.',
+  sky_forget: 'Diesen loslassen',
+  sky_hint: 'Jeder Stern ist ein Moment, den du behalten hast. Tippe einen an, um ihn zu lesen.',
+  sky_add_label: 'Ein schöner Moment zum Behalten',
+  sky_add_placeholder: 'Ein schöner Moment zum Behalten…',
+  sky_add: 'Stern hinzufügen',
+  sky_added: 'Ein neuer Stern leuchtet an deinem Himmel.',
+
+  rest_hint: 'Nichts zu tun. Die Dinge hier reagieren, wenn du sie berührst.',
+  rest_objects: { lamp: 'Lampe', window: 'Fenster — Regen', curtain: 'Vorhang', tea: 'Tasse Tee', fire: 'Kamin' },
+  room_label: 'Eine ruhige Wohnung bei Nacht',
+
+  calm_lines: [
+    'Atme langsam ein.',
+    'Lass die Schultern sinken.',
+    'Du bist jetzt zu Hause.',
+    'Du musst heute Nacht nicht alles lösen.',
+  ],
+  calm_in: 'einatmen',
+  calm_out: 'ausatmen',
+
+  quiet_title: 'Nur die Geräusche, die du willst.',
+  quiet_master: 'Gesamtlautstärke',
+  quiet_volume: 'Lautstärke',
+  quiet_sounds: { rain: 'Regen', wind: 'Wind', fire: 'Kamin', cafe: 'Café', wave: 'Meer', city: 'Stadt bei Nacht', forest: 'Wald' },
+
+  company_lines: [
+    'Gegenüber ist auch noch jemand wach.',
+    'Gerade ist noch ein Licht angegangen.',
+    'Du bist nicht die einzige Person mit einem langen Tag.',
+    'Alle kommen langsam zur Ruhe, Fenster für Fenster.',
+    'Es ist okay, sich auszuruhen.',
+  ],
+  company_label: 'Erleuchtete Fenster im Haus gegenüber',
+
+  sleep_intro: 'Lass uns alles verlangsamen.',
+  sleep_main: 'Die Probleme von morgen dürfen bis morgen warten.',
+  sleep_eyes: 'Lass deine Augen schwer werden.',
+  sleep_night: 'Gute Nacht.',
+  close_ws: 'Arbeitsbereich schließen',
+
+  final_1: 'Du hast heute genug getan.',
+  final_2: 'Der Rest kann bis morgen warten.',
+  final_night: 'Gute Nacht.',
+  closed_title: 'Gute Nacht.',
+  closed_sub: 'Der Ton ist aus. Du kannst diesen Tab schließen, wann immer du willst.',
+  closed_reopen: 'Wieder hinein',
+}
+
+export default de

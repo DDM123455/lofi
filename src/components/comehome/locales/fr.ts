@@ -1,0 +1,126 @@
+import type { HomeCopy } from '../copy'
+
+const fr: HomeCopy = {
+  mode_focus: 'Concentration',
+  mode_home: 'Rentrer chez soi',
+  mode_switch_label: "Mode de l'espace",
+  sound_on: 'Son doux activé',
+  sound_off: 'Son coupé',
+  sound_hint: 'Touchez pour une pluie douce',
+  back: 'Retour',
+  menu: 'Menu',
+  close: 'Fermer',
+  sky_open: 'Votre ciel',
+
+  welcome_title: 'Bienvenue chez vous.',
+  welcome_sub: "Ici, vous n'avez rien à faire.",
+  welcome_q: "Comment s'est passée votre journée ?",
+  moods: { heavy: 'Lourde', okay: 'Ça va', good: 'Bien', lovely: 'Belle' },
+  mood_reply: {
+    heavy: 'Ça fait beaucoup. Allons-y doucement.',
+    okay: 'Ça va, c’est déjà assez.',
+    good: 'Tant mieux. Restons en douceur.',
+    lovely: 'Gardons ça un instant.',
+  },
+  mood_skip: 'Passer',
+
+  need_q: "De quoi avez-vous besoin, là, tout de suite ?",
+  hub_groups: { out: 'Vider son sac', settle: "S'installer", sleep: 'Se préparer à dormir' },
+  cards: {
+    mind: { title: "Vider sa tête", desc: 'Tout écrire, puis laisser partir.' },
+    one: { title: "Une chose d'aujourd'hui", desc: 'La garder comme une étoile, ou la laisser partir.' },
+    rest: { title: 'Juste se reposer', desc: 'Une pièce douillette. Rien à faire.' },
+    calm: { title: 'Se calmer', desc: 'Deux minutes de respiration lente.' },
+    quiet: { title: 'Un peu de calme', desc: 'Seulement les sons que vous choisissez.' },
+    company: { title: 'Un peu de compagnie', desc: "Des fenêtres allumées de l'autre côté de la rue." },
+    sleep: { title: 'Se préparer au sommeil', desc: "Cinq minutes qui s'éteignent doucement." },
+    sky: { title: 'Votre ciel', desc: 'Les beaux moments gardés, en étoiles.' },
+  },
+  exp_titles: { mind: 'Vider sa tête', one: 'Une chose', rest: 'Repos', calm: 'Calme', quiet: 'Silence', company: 'Compagnie', sleep: 'Sommeil', sky: 'Votre ciel' },
+  suggested: 'pour ce soir',
+
+  steps: { write: 'Écrire', choose: 'Choisir', release: 'Lâcher prise' },
+  ctrl_enter: 'Ctrl + Entrée pour continuer',
+  next: 'Suivant',
+  edit: 'Modifier',
+
+  mind_title: "Qu'est-ce qui prend de la place dans votre tête ?",
+  mind_sub: "Écrivez n'importe quoi. Pas besoin de trier.",
+  mind_placeholder: "la deadline de demain\nl'argent\nréunion avec mon chef\nil faut que j'apprenne Kafka\ncadeau d'anniversaire\nje suis fatigué\nje ne sais plus ce que je fais...",
+  mind_choose_title: 'Comment voulez-vous le laisser partir ?',
+  mind_choose_sub: 'Choisissez ce qui vous semble juste ce soir.',
+  mind_release: 'Laisser partir',
+  mind_privacy: "Rien de ce que vous écrivez ne quitte cet appareil. Rien n'est enregistré.",
+  rituals: {
+    sky: { name: 'Vers les étoiles', desc: 'Chaque souci monte et devient une petite étoile.', after: "Vous n'avez pas à tout régler ce soir." },
+    river: { name: 'Au fil de l’eau', desc: "Plié en petits bateaux de papier que l'eau emporte.", after: "C'est parti au fil de l'eau. Laissez-le continuer." },
+    burn: { name: 'Le brûler', desc: 'Regardez-le devenir braises et cendres.', after: "Ce ne sont plus que des cendres. Plus rien à porter." },
+    wind: { name: 'Au vent', desc: 'Une rafale le soulève et le disperse.', after: "Le vent l'a pris. Vos mains peuvent se reposer." },
+    rain: { name: 'Sous la pluie', desc: "L'encre se brouille et s'efface.", after: 'Lavé. Demain repart à zéro.' },
+  },
+
+  after_menu: 'Autre chose',
+  after_rest: 'Se reposer dans la pièce',
+  done_tonight: "C'est fini pour ce soir",
+
+  one_title: "Racontez-moi une chose d'aujourd'hui.",
+  one_prefix: "Aujourd'hui, j'ai…",
+  one_placeholder: 'eu une réunion vraiment difficile.',
+  one_choose_title: "Qu'aimeriez-vous en faire ?",
+  one_keep: 'Garder ce moment',
+  one_keep_desc: 'Il devient une étoile dans votre ciel (seulement dans ce navigateur).',
+  one_go_label: 'Ou le laisser partir',
+  one_after_keep: 'Gardé. Il vit maintenant dans votre ciel.',
+  one_privacy: 'Les moments gardés restent uniquement dans ce navigateur.',
+
+  sky_title: 'Votre ciel',
+  sky_empty: "Rien pour l'instant. Écrivez un beau moment ci-dessous : ce sera votre première étoile.",
+  sky_forget: 'Laisser partir celle-ci',
+  sky_hint: 'Chaque étoile est un moment que vous avez gardé. Touchez-en une pour la lire.',
+  sky_add_label: 'Un beau moment à garder',
+  sky_add_placeholder: 'Un beau moment à garder…',
+  sky_add: 'Ajouter une étoile',
+  sky_added: 'Une nouvelle étoile brille dans votre ciel.',
+
+  rest_hint: 'Rien à faire. Les objets réagissent si vous les touchez.',
+  rest_objects: { lamp: 'Lampe', window: 'Fenêtre — pluie', curtain: 'Rideau', tea: 'Tasse de thé', fire: 'Cheminée' },
+  room_label: 'Un appartement calme, la nuit',
+
+  calm_lines: [
+    'Respirez lentement.',
+    'Relâchez les épaules.',
+    'Vous êtes chez vous, maintenant.',
+    "Vous n'avez pas à tout régler ce soir.",
+  ],
+  calm_in: 'inspirez',
+  calm_out: 'expirez',
+
+  quiet_title: 'Seulement les sons que vous voulez.',
+  quiet_master: 'Volume général',
+  quiet_volume: 'volume',
+  quiet_sounds: { rain: 'Pluie', wind: 'Vent', fire: 'Cheminée', cafe: 'Café', wave: 'Océan', city: 'Ville la nuit', forest: 'Forêt' },
+
+  company_lines: [
+    "Quelqu'un en face est encore debout, lui aussi.",
+    "Une autre lumière vient de s'allumer.",
+    "Vous n'êtes pas le seul à avoir eu une longue journée.",
+    'Tout le monde ralentit, une fenêtre après l’autre.',
+    "C'est normal de se reposer.",
+  ],
+  company_label: "Fenêtres allumées dans l'immeuble d'en face",
+
+  sleep_intro: 'Ralentissons tout.',
+  sleep_main: 'Les problèmes de demain peuvent attendre demain.',
+  sleep_eyes: 'Laissez vos paupières devenir lourdes.',
+  sleep_night: 'Bonne nuit.',
+  close_ws: "Fermer l'espace",
+
+  final_1: "Vous en avez fait assez aujourd'hui.",
+  final_2: 'Le reste peut attendre demain.',
+  final_night: 'Bonne nuit.',
+  closed_title: 'Bonne nuit.',
+  closed_sub: 'Le son est coupé. Vous pouvez fermer cet onglet quand vous voulez.',
+  closed_reopen: 'Revenir',
+}
+
+export default fr

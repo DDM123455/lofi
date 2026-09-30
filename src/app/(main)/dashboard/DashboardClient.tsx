@@ -57,8 +57,14 @@ export default function DashboardClient() {
   useEffect(() => { setMounted(true) }, [])
 
   if (!mounted) {
+    // Render the real heading + intro on the server so crawlers and the initial paint have
+    // an H1 and body copy; only the device-local stats are deferred to after hydration.
     return (
       <div className="mx-auto max-w-5xl px-4 py-14">
+        <div className="mb-10">
+          <h1 className="text-3xl font-bold text-white sm:text-4xl">Your Focus Dashboard</h1>
+          <p className="mt-1 text-sm text-white/45">Streaks, focus time and session history — all stored on this device.</p>
+        </div>
         <div className="h-40 animate-pulse rounded-2xl border border-white/8 bg-white/3" />
       </div>
     )

@@ -1,4 +1,57 @@
-export type Lang = 'en' | 'vi'
+export type Lang = 'en' | 'vi' | 'es' | 'pt' | 'fr' | 'de' | 'ru' | 'ja' | 'ko' | 'zh' | 'id' | 'th'
+
+/** Every UI language, in picker order. `locale` feeds Intl date formatting. */
+export const LANGS: { code: Lang; label: string; locale: string }[] = [
+  { code: 'en', label: 'English',          locale: 'en-US' },
+  { code: 'vi', label: 'Tiếng Việt',       locale: 'vi-VN' },
+  { code: 'es', label: 'Español',          locale: 'es-ES' },
+  { code: 'pt', label: 'Português',        locale: 'pt-BR' },
+  { code: 'fr', label: 'Français',         locale: 'fr-FR' },
+  { code: 'de', label: 'Deutsch',          locale: 'de-DE' },
+  { code: 'ru', label: 'Русский',          locale: 'ru-RU' },
+  { code: 'ja', label: '日本語',            locale: 'ja-JP' },
+  { code: 'ko', label: '한국어',            locale: 'ko-KR' },
+  { code: 'zh', label: '简体中文',          locale: 'zh-CN' },
+  { code: 'id', label: 'Bahasa Indonesia', locale: 'id-ID' },
+  { code: 'th', label: 'ไทย',              locale: 'th-TH' },
+]
+
+export function isLang(x: unknown): x is Lang {
+  return typeof x === 'string' && LANGS.some(l => l.code === x)
+}
+
+export function localeOf(lang: Lang): string {
+  return LANGS.find(l => l.code === lang)?.locale ?? 'en-US'
+}
+
+/** Best supported match for the browser's preferred languages ('pt-BR' → 'pt', 'zh-TW' → 'zh'). */
+export function matchLang(prefs: readonly string[]): Lang | null {
+  for (const p of prefs) {
+    const base = p.toLowerCase().split('-')[0]
+    if (isLang(base)) return base
+  }
+  return null
+}
+
+// en + vi ship inline (default + largest audience); the other languages are split into
+// their own chunks and fetched only when picked, so they never weigh on the workspace bundle.
+const LOADERS: Record<Exclude<Lang, 'en' | 'vi'>, () => Promise<{ default: Translations }>> = {
+  es: () => import('./locales/es'),
+  pt: () => import('./locales/pt'),
+  fr: () => import('./locales/fr'),
+  de: () => import('./locales/de'),
+  ru: () => import('./locales/ru'),
+  ja: () => import('./locales/ja'),
+  ko: () => import('./locales/ko'),
+  zh: () => import('./locales/zh'),
+  id: () => import('./locales/id'),
+  th: () => import('./locales/th'),
+}
+
+export async function loadTranslations(lang: Lang): Promise<Translations> {
+  if (lang === 'en' || lang === 'vi') return TRANSLATIONS[lang]
+  return (await LOADERS[lang]()).default
+}
 
 export interface Translations {
   // Pomodoro
@@ -8,6 +61,31 @@ export interface Translations {
   pom_pause: string
   pom_phase_focus: string
   pom_phase_break: string
+  pom_phase_long: string
+  pom_long: string
+  pom_skip: string
+  pom_timer_settings: string
+  pom_work_len: string
+  pom_break_len: string
+  pom_long_len: string
+  pom_cycles: string
+  pom_autostart: string
+  pom_today_done: string
+  pom_goal: string
+  pom_goal_reached: string
+  notif_break_title: string
+  notif_break_body: string
+  notif_focus_title: string
+  notif_focus_body: string
+  notif_long_title: string
+  zen_label: string
+  zen_hint: string
+  shortcuts_title: string
+  tip_playpause: string
+  tip_fullscreen: string
+  tip_fullscreen_exit: string
+  tip_support: string
+  tip_lang: string
 
   // Panel tabs (tooltips)
   tab_music: string
@@ -28,6 +106,8 @@ export interface Translations {
   music_connecting: string
   music_yt_blocked: string
   music_retry_btn: string
+  music_tap_play: string
+  music_yt_unavailable: string
   music_now_playing: string
   music_paused: string
 
@@ -132,9 +212,14 @@ export interface Translations {
 
   // Misc
   click_to_start: string
+  app_loading: string
   pom_done_toast: string
   switch_theme: string
   open_player: string
+  more: string
+  mode_focus: string
+  mode_home: string
+  mode_switch_label: string
 
   // WMO weather codes
   wmo: Record<number, string>
@@ -175,9 +260,15 @@ export interface Translations {
   home_cta2_desc: string
   home_cta2_btn: string
   home_cta2_tagline: string
+
+  // Come Home teaser on the landing page
+  home_ch_title: string
+  home_ch_desc: string
+  home_ch_btn: string
+  home_ch_more: string
 }
 
-export const TRANSLATIONS: Record<Lang, Translations> = {
+export const TRANSLATIONS: Record<'en' | 'vi', Translations> = {
   en: {
     pom_focus: 'Focus',
     pom_break: 'Break',
@@ -185,6 +276,31 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     pom_pause: 'Pause',
     pom_phase_focus: 'FOCUS',
     pom_phase_break: 'BREAK',
+    pom_phase_long: 'LONG BREAK',
+    pom_long: 'Long break',
+    pom_skip: 'Skip to next phase',
+    pom_timer_settings: 'Timer settings',
+    pom_work_len: 'Focus length',
+    pom_break_len: 'Break length',
+    pom_long_len: 'Long break length',
+    pom_cycles: 'Focus sessions before a long break',
+    pom_autostart: 'Auto-start next phase',
+    pom_today_done: 'today',
+    pom_goal: 'Daily goal',
+    pom_goal_reached: 'Daily goal reached! 🎉',
+    notif_break_title: 'Break time 🍵',
+    notif_break_body: 'Step away and rest your eyes.',
+    notif_focus_title: 'Back to focus 🎯',
+    notif_focus_body: 'New focus session started.',
+    notif_long_title: 'Long break 🌿',
+    zen_label: 'Zen',
+    zen_hint: 'Exit Zen mode (Z or Esc)',
+    shortcuts_title: 'Keyboard shortcuts',
+    tip_playpause: 'Play / Pause (Space)',
+    tip_fullscreen: 'Fullscreen (F)',
+    tip_fullscreen_exit: 'Exit fullscreen (F)',
+    tip_support: 'Support LofiSpace 💜',
+    tip_lang: 'Language',
 
     tab_music: 'Lofi Music',
     tab_sounds: 'Ambient Sounds',
@@ -202,6 +318,8 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     music_connecting: 'connecting…',
     music_yt_blocked: '⚠ YouTube not ready. Synth audio is active.',
     music_retry_btn: 'Retry',
+    music_tap_play: 'Tap to play music',
+    music_yt_unavailable: "⚠ This video can't be played here (removed or embedding disabled). Try another link.",
     music_now_playing: 'Now Playing',
     music_paused: 'Paused',
 
@@ -293,9 +411,14 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     progress_best: 'Best',
 
     click_to_start: 'Tap to start',
+    app_loading: 'Loading…',
     pom_done_toast: 'Pomodoro complete!',
     switch_theme: 'Switch theme',
     open_player: 'Player',
+    more: 'More',
+    mode_focus: 'Focus',
+    mode_home: 'Come Home',
+    mode_switch_label: 'Workspace mode',
 
     wmo: {
       0: 'Clear sky', 1: 'Few clouds', 2: 'Partly cloudy', 3: 'Overcast',
@@ -367,6 +490,11 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     home_cta2_desc: 'Join thousands of students and developers using LofiSpace every day.',
     home_cta2_btn: 'Open Free Workspace →',
     home_cta2_tagline: 'No account · No payment · Forever free',
+
+    home_ch_title: 'A quiet place after a long day',
+    home_ch_desc: 'When work is over but your mind is still running, Come Home gives you a quiet space to slow down, clear your thoughts, and simply rest.',
+    home_ch_btn: 'Come Home',
+    home_ch_more: 'Learn more',
   },
 
   vi: {
@@ -376,6 +504,31 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     pom_pause: 'Tạm dừng',
     pom_phase_focus: 'TẬP TRUNG',
     pom_phase_break: 'GIẢI LAO',
+    pom_phase_long: 'NGHỈ DÀI',
+    pom_long: 'Nghỉ dài',
+    pom_skip: 'Chuyển sang phase kế',
+    pom_timer_settings: 'Cài đặt hẹn giờ',
+    pom_work_len: 'Thời lượng tập trung',
+    pom_break_len: 'Thời lượng nghỉ',
+    pom_long_len: 'Thời lượng nghỉ dài',
+    pom_cycles: 'Số phiên tập trung trước khi nghỉ dài',
+    pom_autostart: 'Tự động bắt đầu phase kế',
+    pom_today_done: 'hôm nay',
+    pom_goal: 'Mục tiêu ngày',
+    pom_goal_reached: 'Đã đạt mục tiêu hôm nay! 🎉',
+    notif_break_title: 'Giờ nghỉ 🍵',
+    notif_break_body: 'Đứng dậy và thư giãn mắt một chút.',
+    notif_focus_title: 'Quay lại tập trung 🎯',
+    notif_focus_body: 'Phiên tập trung mới đã bắt đầu.',
+    notif_long_title: 'Nghỉ dài 🌿',
+    zen_label: 'Zen',
+    zen_hint: 'Thoát chế độ Zen (Z hoặc Esc)',
+    shortcuts_title: 'Phím tắt',
+    tip_playpause: 'Phát / Tạm dừng (Space)',
+    tip_fullscreen: 'Toàn màn hình (F)',
+    tip_fullscreen_exit: 'Thoát toàn màn hình (F)',
+    tip_support: 'Ủng hộ LofiSpace 💜',
+    tip_lang: 'Ngôn ngữ',
 
     tab_music: 'Nhạc Lofi',
     tab_sounds: 'Âm thanh nền',
@@ -393,6 +546,8 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     music_connecting: 'đang kết nối…',
     music_yt_blocked: '⚠ YouTube chưa sẵn sàng. Âm thanh tổng hợp đang hoạt động.',
     music_retry_btn: 'Thử lại',
+    music_tap_play: 'Chạm để phát nhạc',
+    music_yt_unavailable: "⚠ Video này không phát được ở đây (đã bị gỡ hoặc tắt nhúng). Hãy thử link khác.",
     music_now_playing: 'Đang phát',
     music_paused: 'Tạm dừng',
 
@@ -484,9 +639,14 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     progress_best: 'Kỷ lục',
 
     click_to_start: 'Nhấn để bắt đầu',
+    app_loading: 'Đang tải…',
     pom_done_toast: 'Pomodoro hoàn thành!',
     switch_theme: 'Đổi giao diện',
     open_player: 'Trình phát',
+    more: 'Thêm',
+    mode_focus: 'Tập trung',
+    mode_home: 'Về nhà',
+    mode_switch_label: 'Chế độ không gian',
 
     wmo: {
       0: 'Trời quang', 1: 'Ít mây', 2: 'Có mây', 3: 'Nhiều mây',
@@ -558,5 +718,10 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     home_cta2_desc: 'Hàng ngàn học sinh và lập trình viên đang dùng LofiSpace mỗi ngày.',
     home_cta2_btn: 'Mở Workspace Miễn Phí →',
     home_cta2_tagline: 'Không tài khoản · Không thanh toán · Miễn phí mãi',
+
+    home_ch_title: 'Một góc yên tĩnh sau một ngày dài',
+    home_ch_desc: 'Khi công việc đã xong nhưng đầu óc vẫn chưa dừng, Về nhà cho bạn một không gian yên tĩnh để chậm lại, gỡ bớt suy nghĩ và đơn giản là nghỉ ngơi.',
+    home_ch_btn: 'Về nhà',
+    home_ch_more: 'Tìm hiểu thêm',
   },
 }

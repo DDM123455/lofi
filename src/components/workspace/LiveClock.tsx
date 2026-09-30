@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { localeOf } from '@/lib/i18n'
 
 export type ClockStyle = 'digital' | 'minimal' | 'bold' | 'analog'
 
@@ -44,7 +45,7 @@ export function LiveClock({ clockStyle, accent }: { clockStyle: ClockStyle; acce
   const dateStr = now
     ? lang === 'vi'
       ? `${t.cal_days_long[now.getDay()]}, ${now.getDate()} tháng ${now.getMonth() + 1}`
-      : `${t.cal_days_long[now.getDay()]}, ${t.cal_months[now.getMonth()].slice(0, 3)} ${now.getDate()}`
+      : now.toLocaleDateString(localeOf(lang), { weekday: 'long', month: 'short', day: 'numeric' })
     : ''
 
   if (clockStyle === 'analog') return <AnalogClock now={now ?? new Date(0)} size={110} accent={accent} />

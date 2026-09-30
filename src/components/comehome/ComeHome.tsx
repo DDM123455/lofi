@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
-import { EXP_EMOJI, HOME_COPY, HUB, MOOD_EMOJI, MOOD_SUGGEST, NEED_MIX, RITUAL_MIX, type Exp, type HomeCopy, type Mood, type Ritual } from './copy'
+import type { Lang } from '@/lib/i18n'
+import { EXP_EMOJI, HOME_COPY, HUB, loadHomeCopy, MOOD_EMOJI, MOOD_SUGGEST, NEED_MIX, RITUAL_MIX, type Exp, type HomeCopy, type Mood, type Ritual } from './copy'
 import { loadSky, useFocusOnMount, useReducedMotion } from './hooks'
 import { BrainDump, MemorySky, OneThing, StarField, type Exits } from './Release'
 import { CalmBreath, CompanyRoom, QuietMixer, RestRoom, SleepWindDown, type HomeAudio } from './Experiences'
@@ -33,15 +34,34 @@ const START_EVENT: Partial<Record<Exp, string>> = {
 
 interface Props {
   audio: HomeAudio
-  lang: 'en' | 'vi'
+  lang: Lang
   /** Switch back to the Focus workspace (called after the fade-out). */
   onExit: () => void
   /** Swap the shared workspace background to one of BG_PRESETS by id. */
   setBackdrop: (presetId: string) => void
 }
 
-export function ComeHome({ audio, lang, onExit, setBackdrop }: Props) {
-  const c = HOME_COPY[lang]
+/** Copy for `lang`; null only while a not-yet-loaded language's chunk is in flight. */
+function useHomeCopy(lang: Lang): HomeCopy | null {
+  const [loaded, setLoaded] = useState<{ lang: Lang; copy: HomeCopy } | null>(null)
+  useEffect(() => {
+    if (lang === 'en' || lang === 'vi') return
+    let live = true
+    loadHomeCopy(lang).then(copy => { if (live) setLoaded({ lang, copy }) }).catch(() => { if (live) setLoaded({ lang, copy: HOME_COPY.en }) })
+    return () => { live = false }
+  }, [lang])
+  if (lang === 'en' || lang === 'vi') return HOME_COPY[lang]
+  return loaded?.copy ?? null
+}
+
+export function ComeHome(props: Props) {
+  const c = useHomeCopy(props.lang)
+  // Same dim veil as the dynamic() loading state, so a language chunk fetch looks seamless.
+  if (!c) return <div style={{ position: 'fixed', inset: 0, zIndex: 30, background: 'rgba(8,5,12,.7)' }} />
+  return <ComeHomeView {...props} c={c} />
+}
+
+function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: HomeCopy }) {
   const reduced = useReducedMotion()
   const [screen, setScreen] = useState<Screen>({ kind: 'welcome' })
   const [mood, setMood] = useState<Mood | null>(null)

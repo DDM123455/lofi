@@ -1,0 +1,126 @@
+import type { HomeCopy } from '../copy'
+
+const ja: HomeCopy = {
+  mode_focus: '集中',
+  mode_home: 'おうち時間',
+  mode_switch_label: 'ワークスペースのモード',
+  sound_on: 'やさしい音：オン',
+  sound_off: '音：オフ',
+  sound_hint: 'タップして小雨の音を流す',
+  back: '戻る',
+  menu: 'メニュー',
+  close: '閉じる',
+  sky_open: 'あなたの空',
+
+  welcome_title: 'おかえりなさい。',
+  welcome_sub: 'ここでは、何もしなくていいんです。',
+  welcome_q: '今日はどんな一日でしたか？',
+  moods: { heavy: 'しんどい', okay: 'まあまあ', good: 'よかった', lovely: 'すてき' },
+  mood_reply: {
+    heavy: 'たくさんのことがあったんですね。ゆっくりいきましょう。',
+    okay: 'まあまあで、じゅうぶんです。',
+    good: 'よかった。このままやさしくいきましょう。',
+    lovely: 'その気持ちを、少しだけ抱きしめていましょう。',
+  },
+  mood_skip: 'スキップ',
+
+  need_q: 'いま、何が必要ですか？',
+  hub_groups: { out: '吐き出す', settle: 'くつろぐ', sleep: '眠りの準備' },
+  cards: {
+    mind: { title: '頭を空っぽにする', desc: '全部書き出して、手放しましょう。' },
+    one: { title: '今日のひとこと', desc: '星として残すか、手放すか。' },
+    rest: { title: 'ただ休む', desc: '居心地のいい部屋。することは何もありません。' },
+    calm: { title: '落ち着く', desc: '2分間、ゆっくり呼吸しましょう。' },
+    quiet: { title: '少し静かに', desc: '選んだ音だけを。' },
+    company: { title: '誰かの気配', desc: '通りの向こうに灯る窓。' },
+    sleep: { title: '眠る準備', desc: '5分かけて、ゆっくりフェードアウト。' },
+    sky: { title: 'あなたの空', desc: '残しておいた良い瞬間が、星になって。' },
+  },
+  exp_titles: { mind: '頭を空っぽに', one: '今日のひとこと', rest: '休む', calm: '落ち着く', quiet: '静けさ', company: '誰かの気配', sleep: '眠り', sky: 'あなたの空' },
+  suggested: '今夜のおすすめ',
+
+  steps: { write: '書く', choose: '選ぶ', release: '手放す' },
+  ctrl_enter: 'Ctrl + Enter で次へ',
+  next: '次へ',
+  edit: '書き直す',
+
+  mind_title: 'いま、頭の中を占めているものは？',
+  mind_sub: '何でも書いてください。整理しなくて大丈夫。',
+  mind_placeholder: '明日の締め切り\nお金のこと\n上司との面談\nKafkaを勉強しなきゃ\n誕生日プレゼント\n疲れた\n自分が何をしてるのか分からない...',
+  mind_choose_title: 'どうやって手放しますか？',
+  mind_choose_sub: '今夜しっくりくるものを選んでください。',
+  mind_release: '手放す',
+  mind_privacy: '書いた内容はこの端末から外に出ることはなく、どこにも保存されません。',
+  rituals: {
+    sky: { name: '星空へ', desc: 'ひとつひとつの不安が昇って、小さな星になります。', after: '今夜すべてを解決しなくていいんです。' },
+    river: { name: '川に流す', desc: '紙の舟に折って、流れに運んでもらいます。', after: 'もう下流へ流れていきました。そのまま行かせてあげましょう。' },
+    burn: { name: '燃やす', desc: '残り火と灰になっていくのを見届けます。', after: 'もう灰になりました。背負うものは何もありません。' },
+    wind: { name: '風にのせる', desc: 'ひと吹きの風が、さらって散らしていきます。', after: '風が持っていきました。手を休めていいですよ。' },
+    rain: { name: '雨に溶かす', desc: 'インクがにじんで、洗い流されていきます。', after: '洗い流されました。明日はまっさらから。' },
+  },
+
+  after_menu: 'ほかのこと',
+  after_rest: '部屋で休む',
+  done_tonight: '今夜はこれでおしまい',
+
+  one_title: '今日のこと、ひとつだけ聞かせてください。',
+  one_prefix: '今日わたしは…',
+  one_placeholder: 'とても大変な会議があった。',
+  one_choose_title: 'それをどうしたいですか？',
+  one_keep: 'この瞬間を残す',
+  one_keep_desc: 'あなたの空の星になります（このブラウザの中だけ）。',
+  one_go_label: 'または手放す',
+  one_after_keep: '残しました。いまはあなたの空で輝いています。',
+  one_privacy: '残した瞬間は、このブラウザの中にだけ保存されます。',
+
+  sky_title: 'あなたの空',
+  sky_empty: 'まだ何もありません。下に良い瞬間を書くと、最初の星になります。',
+  sky_forget: 'この星を手放す',
+  sky_hint: '星のひとつひとつが、あなたが残した瞬間です。タップして読めます。',
+  sky_add_label: '残しておきたい良い瞬間',
+  sky_add_placeholder: '残しておきたい良い瞬間…',
+  sky_add: '星を追加',
+  sky_added: 'あなたの空に、新しい星が灯りました。',
+
+  rest_hint: 'することは何もありません。ここにあるものは、触れると反応します。',
+  rest_objects: { lamp: 'ランプ', window: '窓 — 雨', curtain: 'カーテン', tea: '紅茶', fire: '暖炉' },
+  room_label: '夜の静かな部屋',
+
+  calm_lines: [
+    'ゆっくり息を吸って。',
+    '肩の力を抜いて。',
+    'もう、おうちにいますよ。',
+    '今夜すべてを解決しなくていいんです。',
+  ],
+  calm_in: '吸って',
+  calm_out: '吐いて',
+
+  quiet_title: '聞きたい音だけを。',
+  quiet_master: '全体の音量',
+  quiet_volume: '音量',
+  quiet_sounds: { rain: '雨', wind: '風', fire: '暖炉', cafe: 'カフェ', wave: '海', city: '夜の街', forest: '森' },
+
+  company_lines: [
+    '通りの向こうにも、まだ起きている人がいます。',
+    'また一つ、窓に明かりが灯りました。',
+    '長い一日だったのは、あなただけじゃありません。',
+    'みんな少しずつ、窓ごとに一日を終えていきます。',
+    '休んでいいんですよ。',
+  ],
+  company_label: '向かいの建物に灯る窓',
+
+  sleep_intro: 'すべてを、ゆっくりにしていきましょう。',
+  sleep_main: '明日のことは、明日考えればいい。',
+  sleep_eyes: 'まぶたが重くなるのにまかせて。',
+  sleep_night: 'おやすみなさい。',
+  close_ws: 'ワークスペースを閉じる',
+
+  final_1: '今日はもう、じゅうぶん頑張りました。',
+  final_2: '残りは明日にまかせましょう。',
+  final_night: 'おやすみなさい。',
+  closed_title: 'おやすみなさい。',
+  closed_sub: '音はオフになりました。このタブはいつ閉じても大丈夫です。',
+  closed_reopen: 'もう一度入る',
+}
+
+export default ja

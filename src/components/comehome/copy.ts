@@ -2,6 +2,8 @@
 // Kept local to the feature (instead of the big workspace `Translations` type) so the
 // lazy-loaded chunk carries its own strings and the focus workspace bundle stays untouched.
 
+import type { Lang } from '@/lib/i18n'
+
 export type Mood = 'heavy' | 'okay' | 'good' | 'lovely'
 export type Need = 'rest' | 'calm' | 'mind' | 'quiet' | 'company' | 'sleep'
 /** Everything the hub can open. */
@@ -351,6 +353,25 @@ const vi: HomeCopy = {
 }
 
 export const HOME_COPY: Record<'en' | 'vi', HomeCopy> = { en, vi }
+
+// Other languages live in their own chunks (see ./locales) and are fetched only when used.
+const LOADERS: Record<Exclude<Lang, 'en' | 'vi'>, () => Promise<{ default: HomeCopy }>> = {
+  es: () => import('./locales/es'),
+  pt: () => import('./locales/pt'),
+  fr: () => import('./locales/fr'),
+  de: () => import('./locales/de'),
+  ru: () => import('./locales/ru'),
+  ja: () => import('./locales/ja'),
+  ko: () => import('./locales/ko'),
+  zh: () => import('./locales/zh'),
+  id: () => import('./locales/id'),
+  th: () => import('./locales/th'),
+}
+
+export async function loadHomeCopy(lang: Lang): Promise<HomeCopy> {
+  if (lang === 'en' || lang === 'vi') return HOME_COPY[lang]
+  return (await LOADERS[lang]()).default
+}
 
 export const MOOD_EMOJI: Record<Mood, string> = { heavy: '😫', okay: '😐', good: '🙂', lovely: '❤️' }
 export const EXP_EMOJI: Record<Exp, string> = { mind: '💭', one: '✍️', rest: '🛋️', calm: '🌬️', quiet: '🎧', company: '🏙️', sleep: '🌙', sky: '✦' }

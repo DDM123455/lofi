@@ -23,7 +23,7 @@ const ROOM_COLORS = [
 ]
 
 export function HomeContent() {
-  const { t, lang } = useLanguage()
+  const { t } = useLanguage()
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0d0d14]">
@@ -133,19 +133,17 @@ export function HomeContent() {
           <div className="mx-auto max-w-3xl px-4 text-center">
             <div className="mb-4 text-4xl" aria-hidden>🌙</div>
             <h2 className="mb-4 text-3xl font-bold text-white">
-              {lang === 'vi' ? 'Một góc yên tĩnh sau một ngày dài' : 'A quiet place after a long day'}
+              {t.home_ch_title}
             </h2>
             <p className="mx-auto mb-8 max-w-xl text-white/55">
-              {lang === 'vi'
-                ? 'Khi công việc đã xong nhưng đầu óc vẫn chưa dừng, Về nhà cho bạn một không gian yên tĩnh để chậm lại, gỡ bớt suy nghĩ và đơn giản là nghỉ ngơi.'
-                : 'When work is over but your mind is still running, Come Home gives you a quiet space to slow down, clear your thoughts, and simply rest.'}
+              {t.home_ch_desc}
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link href="/workspace?mode=home" className="rounded-full bg-amber-200/90 px-7 py-3 font-semibold text-[#2a1a14] transition-colors hover:bg-amber-100">
-                {lang === 'vi' ? 'Về nhà' : 'Come Home'}
+                {t.home_ch_btn}
               </Link>
               <Link href="/come-home" className="rounded-full border border-white/15 px-7 py-3 text-white/70 transition-colors hover:border-white/30 hover:text-white">
-                {lang === 'vi' ? 'Tìm hiểu thêm' : 'Learn more'}
+                {t.home_ch_more}
               </Link>
             </div>
           </div>

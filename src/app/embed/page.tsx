@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { EmbedClient } from './EmbedClient'
+import { BootBackdrop } from '@/components/workspace/BootBackdrop'
 
 export const metadata = {
   title: 'LofiSpace Widget',
@@ -8,7 +9,7 @@ export const metadata = {
 
 export default function EmbedPage() {
   return (
-    <Suspense fallback={<div className="embed-root bg-[#0d0d14]" />}>
+    <Suspense fallback={<BootBackdrop />}>
       <EmbedClient />
     </Suspense>
   )

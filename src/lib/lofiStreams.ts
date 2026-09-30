@@ -6,7 +6,7 @@ export interface LofiStream {
 }
 
 export const LOFI_STREAMS: LofiStream[] = [
-  { id: 'lofi1', label: 'Lofi Hip-Hop Radio', youtubeId: 'jfKfPfyJRdk' }, // Lofi Girl — stable long-running stream
+  { id: 'lofi1', label: 'Lofi Hip-Hop Radio', youtubeId: 'rFZHOHl-L8A' }, // Lofi Girl "beats to relax/study to" — the old jfKfPfyJRdk stream is UNPLAYABLE since 2026
   { id: 'lofi2', label: 'Synthwave Chill',    youtubeId: '4xDzrJKXOOY' }, // verified working
   { id: 'lofi4', label: 'Chillhop Radio',     youtubeId: '7NOSDKb0HlU' }, // Chillhop Music — stable long-running stream
 ]

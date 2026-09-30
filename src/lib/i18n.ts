@@ -1,4 +1,57 @@
-export type Lang = 'en' | 'vi'
+export type Lang = 'en' | 'vi' | 'es' | 'pt' | 'fr' | 'de' | 'ru' | 'ja' | 'ko' | 'zh' | 'id' | 'th'
+
+/** Every UI language, in picker order. `locale` feeds Intl date formatting. */
+export const LANGS: { code: Lang; label: string; locale: string }[] = [
+  { code: 'en', label: 'English',          locale: 'en-US' },
+  { code: 'vi', label: 'Tiếng Việt',       locale: 'vi-VN' },
+  { code: 'es', label: 'Español',          locale: 'es-ES' },
+  { code: 'pt', label: 'Português',        locale: 'pt-BR' },
+  { code: 'fr', label: 'Français',         locale: 'fr-FR' },
+  { code: 'de', label: 'Deutsch',          locale: 'de-DE' },
+  { code: 'ru', label: 'Русский',          locale: 'ru-RU' },
+  { code: 'ja', label: '日本語',            locale: 'ja-JP' },
+  { code: 'ko', label: '한국어',            locale: 'ko-KR' },
+  { code: 'zh', label: '简体中文',          locale: 'zh-CN' },
+  { code: 'id', label: 'Bahasa Indonesia', locale: 'id-ID' },
+  { code: 'th', label: 'ไทย',              locale: 'th-TH' },
+]
+
+export function isLang(x: unknown): x is Lang {
+  return typeof x === 'string' && LANGS.some(l => l.code === x)
+}
+
+export function localeOf(lang: Lang): string {
+  return LANGS.find(l => l.code === lang)?.locale ?? 'en-US'
+}
+
+/** Best supported match for the browser's preferred languages ('pt-BR' → 'pt', 'zh-TW' → 'zh'). */
+export function matchLang(prefs: readonly string[]): Lang | null {
+  for (const p of prefs) {
+    const base = p.toLowerCase().split('-')[0]
+    if (isLang(base)) return base
+  }
+  return null
+}
+
+// en + vi ship inline (default + largest audience); the other languages are split into
+// their own chunks and fetched only when picked, so they never weigh on the workspace bundle.
+const LOADERS: Record<Exclude<Lang, 'en' | 'vi'>, () => Promise<{ default: Translations }>> = {
+  es: () => import('./locales/es'),
+  pt: () => import('./locales/pt'),
+  fr: () => import('./locales/fr'),
+  de: () => import('./locales/de'),
+  ru: () => import('./locales/ru'),
+  ja: () => import('./locales/ja'),
+  ko: () => import('./locales/ko'),
+  zh: () => import('./locales/zh'),
+  id: () => import('./locales/id'),
+  th: () => import('./locales/th'),
+}
+
+export async function loadTranslations(lang: Lang): Promise<Translations> {
+  if (lang === 'en' || lang === 'vi') return TRANSLATIONS[lang]
+  return (await LOADERS[lang]()).default
+}
 
 export interface Translations {
   // Pomodoro
@@ -53,6 +106,8 @@ export interface Translations {
   music_connecting: string
   music_yt_blocked: string
   music_retry_btn: string
+  music_tap_play: string
+  music_yt_unavailable: string
   music_now_playing: string
   music_paused: string
 
@@ -161,6 +216,10 @@ export interface Translations {
   pom_done_toast: string
   switch_theme: string
   open_player: string
+  more: string
+  mode_focus: string
+  mode_home: string
+  mode_switch_label: string
 
   // WMO weather codes
   wmo: Record<number, string>
@@ -201,9 +260,15 @@ export interface Translations {
   home_cta2_desc: string
   home_cta2_btn: string
   home_cta2_tagline: string
+
+  // Come Home teaser on the landing page
+  home_ch_title: string
+  home_ch_desc: string
+  home_ch_btn: string
+  home_ch_more: string
 }
 
-export const TRANSLATIONS: Record<Lang, Translations> = {
+export const TRANSLATIONS: Record<'en' | 'vi', Translations> = {
   en: {
     pom_focus: 'Focus',
     pom_break: 'Break',
@@ -253,6 +318,8 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     music_connecting: 'connecting…',
     music_yt_blocked: '⚠ YouTube not ready. Synth audio is active.',
     music_retry_btn: 'Retry',
+    music_tap_play: 'Tap to play music',
+    music_yt_unavailable: "⚠ This video can't be played here (removed or embedding disabled). Try another link.",
     music_now_playing: 'Now Playing',
     music_paused: 'Paused',
 
@@ -348,6 +415,10 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     pom_done_toast: 'Pomodoro complete!',
     switch_theme: 'Switch theme',
     open_player: 'Player',
+    more: 'More',
+    mode_focus: 'Focus',
+    mode_home: 'Come Home',
+    mode_switch_label: 'Workspace mode',
 
     wmo: {
       0: 'Clear sky', 1: 'Few clouds', 2: 'Partly cloudy', 3: 'Overcast',
@@ -419,6 +490,11 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     home_cta2_desc: 'Join thousands of students and developers using LofiSpace every day.',
     home_cta2_btn: 'Open Free Workspace →',
     home_cta2_tagline: 'No account · No payment · Forever free',
+
+    home_ch_title: 'A quiet place after a long day',
+    home_ch_desc: 'When work is over but your mind is still running, Come Home gives you a quiet space to slow down, clear your thoughts, and simply rest.',
+    home_ch_btn: 'Come Home',
+    home_ch_more: 'Learn more',
   },
 
   vi: {
@@ -470,6 +546,8 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     music_connecting: 'đang kết nối…',
     music_yt_blocked: '⚠ YouTube chưa sẵn sàng. Âm thanh tổng hợp đang hoạt động.',
     music_retry_btn: 'Thử lại',
+    music_tap_play: 'Chạm để phát nhạc',
+    music_yt_unavailable: "⚠ Video này không phát được ở đây (đã bị gỡ hoặc tắt nhúng). Hãy thử link khác.",
     music_now_playing: 'Đang phát',
     music_paused: 'Tạm dừng',
 
@@ -565,6 +643,10 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     pom_done_toast: 'Pomodoro hoàn thành!',
     switch_theme: 'Đổi giao diện',
     open_player: 'Trình phát',
+    more: 'Thêm',
+    mode_focus: 'Tập trung',
+    mode_home: 'Về nhà',
+    mode_switch_label: 'Chế độ không gian',
 
     wmo: {
       0: 'Trời quang', 1: 'Ít mây', 2: 'Có mây', 3: 'Nhiều mây',
@@ -636,5 +718,10 @@ export const TRANSLATIONS: Record<Lang, Translations> = {
     home_cta2_desc: 'Hàng ngàn học sinh và lập trình viên đang dùng LofiSpace mỗi ngày.',
     home_cta2_btn: 'Mở Workspace Miễn Phí →',
     home_cta2_tagline: 'Không tài khoản · Không thanh toán · Miễn phí mãi',
+
+    home_ch_title: 'Một góc yên tĩnh sau một ngày dài',
+    home_ch_desc: 'Khi công việc đã xong nhưng đầu óc vẫn chưa dừng, Về nhà cho bạn một không gian yên tĩnh để chậm lại, gỡ bớt suy nghĩ và đơn giản là nghỉ ngơi.',
+    home_ch_btn: 'Về nhà',
+    home_ch_more: 'Tìm hiểu thêm',
   },
 }

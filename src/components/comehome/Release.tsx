@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
+import { localeOf, type Lang } from '@/lib/i18n'
 import { RITUAL_EMOJI, RITUAL_ORDER, type HomeCopy, type Ritual } from './copy'
 import { loadSky, newStar, saveSky, SKY_MAX, starPos, useFocusOnMount, type SkyStar } from './hooks'
 
@@ -373,7 +374,7 @@ export function OneThing({ c, reduced, track, onRitual, onOpenSky, onKept, exits
 
 // ── Memory Sky ──────────────────────────────────────────────────────────────
 export function MemorySky({ c, lang, track, onChange }: {
-  c: HomeCopy; lang: 'en' | 'vi'; track: Track; onChange: (n: number) => void
+  c: HomeCopy; lang: Lang; track: Track; onChange: (n: number) => void
 }) {
   const [stars, setStars] = useState<SkyStar[]>(loadSky)
   const [open, setOpen] = useState<string | null>(null)
@@ -406,7 +407,7 @@ export function MemorySky({ c, lang, track, onChange }: {
 
   const fmt = (iso: string) => {
     const d = new Date(iso)
-    return isNaN(d.getTime()) ? '' : d.toLocaleDateString(lang === 'vi' ? 'vi-VN' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    return isNaN(d.getTime()) ? '' : d.toLocaleDateString(localeOf(lang), { month: 'short', day: 'numeric', year: 'numeric' })
   }
   const active = stars.find(s => s.id === open)
 

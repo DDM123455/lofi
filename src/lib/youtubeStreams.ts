@@ -4,8 +4,8 @@ export const LOFI_STREAMS: LofiStream[] = [
   {
     id: 'lofi-girl',
     label: 'Lofi Girl - Study',
-    youtubeId: 'jfKfPfyJRdk',
-    thumbnail: 'https://img.youtube.com/vi/jfKfPfyJRdk/mqdefault.jpg',
+    youtubeId: 'rFZHOHl-L8A',
+    thumbnail: 'https://img.youtube.com/vi/rFZHOHl-L8A/mqdefault.jpg',
   },
   {
     id: 'lofi-chill',

@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
 import { EmbedClient } from '@/app/embed/EmbedClient'
+import { BootBackdrop } from '@/components/workspace/BootBackdrop'
 
 export const metadata: Metadata = {
   title: 'Focus Workspace — Lofi Music, Pomodoro & Ambient Sounds',
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
 
 export default function WorkspacePage() {
   return (
-    <Suspense fallback={<div style={{ background: '#0d0d14', minHeight: '100vh' }} />}>
+    <Suspense fallback={<BootBackdrop />}>
       <EmbedClient />
     </Suspense>
   )

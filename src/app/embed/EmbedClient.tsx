@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext } from 'react'
-import { preload, preconnect } from 'react-dom'
+import { preconnect } from 'react-dom'
 import { getDayNightConfig } from '@/hooks/useDayNight'
 import { LOFI_STREAMS, AMBIENT_SOUNDS } from '@/lib/lofiStreams'
 import { BG_PRESETS, getBgPresetByUrl } from '@/lib/backgrounds'
@@ -11,6 +11,7 @@ import { useGameStore, xpProgress, ACHIEVEMENT_DEFS, localDate } from '@/lib/gam
 import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
 import { analytics } from '@/lib/analytics'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { LANGS, isLang, localeOf } from '@/lib/i18n'
 import { SupportModal } from '@/components/support/SupportModal'
 import { LiveClock } from '@/components/workspace/LiveClock'
 import type { HomeAudio } from '@/components/comehome/ComeHome'
@@ -32,12 +33,10 @@ type MoreTab = 'widgets'|'weather'|'progress'|'share'
 interface Todo { id:string; text:string; done:boolean; estimate?:number; actual:number }
 interface WxData { city:string; temp:number; code:number; desc:string; emoji:string; feels:number|null; humidity:number|null; wind:number|null }
 
-// Warm the critical media paths before hydration finishes:
-// - the default background clip starts downloading immediately instead of after first render
-// - TLS/DNS to YouTube's hosts is pre-negotiated so initYT() doesn't pay for it on click
+// TLS/DNS to YouTube's hosts is pre-negotiated so the first play doesn't pay for it on click.
+// (The background clip itself is started from the HTML by BootBackdrop, before this JS runs.)
 if(typeof window!=='undefined'){
   try{
-    preload('/video/street-scene.mp4',{as:'video'})
     preconnect('https://www.youtube.com')
     preconnect('https://i.ytimg.com')
     preconnect('https://www.google.com')
@@ -67,6 +66,32 @@ function Tip({label,children}:{label:string;children:React.ReactNode}){
 function bgTypeFromUrl(url:string):BgType {
   if(/\.(mp4|webm|mov)$/i.test(url)) return 'video'
   return 'gif'
+}
+
+const DEFAULT_YT='7NOSDKb0HlU'
+
+// Loads YouTube's iframe_api once. If the script fails (flaky network, filter lists) the
+// cached promise is dropped so the next call injects a fresh <script> instead of hanging.
+let ytApiPromise:Promise<void>|null=null
+function loadYtApi():Promise<void> {
+  const w=window as any
+  if(w.YT?.Player)return Promise.resolve()
+  if(ytApiPromise)return ytApiPromise
+  ytApiPromise=new Promise<void>((resolve,reject)=>{
+    const prev=w.onYouTubeIframeAPIReady
+    w.onYouTubeIframeAPIReady=()=>{ try{prev?.()}catch{/* ignore */} resolve() }
+    document.getElementById('yt-api')?.remove()
+    const el=document.createElement('script')
+    el.id='yt-api';el.src='https://www.youtube.com/iframe_api';el.async=true
+    el.onerror=()=>{ el.remove(); ytApiPromise=null; reject(new Error('yt-api')) }
+    document.head.appendChild(el)
+  })
+  return ytApiPromise
+}
+
+function savedBgUrl():string|null {
+  if(typeof window==='undefined')return null
+  try{ const u=JSON.parse(localStorage.getItem('lofispace-settings')||'{}')?.bgUrl; return typeof u==='string'&&u?u:null }catch{ return null }
 }
 
 function parseYtId(s:string):string|null {
@@ -305,7 +330,10 @@ export function EmbedClient() {
   const { lang, setLang, t } = useLanguage()
   const hasBgParam = sp.has('bgv')
 
-  const initBgUrl  = hasBgParam ? decodeURIComponent(sp.get('bgv')!) : '/video/street-scene.mp4'
+  // Resolve the saved background on the very first render (instead of in a post-mount effect)
+  // so the default clip is never fetched just to be swapped out a frame later. Safe: this
+  // tree always client-renders (useSearchParams bails the route out of prerendering).
+  const [initBgUrl] = useState(()=>hasBgParam ? decodeURIComponent(sp.get('bgv')!) : (savedBgUrl() ?? '/video/street-scene.mp4'))
   const initBgOp   = Math.min(90, Math.max(0, parseInt(sp.get('bgo') ?? String(dn.overlay))))
   const initBlur   = Math.min(20, Math.max(0, parseInt(sp.get('bl') ?? '0')))
   const initWorkMin  = Math.min(90, Math.max(1, parseInt(sp.get('pw') ?? '25') || 25))
@@ -326,7 +354,8 @@ export function EmbedClient() {
   const [bgUrl,       setBgUrl]       = useState(initBgUrl)
   const [bgOpacity,   setBgOpacity]   = useState(initBgOp)
   const [bgBlur,      setBgBlur]      = useState(initBlur)
-  const [bgReady,     setBgReady]     = useState(false)
+  // Presets paint their poster instantly, so start visible (no fade-in over the boot backdrop)
+  const [bgReady,     setBgReady]     = useState(()=>!!getBgPresetByUrl(initBgUrl)?.poster)
   const [showBgSpinner, setShowBgSpinner] = useState(false)
   const [prevBg,      setPrevBg]      = useState<{url:string;type:BgType}|null>(null)
   const [bgYtInput,   setBgYtInput]   = useState('')
@@ -394,7 +423,7 @@ export function EmbedClient() {
   const [streakRef,streakH]= useHeight()
   const [wxRef,   wxH]     = useHeight()
   const [mounted,     setMounted]     = useState(false)
-  const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
+  const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'|'tap'|'unavailable'>('idle')
   const [copied,      setCopied]      = useState(false)
   const [vw,          setVw]          = useState(1280)
   const [showSupport,  setShowSupport]  = useState(false)
@@ -420,6 +449,13 @@ export function EmbedClient() {
   const manualYtInit = useRef(false) // true once a real (user-driven) player init has started — stops the silent pre-init from racing it
   const ytAutoRetriedRef = useRef(false) // one free automatic re-init before we surface the manual Retry UI
   const ytWarmRef = useRef<(()=>void)|null>(null) // pulls the silent pre-init forward on start-overlay hover
+  const ytReadyRef  = useRef(false)             // current player fired onReady
+  const ytWantRef   = useRef(false)             // we want sound right now (vs. silent pre-init / paused)
+  const ytVidRef    = useRef<string|null>(null) // video the player is on
+  const ytTargetRef = useRef<string|null>(null) // video we want it on (applied in onReady if still booting)
+  const ytDeadRef   = useRef<Set<string>>(new Set()) // ids that errored as removed / not embeddable
+  const ytErrorRef  = useRef<(code:number,id?:string)=>void>(()=>{})
+  const ytStatusRef = useRef<string>('idle')
   const noteTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const shownBgRef  = useRef<{url:string;type:BgType}|null>(null)
   const prevBgTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
@@ -466,10 +502,10 @@ export function EmbedClient() {
   useEffect(()=>{
     try{
       const s=JSON.parse(localStorage.getItem('lofispace-settings')||'{}')
-      if(!hasBgParam&&s.bgUrl){setBgUrl(s.bgUrl);setBgType(bgTypeFromUrl(s.bgUrl))}
       if(!sp.has('bgo')&&s.bgOpacity!=null)setBgOpacity(s.bgOpacity)
       if(!sp.has('bl')&&s.bgBlur!=null)setBgBlur(s.bgBlur)
       if(!sp.has('ls')&&s.lofiId)setLofiId(s.lofiId)
+      if(typeof s.customLofiId==='string'&&/^[\w-]{11}$/.test(s.customLofiId))setCustomLofiId(s.customLofiId)
       if(!sp.has('lv')&&s.lofiVol!=null)setLofiVol(s.lofiVol)
       if(!sp.has('at')&&s.ambVols)setAmbVols(s.ambVols)
       if(s.theme)setTheme(s.theme)
@@ -482,8 +518,8 @@ export function EmbedClient() {
   useEffect(()=>{
     // Come Home temporarily swaps background/sounds — never persist those as focus settings
     if(!mounted||mode==='home')return
-    try{localStorage.setItem('lofispace-settings',JSON.stringify({bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere}))}catch(_){}
-  },[mounted,mode,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere])
+    try{localStorage.setItem('lofispace-settings',JSON.stringify({bgUrl,bgOpacity,bgBlur,lofiId,customLofiId,lofiVol,ambVols,theme,clockStyle,atmosphere}))}catch(_){}
+  },[mounted,mode,bgUrl,bgOpacity,bgBlur,lofiId,customLofiId,lofiVol,ambVols,theme,clockStyle,atmosphere])
   useEffect(()=>{ recordActivity() },[recordActivity])
   const handleBgReady=useCallback(()=>{
     setBgReady(true)
@@ -500,7 +536,9 @@ export function EmbedClient() {
     // but a bare src swap doesn't reliably kick off a fresh load in every browser, so do it
     // explicitly. (Harmless for the <img> path, which reloads on src change by itself.)
     const vel=bgElRef.current
-    if(vel instanceof HTMLVideoElement){ try{ vel.load() }catch{/* no-op */} }
+    // Skipped when the element is already on this clip (first mount) — a redundant load()
+    // would abort the in-flight fetch and restart it.
+    if(vel instanceof HTMLVideoElement&&vel.currentSrc&&!vel.currentSrc.endsWith(bgUrl)){ try{ vel.load() }catch{/* no-op */} }
     // Known presets ship a pre-generated first-frame poster (tiny JPG) — the <video poster>
     // attribute paints it immediately, well before the clip itself buffers, so there's no
     // reason to keep showing the old background while we wait: that's what made switching
@@ -579,11 +617,7 @@ export function EmbedClient() {
     try{const cn=JSON.parse(localStorage.getItem('lofispace-calNotes')||'{}');if(cn&&typeof cn==='object')setCalNotes(cn)}catch(_){}
     const t=new Date();setCalSelected(`${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`)
   },[])
-  useEffect(()=>{
-    if(typeof window==='undefined'||document.getElementById('yt-api'))return
-    const s=document.createElement('script');s.id='yt-api';s.src='https://www.youtube.com/iframe_api';s.async=true
-    document.head.appendChild(s)
-  },[])
+  useEffect(()=>{ loadYtApi().catch(()=>{/* retried on first play */}) },[])
   // Show onboarding tip on first visit, auto-dismiss after 6s
   useEffect(()=>{
     if(localStorage.getItem('lofispace-onboarded'))return
@@ -592,40 +626,21 @@ export function EmbedClient() {
     return()=>{clearTimeout(show);clearTimeout(hide)}
   },[])
 
-  // Pre-init YT player silently so first-play is instant
+  // Pre-build the YT player silently (no sound) so first play only needs playVideo().
   useEffect(()=>{
-    const tryPre=()=>{
-      if(!ytRef.current||ytPlayer.current||manualYtInit.current)return
-      const container=document.createElement('div')
-      ytRef.current.appendChild(container)
-      ytPlayer.current=new(window as any).YT.Player(container,{
-        height:'180',width:'320',videoId:activeYtId,
-        playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
-        events:{
-          onReady:(e:any)=>{e.target.setVolume(0);setYtStatus('ready')},
-          onError:()=>{ /* pre-init fail is silent, initYT will retry on play */ },
-        },
-      })
-    }
-    const armReady=()=>{
-      if((window as any).YT?.Player)tryPre()
-      else{const p=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{p?.();tryPre()}}
-    }
+    const pre=()=>{ if(!ytPlayer.current&&!manualYtInit.current)createYtRef.current(activeYtIdRef.current) }
     // Also let an explicit hover/focus over the "Click to start" overlay pull the pre-init
     // forward — by the time the user's pointer reaches the button the player is usually warm.
-    ytWarmRef.current=armReady
-    // Constructing the YT.Player here pulls in YouTube's own embed JS/CSS (~1MB) right
-    // away — on a cold load that competes for bandwidth with the app's own hydration JS
-    // and the autoplaying default background video, and was a likely cause of "no music
-    // until I reload a few times" (the click handler hadn't hydrated yet by the time users
-    // tapped "Click to Start"). Wait for the page's own load to finish, then use an idle
-    // slot, so this optimization no longer fights the critical first paint for bandwidth.
+    ytWarmRef.current=pre
+    // Constructing the YT.Player pulls in YouTube's own embed JS/CSS (~1MB) — on a cold load
+    // that competes with the app's own JS and the background clip. Wait for the page's load
+    // event, then an idle slot, so it never fights the critical first paint for bandwidth.
     const idle=(cb:()=>void)=>{
       if('requestIdleCallback' in window)(window as any).requestIdleCallback(cb,{timeout:4000})
       else setTimeout(cb,1200)
     }
-    if(document.readyState==='complete')idle(armReady)
-    else window.addEventListener('load',()=>idle(armReady),{once:true})
+    if(document.readyState==='complete')idle(pre)
+    else window.addEventListener('load',()=>idle(pre),{once:true})
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
   // Auto-detect weather — deferred until the user has actually entered the workspace
@@ -674,48 +689,140 @@ export function EmbedClient() {
     if(synthRef.current[id]&&ctxRef.current)synthRef.current[id].gain.gain.setTargetAtTime(s,ctxRef.current.currentTime,0.05)
   },[])
 
-  const initYT = useCallback((ytId:string,vol:number,userInitiated=false)=>{
+  // ── YouTube ────────────────────────────────────────────────────────────
+  // One long-lived player. It's built once (silently, before "start" when possible) and
+  // re-pointed with loadVideoById() on track changes — rebuilding it meant a fresh ~1MB embed
+  // and iframe handshake on every switch. Every play request arms a watchdog that tells
+  // apart the ways it can fail:
+  //   • player ready but not playing  → the browser refused autoplay (iOS/Safari) → 'tap'
+  //   • player never became ready     → embed blocked/slow → rebuild once, then 'blocked'
+  //   • onError 2/100/101/150         → video gone or embedding disabled → next preset stream
+  const activeYtId = (lofiId==='custom'&&customLofiId) ? customLofiId : (LOFI_STREAMS.find(s=>s.id===lofiId)?.youtubeId??DEFAULT_YT)
+  const activeYtIdRef=useRef(activeYtId)
+  const lofiVolRef=useRef(lofiVol)
+  const lofiIdRef=useRef(lofiId)
+  useEffect(()=>{ activeYtIdRef.current=activeYtId; lofiVolRef.current=lofiVol; lofiIdRef.current=lofiId })
+
+  const clearYtWatch=()=>{ if(ytTimer.current){clearTimeout(ytTimer.current);ytTimer.current=null} }
+
+  const createYt=useCallback((ytId:string)=>{
     if(!ytRef.current)return
-    manualYtInit.current=true // once the user (or doStart) has kicked off a real init, the silent pre-init must never create a competing player
-    if(userInitiated)ytAutoRetriedRef.current=false
-    // Destroy existing player and reset container before creating new one
-    try{ytPlayer.current?.destroy()}catch(_){}
+    clearYtWatch()
+    try{ytPlayer.current?.destroy()}catch{/* ignore */}
     ytPlayer.current=null
+    ytReadyRef.current=false
+    ytVidRef.current=ytId
+    if(!ytTargetRef.current)ytTargetRef.current=ytId
     ytRef.current.innerHTML=''
     const container=document.createElement('div')
     ytRef.current.appendChild(container)
-    setYtStatus('loading')
-    if(ytTimer.current)clearTimeout(ytTimer.current)
-    // A slow-but-fine connection can legitimately take a few seconds; a truly blocked embed
-    // never fires onReady. Give it 10s, then try one automatic re-init before surfacing the
-    // manual Retry UI — a large share of "blocked" cases clear on a second attempt.
-    const fail=()=>{
-      if(!ytAutoRetriedRef.current){
-        ytAutoRetriedRef.current=true
-        setTimeout(()=>initYTRef.current(ytId,vol),1500)
-      }else{
-        setYtStatus('blocked')
-      }
-    }
-    ytTimer.current=setTimeout(fail,10000)
-    const create=()=>{
-      if(!container)return
+    loadYtApi().then(()=>{
+      if(!container.isConnected)return // superseded by a newer rebuild
       ytPlayer.current=new(window as any).YT.Player(container,{
         height:'180',width:'320',videoId:ytId,
-        playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
+        playerVars:{autoplay:0,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
         events:{
-          onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);ytAutoRetriedRef.current=false;setYtStatus('ready');e.target.setVolume(effYt(vol));e.target.playVideo()},
-          onError:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);console.warn('YT error code:',e.data);fail()},
+          onReady:(e:any)=>{
+            ytReadyRef.current=true
+            const p=e.target
+            if(!ytWantRef.current){ try{p.mute();p.setVolume(0)}catch{/* ignore */} return }
+            try{
+              p.unMute();p.setVolume(effYt(lofiVolRef.current))
+              const want=ytTargetRef.current
+              if(want&&want!==ytVidRef.current){ytVidRef.current=want;p.loadVideoById(want)}else p.playVideo()
+            }catch{/* ignore */}
+          },
+          onStateChange:(e:any)=>{
+            if(e.data===1){ clearYtWatch(); ytAutoRetriedRef.current=false; setYtStatus('ready') }
+            // Live streams occasionally report ENDED on a reconnect — pick them back up.
+            else if(e.data===0&&ytWantRef.current){ try{e.target.loadVideoById(ytVidRef.current)}catch{/* ignore */} }
+          },
+          onError:(e:any)=>ytErrorRef.current(e.data),
         },
       })
-    }
-    if((window as any).YT?.Player){create()}
-    else{const prev=(window as any).onYouTubeIframeAPIReady;(window as any).onYouTubeIframeAPIReady=()=>{prev?.();create()}}
+    }).catch(()=>{ /* API script failed to load — the watchdog rebuilds / surfaces Retry */ })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
-  const initYTRef=useRef(initYT)
-  useEffect(()=>{ initYTRef.current=initYT },[initYT])
+  const createYtRef=useRef(createYt)
 
-  const activeYtId = lofiId==='custom' ? customLofiId : (LOFI_STREAMS.find(s=>s.id===lofiId)?.youtubeId??'7NOSDKb0HlU')
+  const armYtWatch=useCallback(()=>{
+    clearYtWatch()
+    const check=(waited:number)=>{
+      ytTimer.current=null
+      if(!ytWantRef.current)return
+      const p=ytPlayer.current
+      let st:number|null=null
+      try{ st=ytReadyRef.current&&p?.getPlayerState?p.getPlayerState():null }catch{/* ignore */}
+      if(st===1)return
+      // Live streams can sit in BUFFERING for a while on a slow link — keep waiting.
+      if(st===3&&waited<24000){ ytTimer.current=setTimeout(()=>check(waited+4000),4000); return }
+      if(ytReadyRef.current){ setYtStatus('tap'); return }
+      if(!ytAutoRetriedRef.current){
+        ytAutoRetriedRef.current=true
+        createYtRef.current(ytTargetRef.current??activeYtIdRef.current)
+        ytTimer.current=setTimeout(()=>check(0),10000)
+      }else setYtStatus('blocked')
+    }
+    ytTimer.current=setTimeout(()=>check(8000),8000)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[])
+
+  /** Start (or switch to) a stream. Call straight from a click handler where possible —
+   *  on iOS the playVideo() has to happen inside the user gesture. */
+  const playYt=useCallback((ytId:string,userInitiated=false)=>{
+    manualYtInit.current=true
+    ytWantRef.current=true
+    ytTargetRef.current=ytId
+    if(userInitiated)ytAutoRetriedRef.current=false
+    // Already known to be removed / not embeddable — don't make the person wait for a timeout.
+    if(ytDeadRef.current.has(ytId)){ ytErrorRef.current(150,ytId); return }
+    const p=ytPlayer.current
+    if(p&&ytReadyRef.current){
+      try{
+        p.unMute();p.setVolume(effYt(lofiVolRef.current))
+        if(ytVidRef.current!==ytId){ytVidRef.current=ytId;p.loadVideoById(ytId);setYtStatus('loading')}
+        else{ p.playVideo(); if(p.getPlayerState?.()!==1)setYtStatus('loading') }
+        armYtWatch()
+        return
+      }catch{/* broken player — rebuild below */}
+    }
+    setYtStatus('loading')
+    // A player that's still booting picks up ytTargetRef in its onReady; only a Retry after
+    // a failure (or a missing player) forces a rebuild.
+    if(!ytRef.current?.firstChild||(userInitiated&&ytStatusRef.current==='blocked'))createYt(ytId)
+    armYtWatch()
+  },[armYtWatch,createYt])
+
+  const pauseYt=useCallback(()=>{
+    ytWantRef.current=false
+    clearYtWatch()
+    setYtStatus(s=>s==='tap'||s==='loading'?'idle':s)
+    try{ytPlayer.current?.pauseVideo()}catch{/* ignore */}
+  },[])
+
+  // Dead video (removed, private, embedding disabled): retrying can't help. For preset
+  // streams fall through to the next one that hasn't failed yet; a custom link surfaces Retry.
+  useEffect(()=>{
+    ytErrorRef.current=(code:number,id?:string)=>{
+      console.warn('YT error code:',code)
+      if([2,100,101,150].includes(code)){
+        ytDeadRef.current.add(id??ytVidRef.current??'')
+        // Found during the silent pre-init: just remember it — playYt() reroutes on start.
+        if(!ytWantRef.current)return
+        clearYtWatch()
+        if(lofiIdRef.current!=='custom'){
+          const next=LOFI_STREAMS.find(x=>!ytDeadRef.current.has(x.youtubeId))
+          if(next){ setLofiId(next.id); playYt(next.youtubeId); return }
+        }
+        setYtStatus('unavailable'); return
+      }
+      clearYtWatch()
+      // Transient (5 = HTML5 player error): one silent rebuild, then Retry.
+      if(!ytAutoRetriedRef.current&&ytWantRef.current){ ytAutoRetriedRef.current=true; createYt(ytVidRef.current??activeYtIdRef.current); armYtWatch() }
+      else setYtStatus('blocked')
+    }
+  },[playYt,createYt,armYtWatch])
+  useEffect(()=>{ ytStatusRef.current=ytStatus },[ytStatus])
 
   const doStart = useCallback(()=>{
     if(started)return
@@ -724,45 +831,40 @@ export function EmbedClient() {
     // is allowed; used for the Pomodoro phase-change nudge when the tab is in the background.
     try{ if(typeof Notification!=='undefined'&&Notification.permission==='default') Notification.requestPermission().catch(()=>{}) }catch{/* ignore */}
     Object.entries(ambVols).forEach(([id,vol])=>startAmbient(id,vol))
-    if(ytPlayer.current&&ytStatus==='ready'){
-      try{ytPlayer.current.unMute();ytPlayer.current.setVolume(effYt(lofiVol));ytPlayer.current.playVideo()}catch(_){}
-      if(ytTimer.current)clearTimeout(ytTimer.current)
-    }else{
-      initYT(activeYtId,lofiVol,true)
-    }
+    playYt(activeYtId,true)
     setStarted(true);setPlaying(true)
-  },[started,ensureCtx,ambVols,lofiVol,startAmbient,initYT,activeYtId,ytStatus])
+  },[started,ensureCtx,ambVols,startAmbient,playYt,activeYtId])
 
   const togglePlay = useCallback(()=>{
     if(!started){doStart();return}
     const next=!playing;setPlaying(next)
     if(next){
-      ctxRef.current?.resume();ytPlayer.current?.playVideo()
+      ctxRef.current?.resume();playYt(activeYtId)
       const ctx=ctxRef.current
       if(ctx)Object.entries(synthRef.current).forEach(([id,n])=>n.gain.gain.setTargetAtTime((ambVols[id]??50)/100*0.6,ctx.currentTime,0.1))
     }else{
-      try{ytPlayer.current?.pauseVideo()}catch(_){}
+      pauseYt()
       const ctx=ctxRef.current
       if(ctx)Object.values(synthRef.current).forEach(n=>n.gain.gain.setTargetAtTime(0,ctx.currentTime,0.1))
     }
-  },[started,playing,doStart,ambVols])
+  },[started,playing,doStart,ambVols,playYt,pauseYt,activeYtId])
 
   const handleLofiVol=(v:number)=>{setLofiVol(v);if(started)try{ytPlayer.current?.setVolume(effYt(v))}catch(_){}}
   const handleLofiChange=(id:string)=>{
     setLofiId(id)
-    // initYT() tears down any existing player at its top, so no separate destroy + timeout
-    // dance is needed — the old ~80ms gap between destroy() and init is gone.
-    if(started){const ytId=id==='custom'?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??'7NOSDKb0HlU');setPlaying(true);initYT(ytId,lofiVol,true)}
+    if(started){const ytId=(id==='custom'&&customLofiId)?customLofiId:(LOFI_STREAMS.find(s=>s.id===id)?.youtubeId??DEFAULT_YT);setPlaying(true);playYt(ytId,true)}
   }
   const applyCustomLofi=()=>{
     const id=parseYtId(customLofiInput);if(!id)return
+    ytDeadRef.current.delete(id)
     setCustomLofiId(id);setLofiId('custom')
-    if(started){setPlaying(true);initYT(id,lofiVol,true)}
+    if(started){setPlaying(true);playYt(id,true)}
   }
   const retryYT=useCallback(()=>{
     if(!started)return
-    setPlaying(true);initYT(activeYtId,lofiVol,true)
-  },[started,initYT,activeYtId,lofiVol])
+    ytDeadRef.current.delete(activeYtId)
+    setPlaying(true);playYt(activeYtId,true)
+  },[started,playYt,activeYtId])
   const dismissOnboard=()=>{
     setShowOnboard(false)
     localStorage.setItem('lofispace-onboarded','1')
@@ -814,7 +916,7 @@ export function EmbedClient() {
     if(mode==='home')return
     homeSnap.current={ambVols,started,playing,bgUrl,bgType,bgOpacity,bgBlur,atmosphere,masterVol,pomWasOn:pom.on}
     if(pom.on)pom.toggle() // no phase chimes or notifications while decompressing
-    try{ytPlayer.current?.pauseVideo()}catch{/* ignore */}
+    pauseYt()
     // If audio was already running the person has opted in — keep it, just much softer.
     applyMix(HOME_MIX,started&&playing)
     setMasterVol(HOME_MASTER)
@@ -823,7 +925,7 @@ export function EmbedClient() {
     setPanel(false);setOpenPopover(null);setZen(false);setShowShortcuts(false);setShowCal(false);setShowOnboard(false)
     setMode('home')
     try{const u=new URL(window.location.href);if(u.searchParams.get('mode')!=='home'){u.searchParams.set('mode','home');window.history.replaceState(window.history.state,'',u)}}catch{/* ignore */}
-  },[mode,ambVols,started,playing,bgUrl,bgType,bgOpacity,bgBlur,atmosphere,masterVol,pom,applyMix])
+  },[mode,ambVols,started,playing,bgUrl,bgType,bgOpacity,bgBlur,atmosphere,masterVol,pom,applyMix,pauseYt])
 
   const exitHome=useCallback(()=>{
     const snap=homeSnap.current
@@ -839,15 +941,14 @@ export function EmbedClient() {
       setAmbVols(snap.ambVols);setStarted(false);setPlaying(false)
     }else if(snap.playing){
       applyMix(snap.ambVols,true)
-      if(ytPlayer.current&&ytStatus==='ready'){
-        try{ytPlayer.current.unMute();ytPlayer.current.setVolume(Math.round(lofiVol*snap.masterVol/100));ytPlayer.current.playVideo()}catch{/* ignore */}
-      }else initYT(activeYtId,lofiVol,true)
+      masterVolRef.current=snap.masterVol // so playYt() applies the focus-mode level, not home's
+      playYt(activeYtId,true)
       setPlaying(true)
     }else{
       applyMix(snap.ambVols,false);muteAllSynths();setPlaying(false)
     }
     if(snap.pomWasOn&&!pom.on)pom.toggle()
-  },[applyMix,stopAmbient,muteAllSynths,ytStatus,lofiVol,initYT,activeYtId,pom])
+  },[applyMix,stopAmbient,muteAllSynths,playYt,activeYtId,pom])
 
   // Opened via /workspace?mode=home (blog + landing CTAs). Runs after the saved-settings
   // restore has landed in state, so the snapshot holds the person's real focus setup.
@@ -1161,7 +1262,7 @@ export function EmbedClient() {
     :{right:32,top:96+(pomH||400)+14}
 
   return (
-    <div style={{position:'fixed',inset:0,overflowY:mob?'auto':'hidden',overflowX:'hidden',WebkitOverflowScrolling:'touch',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
+    <div lang={lang} style={{position:'fixed',inset:0,overflowY:mob?'auto':'hidden',overflowX:'hidden',WebkitOverflowScrolling:'touch',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
 
       {/* ── Background (fixed to the real viewport so it never scrolls with the stacked panels below) ── */}
       <div style={{position:'fixed',inset:0,background:`linear-gradient(160deg,${bgGradient[0]},${bgGradient[1]})`}}/>
@@ -1497,6 +1598,12 @@ export function EmbedClient() {
                   {ytStatus==='blocked'&&(
                     <p style={{fontSize:10.5,color:'#f97316',margin:'2px 0 0',lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'7px 9px',borderRadius:8}}>{t.music_yt_blocked}</p>
                   )}
+                  {ytStatus==='unavailable'&&(
+                    <p style={{fontSize:10.5,color:'#f97316',margin:'2px 0 0',lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'7px 9px',borderRadius:8}}>{t.music_yt_unavailable}</p>
+                  )}
+                  {ytStatus==='tap'&&(
+                    <button onClick={retryYT} style={{marginTop:2,padding:'9px 12px',border:'none',borderRadius:10,background:accent,color:'#16121f',fontWeight:600,fontSize:12.5,cursor:'pointer'}}>▶ {t.music_tap_play}</button>
+                  )}
                   <div style={{marginTop:10,padding:'9px 12px',borderRadius:11,background:'var(--input)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
                     <span style={{fontSize:11.5,color:'var(--dim)'}}>{t.music_custom_yt}</span>
                     <button onClick={()=>setOpenPopover('youtube')} style={{padding:'5px 12px',border:'none',borderRadius:8,background:accentSoft,color:accent,fontWeight:600,fontSize:12,cursor:'pointer',flexShrink:0}}>YouTube</button>
@@ -1743,11 +1850,10 @@ export function EmbedClient() {
           <div style={{...row,cursor:'default'}}>
             <svg {...ic}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
             <span style={{flex:1}}>{t.tip_lang}</span>
-            <div style={{display:'flex',gap:2}}>
-              {(['en','vi'] as const).map(l=>(
-                <button key={l} onClick={()=>setLang(l)} style={{padding:'4px 9px',border:'none',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:700,background:lang===l?accentSoft:'var(--input)',color:lang===l?accent:'var(--dim)'}}>{l.toUpperCase()}</button>
-              ))}
-            </div>
+            <select value={lang} aria-label={t.tip_lang} onChange={e=>{if(isLang(e.target.value))setLang(e.target.value)}}
+              style={{padding:'4px 8px',border:'none',borderRadius:7,cursor:'pointer',fontSize:11.5,fontWeight:600,background:accentSoft,color:accent,fontFamily:'inherit',outline:'none',maxWidth:130}}>
+              {LANGS.map(l=><option key={l.code} value={l.code} style={{background:'#16121f',color:'#f3f3f8'}}>{l.label}</option>)}
+            </select>
           </div>
           <button onClick={()=>{setOpenPopover(null);setShowShortcuts(true)}} style={row}>
             <svg {...ic}><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
@@ -1767,14 +1873,22 @@ export function EmbedClient() {
         )
       })()}
 
+      {/* Browser refused to autoplay the stream (iOS/Safari, strict autoplay settings) —
+          one tap here calls playVideo() inside a real user gesture. */}
+      {ytStatus==='tap'&&started&&playing&&!home&&(
+        <button onClick={retryYT} style={{position:'fixed',top:mob?60:64,left:'50%',transform:'translateX(-50%)',zIndex:12,display:'flex',alignItems:'center',gap:8,padding:'9px 16px',border:'none',borderRadius:999,background:accent,color:'#16121f',fontWeight:700,fontSize:13,cursor:'pointer',boxShadow:'0 8px 24px rgba(0,0,0,.35)',fontFamily:'inherit'}}>
+          ▶ {t.music_tap_play}
+        </button>
+      )}
+
       {/* ── Mode switch: Focus / Come Home. Above the start overlay so evening visitors can
           go straight to Come Home without starting the focus audio first. ── */}
-      <div role="radiogroup" aria-label={lang==='vi'?'Chế độ không gian':'Workspace mode'} style={{position:'fixed',top:14,...(mob?{right:12}:{left:'50%',transform:'translateX(-50%)'}),zIndex:11,display:'flex',gap:2,padding:4,borderRadius:999,...glassPanel,boxShadow:'0 10px 30px rgba(0,0,0,.3)'}}>
+      <div role="radiogroup" aria-label={t.mode_switch_label} style={{position:'fixed',top:14,...(mob?{right:12}:{left:'50%',transform:'translateX(-50%)'}),zIndex:11,display:'flex',gap:2,padding:4,borderRadius:999,...glassPanel,boxShadow:'0 10px 30px rgba(0,0,0,.3)'}}>
         <button role="radio" aria-checked style={{display:'flex',alignItems:'center',gap:6,padding:mob?'6px 10px':'7px 14px',border:'none',borderRadius:999,background:accentSoft,color:accent,fontSize:12.5,fontWeight:600,cursor:'default',fontFamily:'inherit'}}>
-          <span aria-hidden>☀️</span>{mob?<span className="lf-sr">{lang==='vi'?'Tập trung':'Focus'}</span>:(lang==='vi'?'Tập trung':'Focus')}
+          <span aria-hidden>☀️</span>{mob?<span className="lf-sr">{t.mode_focus}</span>:t.mode_focus}
         </button>
         <button role="radio" aria-checked={false} onClick={enterHome} style={{display:'flex',alignItems:'center',gap:6,padding:mob?'6px 11px':'7px 14px',border:'none',borderRadius:999,background:'transparent',color:'#f3c49b',fontSize:12.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
-          <span aria-hidden>🌙</span>{lang==='vi'?'Về nhà':'Come Home'}
+          <span aria-hidden>🌙</span>{t.mode_home}
         </button>
       </div>
 
@@ -1801,6 +1915,9 @@ export function EmbedClient() {
               style={{flex:1,padding:'10px 12px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
             <button onClick={applyCustomLofi} style={{padding:'0 18px',border:'none',borderRadius:11,background:accent,color:'#16121f',fontWeight:600,fontSize:13,cursor:'pointer'}}>{t.music_play_btn}</button>
           </div>
+          {ytStatus==='unavailable'&&lofiId==='custom'&&(
+            <p style={{fontSize:10.5,color:'#f97316',margin:'8px 0 0',lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'7px 9px',borderRadius:8}}>{t.music_yt_unavailable}</p>
+          )}
           {ytStatus==='blocked'&&(
             <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 8px',borderRadius:6,background:'rgba(249,115,22,0.1)'}}>
               <p style={{flex:1,fontSize:10,color:'#f97316',margin:0,lineHeight:1.5}}>{t.music_yt_blocked}</p>
@@ -1972,7 +2089,7 @@ export function EmbedClient() {
                 <div>
                   <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)'}}>{t.cal_day_notes}</div>
                   <div style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:17,marginTop:2}}>
-                    {(()=>{const p=calSelected.split('-').map(Number);const d=new Date(p[0],p[1],p[2]);if(isNaN(d.getTime()))return'—';return lang==='vi'?`${p[2]} thg ${p[1]+1}`:`${t.cal_months[p[1]].slice(0,3)} ${p[2]}`})()}
+                    {(()=>{const p=calSelected.split('-').map(Number);const d=new Date(p[0],p[1],p[2]);if(isNaN(d.getTime()))return'—';return d.toLocaleDateString(localeOf(lang),{month:'short',day:'numeric'})})()}
                   </div>
                 </div>
                 <button onClick={()=>setShowCal(false)} style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:8,cursor:'pointer'}}>
@@ -2100,8 +2217,8 @@ export function EmbedClient() {
           </button>
           </Tip>
 
-          <Tip label={lang==='vi'?'Thêm':'More'}>
-          <button onClick={()=>setOpenPopover(v=>v==='more'?null:'more')} aria-expanded={openPopover==='more'} style={{...dockBtn(openPopover==='more'),flexShrink:0}} title={lang==='vi'?'Thêm':'More'}>
+          <Tip label={t.more}>
+          <button onClick={()=>setOpenPopover(v=>v==='more'?null:'more')} aria-expanded={openPopover==='more'} style={{...dockBtn(openPopover==='more'),flexShrink:0}} title={t.more}>
             <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
           </button>
           </Tip>

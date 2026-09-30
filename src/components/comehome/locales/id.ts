@@ -1,0 +1,126 @@
+import type { HomeCopy } from '../copy'
+
+const id: HomeCopy = {
+  mode_focus: 'Fokus',
+  mode_home: 'Pulang',
+  mode_switch_label: 'Mode ruang kerja',
+  sound_on: 'Suara lembut menyala',
+  sound_off: 'Suara mati',
+  sound_hint: 'Ketuk untuk hujan pelan',
+  back: 'Kembali',
+  menu: 'Menu',
+  close: 'Tutup',
+  sky_open: 'Langitmu',
+
+  welcome_title: 'Selamat datang di rumah.',
+  welcome_sub: 'Di sini kamu tidak perlu melakukan apa-apa.',
+  welcome_q: 'Bagaimana harimu?',
+  moods: { heavy: 'Berat', okay: 'Biasa saja', good: 'Baik', lovely: 'Menyenangkan' },
+  mood_reply: {
+    heavy: 'Sepertinya banyak sekali ya. Kita pelan-pelan saja.',
+    okay: 'Biasa saja sudah cukup.',
+    good: 'Syukurlah. Kita tetap santai, ya.',
+    lovely: 'Yuk, simpan perasaan itu sebentar.',
+  },
+  mood_skip: 'Lewati',
+
+  need_q: 'Apa yang kamu butuhkan sekarang?',
+  hub_groups: { out: 'Keluarkan semua', settle: 'Bersantai', sleep: 'Bersiap tidur' },
+  cards: {
+    mind: { title: 'Jernihkan pikiran', desc: 'Tulis semuanya, lalu lepaskan.' },
+    one: { title: 'Satu hal hari ini', desc: 'Simpan jadi bintang, atau lepaskan.' },
+    rest: { title: 'Sekadar istirahat', desc: 'Kamar yang nyaman. Tidak ada yang harus dilakukan.' },
+    calm: { title: 'Menenangkan diri', desc: 'Dua menit bernapas pelan.' },
+    quiet: { title: 'Sedikit hening', desc: 'Hanya suara yang kamu pilih.' },
+    company: { title: 'Ada yang menemani', desc: 'Jendela-jendela menyala di seberang jalan.' },
+    sleep: { title: 'Bersiap tidur', desc: 'Lima menit, perlahan meredup.' },
+    sky: { title: 'Langitmu', desc: 'Momen baik yang kamu simpan, jadi bintang.' },
+  },
+  exp_titles: { mind: 'Jernihkan pikiran', one: 'Satu hal', rest: 'Istirahat', calm: 'Tenang', quiet: 'Hening', company: 'Ditemani', sleep: 'Tidur', sky: 'Langitmu' },
+  suggested: 'untuk malam ini',
+
+  steps: { write: 'Tulis', choose: 'Pilih', release: 'Lepaskan' },
+  ctrl_enter: 'Ctrl + Enter untuk lanjut',
+  next: 'Lanjut',
+  edit: 'Ubah',
+
+  mind_title: 'Apa yang sedang memenuhi pikiranmu?',
+  mind_sub: 'Tulis apa saja. Tidak perlu dirapikan.',
+  mind_placeholder: 'deadline besok\nuang\nrapat dengan atasan\nharus belajar Kafka\nkado ulang tahun\naku capek\naku nggak tahu lagi sedang ngapain...',
+  mind_choose_title: 'Bagaimana kamu ingin melepaskannya?',
+  mind_choose_sub: 'Pilih yang terasa pas malam ini.',
+  mind_release: 'Lepaskan',
+  mind_privacy: 'Apa pun yang kamu tulis tidak keluar dari perangkat ini dan tidak disimpan di mana pun.',
+  rituals: {
+    sky: { name: 'Ke bintang-bintang', desc: 'Setiap kekhawatiran naik dan menjadi bintang kecil.', after: 'Kamu tidak harus menyelesaikan semuanya malam ini.' },
+    river: { name: 'Hanyutkan ke sungai', desc: 'Dilipat jadi perahu kertas dan dibawa arus.', after: 'Sudah hanyut jauh. Biarkan terus mengalir.' },
+    burn: { name: 'Bakar saja', desc: 'Lihat ia menjadi bara dan abu.', after: 'Sekarang tinggal abu. Tidak ada lagi yang perlu dipikul.' },
+    wind: { name: 'Titipkan pada angin', desc: 'Embusan angin mengangkat dan menyebarkannya.', after: 'Angin sudah membawanya. Tanganmu boleh beristirahat.' },
+    rain: { name: 'Larutkan dalam hujan', desc: 'Tintanya luntur dan tersapu air.', after: 'Sudah tersapu bersih. Besok mulai dari awal.' },
+  },
+
+  after_menu: 'Hal lain',
+  after_rest: 'Istirahat di kamar',
+  done_tonight: 'Cukup untuk malam ini',
+
+  one_title: 'Ceritakan satu hal dari hari ini.',
+  one_prefix: 'Hari ini aku…',
+  one_placeholder: 'ikut rapat yang sangat berat.',
+  one_choose_title: 'Mau kamu apakan?',
+  one_keep: 'Simpan momen ini',
+  one_keep_desc: 'Ia menjadi bintang di langitmu (hanya di browser ini).',
+  one_go_label: 'Atau lepaskan',
+  one_after_keep: 'Tersimpan. Sekarang ia tinggal di langitmu.',
+  one_privacy: 'Momen yang disimpan hanya ada di browser ini.',
+
+  sky_title: 'Langitmu',
+  sky_empty: 'Belum ada apa-apa. Tulis satu momen baik di bawah dan ia akan jadi bintang pertamamu.',
+  sky_forget: 'Lepaskan bintang ini',
+  sky_hint: 'Setiap bintang adalah momen yang kamu simpan. Ketuk untuk membacanya.',
+  sky_add_label: 'Momen baik untuk disimpan',
+  sky_add_placeholder: 'Momen baik untuk disimpan…',
+  sky_add: 'Tambah bintang',
+  sky_added: 'Ada bintang baru di langitmu.',
+
+  rest_hint: 'Tidak ada yang harus dilakukan. Benda-benda di sini merespons kalau kamu sentuh.',
+  rest_objects: { lamp: 'Lampu', window: 'Jendela — hujan', curtain: 'Tirai', tea: 'Secangkir teh', fire: 'Perapian' },
+  room_label: 'Apartemen yang tenang di malam hari',
+
+  calm_lines: [
+    'Tarik napas pelan-pelan.',
+    'Turunkan bahumu.',
+    'Kamu sudah di rumah.',
+    'Kamu tidak harus menyelesaikan semuanya malam ini.',
+  ],
+  calm_in: 'tarik napas',
+  calm_out: 'embuskan',
+
+  quiet_title: 'Hanya suara yang kamu mau.',
+  quiet_master: 'Volume utama',
+  quiet_volume: 'volume',
+  quiet_sounds: { rain: 'Hujan', wind: 'Angin', fire: 'Perapian', cafe: 'Kafe', wave: 'Laut', city: 'Kota malam', forest: 'Hutan' },
+
+  company_lines: [
+    'Seseorang di seberang jalan juga masih terjaga.',
+    'Satu lampu lagi baru saja menyala.',
+    'Bukan cuma kamu yang melewati hari panjang.',
+    'Semua orang perlahan beristirahat, satu jendela demi satu jendela.',
+    'Tidak apa-apa untuk beristirahat.',
+  ],
+  company_label: 'Jendela menyala di gedung seberang jalan',
+
+  sleep_intro: 'Mari perlambat semuanya.',
+  sleep_main: 'Masalah besok biarlah untuk besok.',
+  sleep_eyes: 'Biarkan matamu terasa berat.',
+  sleep_night: 'Selamat tidur.',
+  close_ws: 'Tutup ruang kerja',
+
+  final_1: 'Kamu sudah melakukan cukup hari ini.',
+  final_2: 'Sisanya bisa menunggu besok.',
+  final_night: 'Selamat tidur.',
+  closed_title: 'Selamat tidur.',
+  closed_sub: 'Suara sudah dimatikan. Kamu bisa menutup tab ini kapan saja.',
+  closed_reopen: 'Masuk lagi',
+}
+
+export default id

@@ -180,7 +180,7 @@ export function useAudioEngine(): AudioEngine {
     const next = !lofiOn
     setLofiOn(next)
     if (next) {
-      const ytId = LOFI_STREAMS.find(s => s.id === lofiId)?.youtubeId ?? 'jfKfPfyJRdk'
+      const ytId = LOFI_STREAMS.find(s => s.id === lofiId)?.youtubeId ?? 'rFZHOHl-L8A'
       initYT(ytId, lofiVol)
     } else {
       try { ytPlayer.current?.pauseVideo() } catch(_) {}
@@ -191,7 +191,7 @@ export function useAudioEngine(): AudioEngine {
     setLofiIdState(id)
     try { ytPlayer.current?.destroy() } catch(_) {}; ytPlayer.current = null
     if (lofiOn && masterStarted) {
-      const ytId = LOFI_STREAMS.find(s => s.id === id)?.youtubeId ?? 'jfKfPfyJRdk'
+      const ytId = LOFI_STREAMS.find(s => s.id === id)?.youtubeId ?? 'rFZHOHl-L8A'
       setTimeout(() => initYT(ytId, lofiVol), 80)
     }
   }, [lofiOn, masterStarted, lofiVol, initYT])

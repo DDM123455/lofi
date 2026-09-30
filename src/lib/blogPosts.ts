@@ -1,4 +1,5 @@
 import { EVENING_POSTS } from './blogPostsEvening'
+import { FEATURE_POSTS } from './blogPostsFeatures'
 
 export interface BlogPost {
   slug: string
@@ -1083,9 +1084,9 @@ const CORE_POSTS: BlogPost[] = [
   },
 ]
 
-// Evening Reset posts go after the core posts so the homepage's "latest 3" teaser and
-// existing listing order stay exactly as they were.
-export const BLOG_POSTS: BlogPost[] = [...CORE_POSTS, ...EVENING_POSTS]
+// Evening Reset and Product Updates posts go after the core posts so the homepage's
+// "latest 3" teaser and existing listing order stay exactly as they were.
+export const BLOG_POSTS: BlogPost[] = [...CORE_POSTS, ...EVENING_POSTS, ...FEATURE_POSTS]
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find(p => p.slug === slug)
@@ -1100,6 +1101,7 @@ export const BLOG_CATEGORIES: { slug: string; label: string }[] = [
   { slug: 'productivity', label: 'Productivity' },
   { slug: 'study-tips',   label: 'Study Tips' },
   { slug: 'evening-reset', label: 'Evening Reset' },
+  { slug: 'product-updates', label: 'Product Updates' },
 ]
 
 export function getCategoryBySlug(slug: string) {

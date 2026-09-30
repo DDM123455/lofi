@@ -117,6 +117,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/vi/dong-ho-tap-trung-am-thanh`,   lastModified: D('2026-07-22'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vi/dong-ho-lofi-hoc-bai`,         lastModified: D('2026-07-22'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vi/gioi-thieu-bang-thong-ke`,     lastModified: D('2026-07-22'), changeFrequency: 'monthly', priority: 0.8 },
+    // Come Home (evening mode) landing
+    { url: `${BASE}/come-home`,                   lastModified: D('2026-09-25'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/vi/ve-nha`,                   lastModified: D('2026-09-25'), changeFrequency: 'monthly', priority: 0.8 },
     // Blog index
     { url: `${BASE}/blog`,                        lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 0.8 },
   ]

@@ -38,6 +38,7 @@ export function Footer() {
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white/40">Focus Tools</h3>
             <ul className="space-y-2 text-xs text-white/30">
               <li><Link href="/pomodoro-timer"     className="hover:text-white/70 transition-colors">Pomodoro Timer</Link></li>
+              <li><Link href="/come-home"          className="hover:text-white/70 transition-colors">Come Home — Unwind After Work</Link></li>
               <li><Link href="/lofi-music"         className="hover:text-white/70 transition-colors">Lofi Music</Link></li>
               <li><Link href="/ambient-sounds"     className="hover:text-white/70 transition-colors">Ambient Sounds</Link></li>
               <li><Link href="/focus-music"        className="hover:text-white/70 transition-colors">Focus Music</Link></li>

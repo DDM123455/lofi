@@ -38,6 +38,15 @@ export const analytics = {
     gtag('donation_method_click', { event_category: 'monetisation', method })
   },
 
+  /**
+   * Come Home (evening) mode product events — e.g. come_home_opened, mood_selected,
+   * brain_dump_released, session_completed. Params must stay anonymous: never pass
+   * anything the person typed.
+   */
+  comeHome(name: string, params?: GtagEventParams) {
+    gtag(name, { event_category: 'come_home', ...params })
+  },
+
   /** Generic custom event for one-off tracking. */
   custom(name: string, params?: GtagEventParams) {
     gtag(name, params)

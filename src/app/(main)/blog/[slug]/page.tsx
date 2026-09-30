@@ -2,8 +2,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { BLOG_POSTS, getPostBySlug, categorySlug } from '@/lib/blogPosts'
-import { BlogPostingJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
+import { BlogPostingJsonLd, BreadcrumbJsonLd, FaqJsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumb } from '@/components/seo/Breadcrumb'
+import { AdBanner } from '@/components/ads/AdBanner'
 import { AuthorBio, AUTHOR_TITLE, AUTHOR_URL } from '@/components/seo/AuthorBio'
 
 export function generateStaticParams() {
@@ -15,21 +16,25 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = getPostBySlug(slug)
   if (!post) return {}
   const url = `https://www.focusworkspace.app/blog/${post.slug}`
+  const title = post.seoTitle ?? post.title
   return {
-    title: post.title,
+    title,
     description: post.excerpt,
     alternates: { canonical: url },
     openGraph: {
-      title: post.title,
+      title,
       description: post.excerpt,
       url,
       type: 'article',
       publishedTime: post.publishedAt,
+      modifiedTime: post.dateModified ?? post.publishedAt,
+      authors: [post.author],
+      section: post.category,
       siteName: 'LofiSpace',
     },
     twitter: {
       card: 'summary_large_image',
-      title: post.title,
+      title,
       description: post.excerpt,
     },
   }
@@ -69,6 +74,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         articleSection={post.category}
         wordCount={post.content.replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length}
       />
+      {post.faq && post.faq.length > 0 && <FaqJsonLd items={post.faq} />}
 
       <Breadcrumb items={[
         { name: 'Home', url: 'https://www.focusworkspace.app' },
@@ -103,8 +109,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       <h1 className="mb-6 text-3xl font-bold leading-tight text-white">{post.title}</h1>
 
       {/* AdSense — top of article */}
-      <div className="mb-8 flex h-20 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
-        Google AdSense — 728×90
+      <div className="mb-8">
+        <AdBanner slot={process.env.NEXT_PUBLIC_AD_SLOT_POST_TOP || process.env.NEXT_PUBLIC_AD_SLOT_BLOG_TOP || ''} format="horizontal" style={{ minHeight: 72 }} />
       </div>
 
       {/* Content */}
@@ -117,16 +123,55 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           prose-code:bg-white/10 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-violet-300
           prose-strong:text-white
           prose-h2:text-xl prose-h3:text-lg
-          prose-ol:text-white/70 prose-ul:text-white/70"
+          prose-ol:text-white/70 prose-ul:text-white/70
+          [&_.come-home-inline]:rounded-xl [&_.come-home-inline]:border [&_.come-home-inline]:border-amber-200/15
+          [&_.come-home-inline]:bg-amber-100/5 [&_.come-home-inline]:px-4 [&_.come-home-inline]:py-3"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
 
+      {/* FAQ — visible counterpart of the FAQPage JSON-LD above */}
+      {post.faq && post.faq.length > 0 && (
+        <section className="mt-12" aria-labelledby="post-faq">
+          <h2 id="post-faq" className="mb-5 text-xl font-semibold text-white">Frequently asked questions</h2>
+          <div className="space-y-3">
+            {post.faq.map(item => (
+              <details key={item.q} className="group rounded-xl border border-white/10 bg-white/5 px-5 py-4 open:bg-white/[0.07]">
+                <summary className="cursor-pointer list-none font-medium text-white/85 marker:hidden">
+                  <span className="mr-2 text-white/30 group-open:hidden">+</span>
+                  <span className="mr-2 hidden text-white/30 group-open:inline">−</span>
+                  {item.q}
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-white/65">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* AdSense — mid article */}
-      <div className="my-10 flex h-20 items-center justify-center rounded-xl border border-dashed border-white/10 text-xs text-white/20">
-        Google AdSense — 300×250
+      <div className="my-10">
+        <AdBanner slot={process.env.NEXT_PUBLIC_AD_SLOT_POST_MID || process.env.NEXT_PUBLIC_AD_SLOT_BLOG_BOT || ''} format="auto" style={{ minHeight: 72 }} />
       </div>
 
       {/* CTA widget */}
+      {post.cta === 'come-home' ? (
+      <div className="my-8 rounded-2xl border border-amber-200/15 bg-gradient-to-br from-[#2a1c24] to-[#15101c] p-6">
+        <p className="mb-1 text-sm font-semibold text-amber-200/80">🌙 A quiet place between work and sleep</p>
+        <h3 className="mb-2 text-lg font-bold text-white">Try Come Home</h3>
+        <p className="mb-4 text-sm text-white/60">Clear your mind, rest in a cozy room, or wind down for sleep. No account, no productivity scores — and nothing you write leaves your device.</p>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/workspace?mode=home"
+            className="inline-block rounded-full bg-amber-200/90 px-6 py-2 text-sm font-semibold text-[#2a1a14] transition-colors hover:bg-amber-100"
+          >
+            Try Come Home
+          </Link>
+          <Link href="/come-home" className="text-sm text-white/55 underline-offset-4 hover:text-white/80 hover:underline">
+            What is Come Home?
+          </Link>
+        </div>
+      </div>
+      ) : (
       <div className="my-8 rounded-2xl bg-gradient-to-r from-violet-900/40 to-violet-800/20 p-6 border border-violet-500/20">
         <p className="text-sm text-violet-300 font-semibold mb-1">Try it free — no account needed</p>
         <h3 className="text-lg font-bold text-white mb-2">Open Your LofiSpace Study Room</h3>
@@ -138,6 +183,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           Open Workspace — Free →
         </Link>
       </div>
+      )}
 
       <AuthorBio />
 

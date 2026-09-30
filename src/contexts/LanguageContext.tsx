@@ -18,10 +18,24 @@ const LanguageContext = createContext<LangCtx>({
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>('en')
 
+  // Priority: explicit ?lang= (links from /vi/* pages) → saved choice → browser language.
+  // Read after mount on purpose: the server always renders 'en', so reading during render
+  // would cause a hydration mismatch.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const saved = localStorage.getItem('lofispace-lang') as Lang | null
-    if (saved === 'en' || saved === 'vi') setLangState(saved)
+    try {
+      const fromUrl = new URLSearchParams(window.location.search).get('lang')
+      if (fromUrl === 'en' || fromUrl === 'vi') {
+        setLangState(fromUrl)
+        localStorage.setItem('lofispace-lang', fromUrl)
+        return
+      }
+      const saved = localStorage.getItem('lofispace-lang') as Lang | null
+      if (saved === 'en' || saved === 'vi') setLangState(saved)
+      else if (navigator.language?.toLowerCase().startsWith('vi')) setLangState('vi')
+    } catch { /* storage blocked — stay on the default */ }
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const setLang = (l: Lang) => {
     setLangState(l)

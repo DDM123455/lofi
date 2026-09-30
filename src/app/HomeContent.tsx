@@ -23,7 +23,7 @@ const ROOM_COLORS = [
 ]
 
 export function HomeContent() {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
 
   return (
     <div className="flex min-h-screen flex-col bg-[#0d0d14]">
@@ -124,6 +124,29 @@ export function HomeContent() {
                   <p className="text-sm text-white/50">{s.desc}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Come Home (evening mode) ────────────────────────────── */}
+        <section className="border-b border-white/5 bg-gradient-to-b from-transparent via-[#1a1219]/60 to-transparent py-20">
+          <div className="mx-auto max-w-3xl px-4 text-center">
+            <div className="mb-4 text-4xl" aria-hidden>🌙</div>
+            <h2 className="mb-4 text-3xl font-bold text-white">
+              {lang === 'vi' ? 'Một góc yên tĩnh sau một ngày dài' : 'A quiet place after a long day'}
+            </h2>
+            <p className="mx-auto mb-8 max-w-xl text-white/55">
+              {lang === 'vi'
+                ? 'Khi công việc đã xong nhưng đầu óc vẫn chưa dừng, Về nhà cho bạn một không gian yên tĩnh để chậm lại, gỡ bớt suy nghĩ và đơn giản là nghỉ ngơi.'
+                : 'When work is over but your mind is still running, Come Home gives you a quiet space to slow down, clear your thoughts, and simply rest.'}
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/workspace?mode=home" className="rounded-full bg-amber-200/90 px-7 py-3 font-semibold text-[#2a1a14] transition-colors hover:bg-amber-100">
+                {lang === 'vi' ? 'Về nhà' : 'Come Home'}
+              </Link>
+              <Link href="/come-home" className="rounded-full border border-white/15 px-7 py-3 text-white/70 transition-colors hover:border-white/30 hover:text-white">
+                {lang === 'vi' ? 'Tìm hiểu thêm' : 'Learn more'}
+              </Link>
             </div>
           </div>
         </section>

@@ -1,23 +1,34 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import { useState, useEffect, useRef, useCallback, useMemo, useContext, createContext } from 'react'
 import { preload, preconnect } from 'react-dom'
 import { getDayNightConfig } from '@/hooks/useDayNight'
 import { LOFI_STREAMS, AMBIENT_SOUNDS } from '@/lib/lofiStreams'
 import { BG_PRESETS, getBgPresetByUrl } from '@/lib/backgrounds'
 import { useGameStore, xpProgress, ACHIEVEMENT_DEFS, localDate } from '@/lib/gameStore'
-import { CodingCatVariant, CAT_VARIANT_META, type CatVariant } from '@/components/companion/CodingCatVariants'
 import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
 import { analytics } from '@/lib/analytics'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { SupportModal } from '@/components/support/SupportModal'
 import { LiveClock } from '@/components/workspace/LiveClock'
+import type { HomeAudio } from '@/components/comehome/ComeHome'
+
+// Come Home (evening) mode ships as its own chunk: focus-mode visitors never download it.
+const ComeHome = dynamic(()=>import('@/components/comehome/ComeHome').then(m=>m.ComeHome),{
+  ssr:false,
+  loading:()=><div style={{position:'fixed',inset:0,zIndex:30,background:'rgba(8,5,12,.7)',transition:'opacity .6s'}}/>,
+})
+// The gentle default mix when entering Come Home, and its evening backdrop
+const HOME_MIX:Record<string,number>={rain:30}
+const HOME_BG='/video/lofi-bedroom.mp4'
+const HOME_MASTER=70
 
 type ClockStyle = 'digital'|'minimal'|'bold'|'analog'
 type BgType = 'gif'|'youtube'|'video'
 type PanelTab = 'music'|'sounds'|'more'
-type MoreTab = 'widgets'|'weather'|'pet'|'progress'|'share'
+type MoreTab = 'widgets'|'weather'|'progress'|'share'
 interface Todo { id:string; text:string; done:boolean; estimate?:number; actual:number }
 interface WxData { city:string; temp:number; code:number; desc:string; emoji:string; feels:number|null; humidity:number|null; wind:number|null }
 
@@ -95,6 +106,20 @@ function useDraggable() {
   return { pos, reset, dp:{onPointerDown,onPointerMove,onPointerUp} }
 }
 
+// Live height of a conditionally-rendered panel (callback ref, so it works when the panel
+// mounts later). Used to stack panels so they never overlap one another.
+function useHeight():[(el:HTMLElement|null)=>void,number]{
+  const [h,setH]=useState(0)
+  const ro=useRef<ResizeObserver|null>(null)
+  const ref=useCallback((el:HTMLElement|null)=>{
+    ro.current?.disconnect()
+    if(!el){setH(0);return}
+    const upd=()=>setH(el.offsetHeight)
+    ro.current=new ResizeObserver(upd); ro.current.observe(el); upd()
+  },[])
+  return [ref,h]
+}
+
 function makePinkBuffer(ctx:AudioContext,secs=8):AudioBuffer {
   const n=Math.floor(ctx.sampleRate*secs),buf=ctx.createBuffer(2,n,ctx.sampleRate)
   for(let ch=0;ch<2;ch++){
@@ -121,8 +146,8 @@ export function getPinkBuffer(ctx:AudioContext):AudioBuffer {
 }
 
 type SynthNode={gain:GainNode;stop:()=>void}
-function buildSynthGraph(ctx:AudioContext,id:string):SynthNode {
-  const master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination)
+function buildSynthGraph(ctx:AudioContext,id:string,dest:AudioNode=ctx.destination):SynthNode {
+  const master=ctx.createGain();master.gain.value=0;master.connect(dest)
   const stops:Array<()=>void>=[]
   const pink=getPinkBuffer(ctx)
   const ns=(_s?:number)=>{const src=ctx.createBufferSource();src.buffer=pink;src.loop=true;return src}
@@ -331,14 +356,8 @@ export function EmbedClient() {
   const [activeTodoId,setActiveTodoId]= useState<string|null>(null)
   const noteDrag      = useDraggable()
   const pomDrag       = useDraggable()
-  const catDrag       = useDraggable()
   const progressDrag  = useDraggable()
 
-  // Pet / Companion
-  const [companionType, setCompanionType] = useState<'none'|'coding'>('coding')
-  const [catVariant,    setCatVariant]    = useState<CatVariant>('typist')
-  const [catSize,       setCatSize]       = useState(160)
-  const [catHovered,    setCatHovered]    = useState(false)
   const [showStreak,  setShowStreak]  = useState(true)
 
   // Atmosphere overlay
@@ -369,7 +388,11 @@ export function EmbedClient() {
   const [panel,       setPanel]       = useState(false)
   const [panelTab,    setPanelTab]    = useState<PanelTab>('music')
   const [moreTab,     setMoreTab]     = useState<MoreTab>('widgets')
-  const [openPopover, setOpenPopover] = useState<'youtube'|'background'|null>(null)
+  const [openPopover, setOpenPopover] = useState<'youtube'|'background'|'more'|null>(null)
+  const [pomRef,  pomH]    = useHeight()
+  const [noteRef, noteH]   = useHeight()
+  const [streakRef,streakH]= useHeight()
+  const [wxRef,   wxH]     = useHeight()
   const [mounted,     setMounted]     = useState(false)
   const [ytStatus,    setYtStatus]    = useState<'idle'|'loading'|'ready'|'blocked'>('idle')
   const [copied,      setCopied]      = useState(false)
@@ -381,6 +404,12 @@ export function EmbedClient() {
   const [showShortcuts,setShowShortcuts]= useState(false)
   const [showPomCfg,   setShowPomCfg]   = useState(false)
   const [tip,          setTip]          = useState<TipState>(null)
+
+  // Come Home (evening decompression) mode. Everything focus-related stays mounted but hidden,
+  // so switching back is instant and no timer/todo/audio state is lost.
+  const [mode,         setMode]         = useState<'focus'|'home'>('focus')
+  const [masterVol,    setMasterVol]    = useState(100)
+  const home = mode==='home'
 
   // Refs
   const ctxRef    = useRef<AudioContext|null>(null)
@@ -396,11 +425,16 @@ export function EmbedClient() {
   const prevBgTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const bgElRef     = useRef<HTMLVideoElement|HTMLImageElement|null>(null)
   const bgPrefetchedRef = useRef(false)
+  const masterGainRef = useRef<GainNode|null>(null) // every ambient synth routes through this
+  const masterVolRef  = useRef(100)
+  const initialHomeRef = useRef(sp.get('mode')==='home')
+  // What focus mode looked like when Come Home was entered — restored exactly on the way back
+  const homeSnap = useRef<{ambVols:Record<string,number>;started:boolean;playing:boolean;bgUrl:string;bgType:BgType;bgOpacity:number;bgBlur:number;atmosphere:typeof atmosphere;masterVol:number;pomWasOn:boolean}|null>(null)
 
   // ── Game store ──────────────────────────────────────────────────────────
   const {
     streak, bestStreak, xp, level, coins, totalPomodoros,
-    companionMood, pendingAchievements, newLevelReached,
+    pendingAchievements, newLevelReached,
     completePomodoro, recordActivity, dismissAchievement, dismissLevelUp,
     unlockedAchievements, dailyStats, dailyGoalPomodoros, setDailyGoal,
   } = useGameStore()
@@ -446,9 +480,10 @@ export function EmbedClient() {
   },[])
   // Save settings to localStorage on change (gated on mounted to skip first render)
   useEffect(()=>{
-    if(!mounted)return
+    // Come Home temporarily swaps background/sounds — never persist those as focus settings
+    if(!mounted||mode==='home')return
     try{localStorage.setItem('lofispace-settings',JSON.stringify({bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere}))}catch(_){}
-  },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere])
+  },[mounted,mode,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,ambVols,theme,clockStyle,atmosphere])
   useEffect(()=>{ recordActivity() },[recordActivity])
   const handleBgReady=useCallback(()=>{
     setBgReady(true)
@@ -605,22 +640,32 @@ export function EmbedClient() {
 
   // ── Audio ──────────────────────────────────────────────────────────────
   const ensureCtx = useCallback(()=>{
-    if(!ctxRef.current) ctxRef.current=new(window.AudioContext||(window as any).webkitAudioContext)()
+    if(!ctxRef.current){
+      const ctx=new(window.AudioContext||(window as any).webkitAudioContext)()
+      const mg=ctx.createGain(); mg.gain.value=masterVolRef.current/100; mg.connect(ctx.destination)
+      ctxRef.current=ctx; masterGainRef.current=mg
+    }
     return ctxRef.current
   },[])
+  // YouTube volume scaled by the master level (100 in focus mode unless changed in Come Home)
+  const effYt=(v:number)=>Math.round(v*masterVolRef.current/100)
 
   const startAmbient = useCallback((id:string,vol:number)=>{
     if(synthRef.current[id])return
     const ctx=ensureCtx();ctx.resume().catch(()=>{})
-    const node=buildSynthGraph(ctx,id)
+    const node=buildSynthGraph(ctx,id,masterGainRef.current??ctx.destination)
     node.gain.gain.setTargetAtTime((vol/100)*0.6,ctx.currentTime,0.1)
     synthRef.current[id]=node
   },[ensureCtx])
 
   const stopAmbient = useCallback((id:string)=>{
-    if(synthRef.current[id]&&ctxRef.current){
-      synthRef.current[id].gain.gain.setTargetAtTime(0,ctxRef.current.currentTime,0.15)
-      setTimeout(()=>{try{synthRef.current[id]?.stop()}catch(_){};delete synthRef.current[id]},300)
+    const node=synthRef.current[id]
+    if(node&&ctxRef.current){
+      // Detach from the map immediately so a quick re-enable builds a fresh graph instead of
+      // being swallowed by this one's pending teardown.
+      delete synthRef.current[id]
+      node.gain.gain.setTargetAtTime(0,ctxRef.current.currentTime,0.15)
+      setTimeout(()=>{try{node.stop()}catch(_){}},300)
     }
   },[])
 
@@ -659,7 +704,7 @@ export function EmbedClient() {
         height:'180',width:'320',videoId:ytId,
         playerVars:{autoplay:1,controls:0,disablekb:1,playsinline:1,enablejsapi:1,origin:window.location.origin},
         events:{
-          onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);ytAutoRetriedRef.current=false;setYtStatus('ready');e.target.setVolume(vol);e.target.playVideo()},
+          onReady:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);ytAutoRetriedRef.current=false;setYtStatus('ready');e.target.setVolume(effYt(vol));e.target.playVideo()},
           onError:(e:any)=>{if(ytTimer.current)clearTimeout(ytTimer.current);console.warn('YT error code:',e.data);fail()},
         },
       })
@@ -680,7 +725,7 @@ export function EmbedClient() {
     try{ if(typeof Notification!=='undefined'&&Notification.permission==='default') Notification.requestPermission().catch(()=>{}) }catch{/* ignore */}
     Object.entries(ambVols).forEach(([id,vol])=>startAmbient(id,vol))
     if(ytPlayer.current&&ytStatus==='ready'){
-      try{ytPlayer.current.unMute();ytPlayer.current.setVolume(lofiVol);ytPlayer.current.playVideo()}catch(_){}
+      try{ytPlayer.current.unMute();ytPlayer.current.setVolume(effYt(lofiVol));ytPlayer.current.playVideo()}catch(_){}
       if(ytTimer.current)clearTimeout(ytTimer.current)
     }else{
       initYT(activeYtId,lofiVol,true)
@@ -702,7 +747,7 @@ export function EmbedClient() {
     }
   },[started,playing,doStart,ambVols])
 
-  const handleLofiVol=(v:number)=>{setLofiVol(v);if(started)try{ytPlayer.current?.setVolume(v)}catch(_){}}
+  const handleLofiVol=(v:number)=>{setLofiVol(v);if(started)try{ytPlayer.current?.setVolume(effYt(v))}catch(_){}}
   const handleLofiChange=(id:string)=>{
     setLofiId(id)
     // initYT() tears down any existing player at its top, so no separate destroy + timeout
@@ -726,7 +771,109 @@ export function EmbedClient() {
     if(ambVols[id]!==undefined){if(started)stopAmbient(id);setAmbVols(prev=>{const n={...prev};delete n[id];return n})}
     else{if(started&&playing)startAmbient(id,50);setAmbVols(prev=>({...prev,[id]:50}))}
   }
-  const handleAmbVol=(id:string,v:number)=>{setAmbVols(prev=>({...prev,[id]:v}));if(started)setAmbVol(id,v)}
+  // Only touch the live gain while audible — paused layers sit at 0 and must stay silent
+  const handleAmbVol=(id:string,v:number)=>{setAmbVols(prev=>({...prev,[id]:v}));if(started&&playing)setAmbVol(id,v)}
+
+  // ── Come Home mode ─────────────────────────────────────────────────────
+  // Master level: scales every ambient layer (via masterGain) and the YouTube stream.
+  useEffect(()=>{
+    masterVolRef.current=masterVol
+    const ctx=ctxRef.current,mg=masterGainRef.current
+    if(ctx&&mg)mg.gain.setTargetAtTime(masterVol/100,ctx.currentTime,0.4)
+    if(started&&playing&&!home)try{ytPlayer.current?.setVolume(effYt(lofiVol))}catch{/* ignore */}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[masterVol])
+
+  // Crossfade the running synth graphs to `next`. Layers only start if `live`.
+  const applyMix=useCallback((next:Record<string,number>,live:boolean)=>{
+    Object.keys(synthRef.current).forEach(id=>{ if(!(id in next))stopAmbient(id) })
+    if(live)Object.entries(next).forEach(([id,v])=>{ if(synthRef.current[id])setAmbVol(id,v); else startAmbient(id,v) })
+    setAmbVols(next)
+  },[stopAmbient,setAmbVol,startAmbient])
+  const muteAllSynths=useCallback(()=>{
+    const ctx=ctxRef.current
+    if(ctx)Object.values(synthRef.current).forEach(n=>n.gain.gain.setTargetAtTime(0,ctx.currentTime,0.3))
+  },[])
+
+  // Explicit user gesture only (browser autoplay policy + "no surprise audio" rule).
+  const homeSoundOn=useCallback((mix:Record<string,number>)=>{
+    const ctx=ensureCtx();ctx.resume().catch(()=>{})
+    Object.entries(mix).forEach(([id,v])=>{
+      const n=synthRef.current[id]
+      if(n)n.gain.gain.setTargetAtTime((v/100)*0.6,ctx.currentTime,0.5); else startAmbient(id,v)
+    })
+    setStarted(true);setPlaying(true)
+  },[ensureCtx,startAmbient])
+
+  const setBackdrop=useCallback((id:string)=>{
+    const p=BG_PRESETS.find(b=>b.id===id)
+    if(p&&p.url!==bgUrl){setBgUrl(p.url);setBgType(bgTypeFromUrl(p.url))}
+  },[bgUrl])
+
+  const enterHome=useCallback(()=>{
+    if(mode==='home')return
+    homeSnap.current={ambVols,started,playing,bgUrl,bgType,bgOpacity,bgBlur,atmosphere,masterVol,pomWasOn:pom.on}
+    if(pom.on)pom.toggle() // no phase chimes or notifications while decompressing
+    try{ytPlayer.current?.pauseVideo()}catch{/* ignore */}
+    // If audio was already running the person has opted in — keep it, just much softer.
+    applyMix(HOME_MIX,started&&playing)
+    setMasterVol(HOME_MASTER)
+    if(bgUrl!==HOME_BG){setBgUrl(HOME_BG);setBgType('video')}
+    setBgOpacity(40);setBgBlur(0);setAtmosphere('night')
+    setPanel(false);setOpenPopover(null);setZen(false);setShowShortcuts(false);setShowCal(false);setShowOnboard(false)
+    setMode('home')
+    try{const u=new URL(window.location.href);if(u.searchParams.get('mode')!=='home'){u.searchParams.set('mode','home');window.history.replaceState(window.history.state,'',u)}}catch{/* ignore */}
+  },[mode,ambVols,started,playing,bgUrl,bgType,bgOpacity,bgBlur,atmosphere,masterVol,pom,applyMix])
+
+  const exitHome=useCallback(()=>{
+    const snap=homeSnap.current
+    homeSnap.current=null
+    setMode('focus')
+    try{const u=new URL(window.location.href);u.searchParams.delete('mode');window.history.replaceState(window.history.state,'',u)}catch{/* ignore */}
+    if(!snap)return
+    setMasterVol(snap.masterVol)
+    setBgUrl(snap.bgUrl);setBgType(snap.bgType);setBgOpacity(snap.bgOpacity);setBgBlur(snap.bgBlur);setAtmosphere(snap.atmosphere)
+    if(!snap.started){
+      // Came straight from the start overlay: put everything back so "Click to start" works as before.
+      Object.keys(synthRef.current).forEach(id=>stopAmbient(id))
+      setAmbVols(snap.ambVols);setStarted(false);setPlaying(false)
+    }else if(snap.playing){
+      applyMix(snap.ambVols,true)
+      if(ytPlayer.current&&ytStatus==='ready'){
+        try{ytPlayer.current.unMute();ytPlayer.current.setVolume(Math.round(lofiVol*snap.masterVol/100));ytPlayer.current.playVideo()}catch{/* ignore */}
+      }else initYT(activeYtId,lofiVol,true)
+      setPlaying(true)
+    }else{
+      applyMix(snap.ambVols,false);muteAllSynths();setPlaying(false)
+    }
+    if(snap.pomWasOn&&!pom.on)pom.toggle()
+  },[applyMix,stopAmbient,muteAllSynths,ytStatus,lofiVol,initYT,activeYtId,pom])
+
+  // Opened via /workspace?mode=home (blog + landing CTAs). Runs after the saved-settings
+  // restore has landed in state, so the snapshot holds the person's real focus setup.
+  useEffect(()=>{
+    if(mounted&&initialHomeRef.current){initialHomeRef.current=false;enterHome()}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[mounted])
+
+  const homeAudio:HomeAudio={
+    soundOn:home&&started&&playing,
+    enableSound:()=>{
+      const mix=Object.keys(ambVols).length?ambVols:HOME_MIX
+      if(mix!==ambVols)setAmbVols(mix) // keep the mixer UI in sync with what actually plays
+      homeSoundOn(mix)
+    },
+    disableSound:()=>{muteAllSynths();setPlaying(false)},
+    vols:ambVols,
+    toggle:(id:string)=>{
+      if(ambVols[id]!==undefined){stopAmbient(id);setAmbVols(prev=>{const n={...prev};delete n[id];return n})}
+      else{const next={...ambVols,[id]:30};setAmbVols(next);homeSoundOn(next)} // choosing a sound is consent to hear it
+    },
+    setVol:(id:string,v:number)=>{setAmbVols(prev=>({...prev,[id]:v}));if(started&&playing)setAmbVol(id,v)},
+    master:masterVol,
+    setMaster:setMasterVol,
+    setMix:(mix:Record<string,number>)=>applyMix(mix,started&&playing),
+  }
 
   // ── Todos ──────────────────────────────────────────────────────────────
   const saveTodos=(list:Todo[])=>{
@@ -797,6 +944,7 @@ export function EmbedClient() {
   // ── Global keyboard shortcuts ──────────────────────────────────────────
   useEffect(()=>{
     const onKey=(e:KeyboardEvent)=>{
+      if(home)return // Come Home has its own (Esc-only) handling and no productivity shortcuts
       if(e.metaKey||e.ctrlKey||e.altKey)return
       const el=e.target as HTMLElement|null
       if(el&&(el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.isContentEditable))return
@@ -815,7 +963,7 @@ export function EmbedClient() {
     }
     window.addEventListener('keydown',onKey)
     return ()=>window.removeEventListener('keydown',onKey)
-  },[togglePlay,toggleFullscreen])
+  },[togglePlay,toggleFullscreen,home])
 
   // ── Pomodoro phase-change feedback (chime + notification + tab title) ────
   const playChime=useCallback((rising:boolean)=>{
@@ -854,14 +1002,19 @@ export function EmbedClient() {
   // Tab-title countdown while the timer runs
   useEffect(()=>{
     const base='LofiSpace — Focus Workspace'
-    if(pom.on){
+    if(home){
+      // Next re-applies the route's metadata title after hydration — set it again once that's done
+      document.title='Come Home — LofiSpace'
+      const id=setTimeout(()=>{document.title='Come Home — LofiSpace'},400)
+      return ()=>{clearTimeout(id);document.title=base}
+    }else if(pom.on){
       const label=pom.phase==='work'?t.pom_phase_focus:pom.phase==='long'?t.pom_phase_long:t.pom_phase_break
       document.title=`${pom.mm}:${pom.ss} · ${label}`
     }else{
       document.title=base
     }
     return ()=>{ document.title=base }
-  },[pom.on,pom.phase,pom.mm,pom.ss,t])
+  },[pom.on,pom.phase,pom.mm,pom.ss,t,home])
 
   // Warn before an accidental tab close mid focus-session
   useEffect(()=>{
@@ -990,13 +1143,22 @@ export function EmbedClient() {
   // On mobile, panel widths grow to near-full-viewport (see width:Math.min(N,vw-M) below),
   // so the desktop two-column left/right placement collides. Stack them in one column instead.
   const mobTop:Record<string,number>={}
+  let mobEnd=0
   if(mob){
+    const GAP=12
     let cursor=132
-    if(showWx&&wxData){mobTop.wx=cursor;cursor+=92}
-    if(showStreak){mobTop.streak=cursor;cursor+=196}
-    if(showPom){mobTop.pom=cursor;cursor+=352}
-    if(showNote){mobTop.note=cursor;cursor+=300}
+    if(showWx&&wxData&&!zen){mobTop.wx=cursor;cursor+=(wxH||80)+GAP}
+    if(showStreak&&!zen){mobTop.streak=cursor;cursor+=(streakH||190)+GAP}
+    if(showPom){mobTop.pom=cursor;cursor+=(pomH||390)+GAP}
+    if(showNote&&!zen){mobTop.note=cursor;cursor+=(noteH||290)+GAP}
+    mobEnd=cursor
   }
+  // Desktop: To-Do sits beside the Pomodoro on wide screens, directly under it otherwise -
+  // previously it was pinned to the bottom and slid under the timer on shorter screens.
+  const pomW=Math.min(236,vw-48)
+  const noteDefault:React.CSSProperties=!showPom?{right:32,top:96}
+    :vw>=1100?{right:32+pomW+16,top:96}
+    :{right:32,top:96+(pomH||400)+14}
 
   return (
     <div style={{position:'fixed',inset:0,overflowY:mob?'auto':'hidden',overflowX:'hidden',WebkitOverflowScrolling:'touch',fontFamily:"'Outfit',system-ui,sans-serif",color:'var(--text,#f3f3f8)',userSelect:'none',...cssVars,['--accent' as any]:accent,['--accent2' as any]:accent2,['--accentSoft' as any]:accentSoft,['--accentGlow' as any]:accentGlow}}>
@@ -1029,11 +1191,19 @@ export function EmbedClient() {
       {bgBlur>0&&<div style={{position:'fixed',inset:0,backdropFilter:`blur(${bgBlur}px)`}}/>}
       {atmosphere!=='none'&&<div style={{position:'fixed',inset:0,background:atmOverlay[atmosphere],pointerEvents:'none'}}/>}
       {showBgSpinner&&!bgReady&&(
-        <div style={{position:'fixed',top:20,left:'50%',transform:'translateX(-50%)',zIndex:6,display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderRadius:999,background:'rgba(0,0,0,.5)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)',color:'#fff',fontSize:12,fontWeight:600,pointerEvents:'none'}}>
+        <div style={{position:'fixed',top:64,left:'50%',transform:'translateX(-50%)',zIndex:6,display:'flex',alignItems:'center',gap:8,padding:'8px 14px',borderRadius:999,background:'rgba(0,0,0,.5)',backdropFilter:'blur(8px)',WebkitBackdropFilter:'blur(8px)',color:'#fff',fontSize:12,fontWeight:600,pointerEvents:'none'}}>
           <span style={{width:13,height:13,borderRadius:'50%',border:'2px solid rgba(255,255,255,.3)',borderTopColor:'#fff',animation:'spin .8s linear infinite'}}/>
           {t.bg_loading}
         </div>
       )}
+
+      {/* ── Hidden YT player — off-screen (opacity:0 causes Chrome to pause media). Kept outside the
+          focus-only wrapper below so it survives Come Home mode. ── */}
+      <div style={{position:'fixed',left:'-400px',top:0,width:'320px',height:'180px',pointerEvents:'none'}}><div ref={ytRef}/></div>
+
+      {/* Focus-mode UI. `display:contents` keeps the existing absolute layout untouched; in Come
+          Home it's hidden (not unmounted), so timers, todos and panel state survive the round trip. */}
+      <div style={{display:home?'none':'contents'}}>
 
       {/* ── Clock (draggable, top-left) ── */}
       {showClock&&(
@@ -1051,7 +1221,7 @@ export function EmbedClient() {
 
       {/* ── Pomodoro panel (draggable, top-right) ── */}
       {showPom&&(
-        <div style={{...wStyle(pomDrag,mob?{left:16,top:mobTop.pom}:{right:32,top:96}),zIndex:5,width:Math.min(236,vw-48),padding:'20px 20px 22px',...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)'}}>
+        <div ref={pomRef} style={{...wStyle(pomDrag,mob?{left:16,top:mobTop.pom}:{right:32,top:96}),zIndex:5,width:pomW,padding:'20px 20px 22px',...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)'}}>
           <div {...pomDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:14,cursor:'grab'}}>
             <span style={{fontSize:11,fontWeight:600,letterSpacing:1.4,textTransform:'uppercase',color:'var(--dim)'}}>Pomodoro</span>
             <div style={{display:'flex',alignItems:'center',gap:2}}>
@@ -1146,7 +1316,7 @@ export function EmbedClient() {
 
       {/* ── Weather (draggable) ── */}
       {showWx&&wxData&&!zen&&(
-        <div {...wxDrag.dp} style={{...wStyle(wxDrag,mob?{left:16,top:mobTop.wx}:{left:20,top:showClock&&clockStyle==='digital'?130:80}),cursor:'grab',zIndex:20,minWidth:160}}>
+        <div ref={wxRef} {...wxDrag.dp} style={{...wStyle(wxDrag,mob?{left:16,top:mobTop.wx}:{left:20,top:showClock&&clockStyle==='digital'?130:80}),cursor:'grab',zIndex:20,minWidth:160}}>
           <div style={{display:'flex',flexDirection:'column',gap:4,...glassPanel,borderRadius:16,padding:'10px 14px',boxShadow:'0 10px 28px rgba(0,0,0,.3)'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:24}}>{wxData.emoji}</span>
@@ -1169,7 +1339,7 @@ export function EmbedClient() {
 
       {/* ── Progress card (left) ── */}
       {showStreak&&!zen&&(
-        <div style={{...wStyle(progressDrag,mob?{left:16,top:mobTop.streak}:{left:20,top:showWx&&wxData?290:showClock&&clockStyle==='digital'?172:90}),zIndex:5,width:Math.min(244,vw-40),padding:16,borderRadius:18,background:'rgba(26,23,44,0.55)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',border:'1px solid rgba(255,255,255,0.10)',color:'#fff',boxShadow:'0 14px 40px rgba(0,0,0,.34)'}}>
+        <div ref={streakRef} style={{...wStyle(progressDrag,mob?{left:16,top:mobTop.streak}:{left:20,top:showWx&&wxData?290:showClock&&clockStyle==='digital'?172:90}),zIndex:5,width:Math.min(244,vw-40),padding:16,borderRadius:18,background:'rgba(26,23,44,0.55)',backdropFilter:'blur(18px)',WebkitBackdropFilter:'blur(18px)',border:'1px solid rgba(255,255,255,0.10)',color:'#fff',boxShadow:'0 14px 40px rgba(0,0,0,.34)'}}>
           {/* Header — drag handle */}
           <div {...progressDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12,cursor:'grab'}}>
             <span style={{fontSize:10,fontWeight:700,letterSpacing:'0.1em',color:'rgba(255,255,255,0.5)'}}>{t.progress_title}</span>
@@ -1217,7 +1387,7 @@ export function EmbedClient() {
 
       {/* ── Notes panel (bottom-right) ── */}
       {showNote&&!zen&&(
-        <div style={{position:'absolute',zIndex:5,width:Math.min(264,vw-48),touchAction:'none',userSelect:'none',...(noteDrag.pos?{left:noteDrag.pos.x,top:noteDrag.pos.y}:mob?{left:16,top:mobTop.note}:{right:32,bottom:118}),...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)',overflow:'hidden'}}>
+        <div ref={noteRef} style={{position:'absolute',zIndex:5,width:Math.min(264,vw-48),touchAction:'none',userSelect:'none',...(noteDrag.pos?{left:noteDrag.pos.x,top:noteDrag.pos.y}:mob?{left:16,top:mobTop.note}:noteDefault),...glassPanel,borderRadius:20,boxShadow:'0 18px 50px rgba(0,0,0,.38)',overflow:'hidden'}}>
           <div {...noteDrag.dp} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'13px 15px',borderBottom:'1px solid var(--border)',cursor:'grab'}}>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3 8-8"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -1365,7 +1535,7 @@ export function EmbedClient() {
               <div>
                 {/* Sub-tabs */}
                 <div style={{display:'flex',gap:5,marginBottom:14,overflowX:'auto',paddingBottom:2}}>
-                  {([['widgets',t.more_widgets],['weather',t.more_weather],['pet',t.more_pet],['progress',t.more_xp],['share',t.more_share]] as [MoreTab,string][]).map(([id,label])=>(
+                  {([['widgets',t.more_widgets],['weather',t.more_weather],['progress',t.more_xp],['share',t.more_share]] as [MoreTab,string][]).map(([id,label])=>(
                     <button key={id} onClick={()=>setMoreTab(id)} style={{flexShrink:0,padding:'6px 12px',borderRadius:9,border:'none',cursor:'pointer',fontSize:12,fontWeight:500,transition:'all .15s',
                       background:moreTab===id?accentSoft:'var(--input)',color:moreTab===id?accent:'var(--dim)'}}>
                       {label}
@@ -1452,48 +1622,6 @@ export function EmbedClient() {
                         <button onClick={()=>{setWxData(null);setWxState('idle');setShowWx(false)}} style={{padding:'8px 14px',borderRadius:10,border:'1px solid var(--border)',background:'transparent',color:'var(--dim)',fontSize:12,cursor:'pointer'}}>{t.wx_clear}</button>
                       </div>
                     </div>}
-                  </div>
-                )}
-
-                {/* Pet */}
-                {moreTab==='pet'&&(
-                  <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:14,padding:'8px 0'}}>
-                    <div style={{background:'var(--input)',border:'1px solid var(--border)',borderRadius:16,padding:'18px 28px',display:'flex',flexDirection:'column',alignItems:'center',gap:10}}>
-                      <CodingCatVariant variant={catVariant} size={90}/>
-                      <span style={{fontSize:10,color:'var(--dim2)'}}>{pom.on ? pom.phase==='work' ? t.pet_focused : t.pet_break : '(=^･ω･^=)'}</span>
-                      <div style={{display:'flex',gap:14,fontSize:12,color:'var(--dim)'}}>
-                        <span>🔥 {streak} {t.progress_days}</span>
-                        <span>Lv.{level}</span>
-                        <span>🪙 {coins}</span>
-                      </div>
-                      {(()=>{const xp2=xpProgress(xp,level);return(
-                        <div style={{width:'100%',maxWidth:160}}>
-                          <div style={{display:'flex',justifyContent:'space-between',fontSize:9,color:'var(--dim2)',marginBottom:4}}>
-                            <span>XP {xp2.current}/{xp2.max}</span><span>{Math.round(xp2.pct)}%</span>
-                          </div>
-                          <div style={{height:4,background:'var(--track)',borderRadius:2,overflow:'hidden'}}>
-                            <div style={{height:'100%',width:`${xp2.pct}%`,background:accent,borderRadius:2,transition:'width .4s'}}/>
-                          </div>
-                        </div>
-                      )})()}
-                    </div>
-                    <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8,marginTop:4}}>{t.pet_choose}</div>
-                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:10}}>
-                      {(['typist','mouse','beanie','wizard'] as CatVariant[]).map(v=>{
-                        const meta=CAT_VARIANT_META[v]
-                        const active=companionType==='coding'&&catVariant===v
-                        return(
-                          <button key={v} onClick={()=>{setCatVariant(v);setCompanionType('coding')}} style={{display:'flex',flexDirection:'column',alignItems:'center',gap:6,padding:'10px 8px',border:`1px solid ${active?accent:'var(--border)'}`,borderRadius:14,background:active?accentSoft:'var(--input)',cursor:'pointer',transition:'all .16s ease',fontFamily:'inherit'}}>
-                            <CodingCatVariant variant={v} size={72}/>
-                            <span style={{fontSize:11,fontWeight:700,color:active?accent:'var(--text)'}}>{meta.label}</span>
-                            <span style={{fontSize:9,color:'var(--dim2)',textAlign:'center',lineHeight:1.4}}>{meta.desc}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                    <button onClick={()=>setCompanionType(companionType==='coding'?'none':'coding')} style={{width:'100%',padding:'10px 0',borderRadius:12,border:`1px solid ${companionType==='coding'?accentSoft:'var(--border)'}`,background:companionType==='coding'?accentSoft:'transparent',color:companionType==='coding'?accent:'var(--dim)',fontSize:13,fontWeight:600,cursor:'pointer',transition:'all .2s',fontFamily:'inherit'}}>
-                      {companionType==='coding'?t.pet_hide:t.pet_show}
-                    </button>
                   </div>
                 )}
 
@@ -1597,6 +1725,62 @@ export function EmbedClient() {
       )}
 
       {/* ── YouTube popover (custom audio track, triggered from the dock) ── */}
+      {/* ── "More" menu: the dock's rarely-used utilities ── */}
+      {openPopover==='more'&&!zen&&(()=>{
+        const row:React.CSSProperties={display:'flex',alignItems:'center',gap:11,width:'100%',padding:'10px 12px',border:'none',borderRadius:11,background:'transparent',color:'var(--text)',fontSize:13,fontWeight:500,cursor:'pointer',textAlign:'left',textDecoration:'none',fontFamily:'inherit'}
+        const ic={width:17,height:17,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round' as const,strokeLinejoin:'round' as const,style:{flexShrink:0,color:'var(--dim)'}}
+        return(
+        <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:mob?72:108,transform:'translateX(-50%)',zIndex:9,width:'min(300px,calc(100vw - 24px))',padding:8,...glassPanel,borderRadius:18,boxShadow:'0 22px 60px rgba(0,0,0,.42)'}}>
+          <button onClick={handleShare} style={row}>
+            <svg {...ic}><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>
+            <span style={{flex:1}}>{copied?t.share_copied:t.share_copy}</span>
+          </button>
+          <button onClick={()=>setTheme(th=>th==='glass'?'warm':'glass')} style={row}>
+            <svg {...ic}><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22"/></svg>
+            <span style={{flex:1}}>{t.switch_theme}</span>
+            <span style={{fontSize:11,color:'var(--dim2)'}}>{theme==='glass'?'Glass':'Warm'}</span>
+          </button>
+          <div style={{...row,cursor:'default'}}>
+            <svg {...ic}><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            <span style={{flex:1}}>{t.tip_lang}</span>
+            <div style={{display:'flex',gap:2}}>
+              {(['en','vi'] as const).map(l=>(
+                <button key={l} onClick={()=>setLang(l)} style={{padding:'4px 9px',border:'none',borderRadius:7,cursor:'pointer',fontSize:11,fontWeight:700,background:lang===l?accentSoft:'var(--input)',color:lang===l?accent:'var(--dim)'}}>{l.toUpperCase()}</button>
+              ))}
+            </div>
+          </div>
+          <button onClick={()=>{setOpenPopover(null);setShowShortcuts(true)}} style={row}>
+            <svg {...ic}><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
+            <span style={{flex:1}}>{t.shortcuts_title}</span>
+            <kbd style={{fontSize:10,color:'var(--dim2)'}}>?</kbd>
+          </button>
+          <a href="/blog" target="_blank" rel="noopener noreferrer" style={row}>
+            <svg {...ic}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span style={{flex:1}}>Blog</span><span style={{fontSize:11,color:'var(--dim2)'}}>↗</span>
+          </a>
+          <div style={{height:1,background:'var(--border)',margin:'4px 6px'}}/>
+          <button onClick={()=>{setOpenPopover(null);setShowSupport(true)}} style={{...row,color:'#f472b6'}}>
+            <svg {...ic} style={{flexShrink:0,color:'#f472b6'}}><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span style={{flex:1}}>{t.tip_support}</span>
+          </button>
+        </div>
+        )
+      })()}
+
+      {/* ── Mode switch: Focus / Come Home. Above the start overlay so evening visitors can
+          go straight to Come Home without starting the focus audio first. ── */}
+      <div role="radiogroup" aria-label={lang==='vi'?'Chế độ không gian':'Workspace mode'} style={{position:'fixed',top:14,...(mob?{right:12}:{left:'50%',transform:'translateX(-50%)'}),zIndex:11,display:'flex',gap:2,padding:4,borderRadius:999,...glassPanel,boxShadow:'0 10px 30px rgba(0,0,0,.3)'}}>
+        <button role="radio" aria-checked style={{display:'flex',alignItems:'center',gap:6,padding:mob?'6px 10px':'7px 14px',border:'none',borderRadius:999,background:accentSoft,color:accent,fontSize:12.5,fontWeight:600,cursor:'default',fontFamily:'inherit'}}>
+          <span aria-hidden>☀️</span>{mob?<span className="lf-sr">{lang==='vi'?'Tập trung':'Focus'}</span>:(lang==='vi'?'Tập trung':'Focus')}
+        </button>
+        <button role="radio" aria-checked={false} onClick={enterHome} style={{display:'flex',alignItems:'center',gap:6,padding:mob?'6px 11px':'7px 14px',border:'none',borderRadius:999,background:'transparent',color:'#f3c49b',fontSize:12.5,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+          <span aria-hidden>🌙</span>{lang==='vi'?'Về nhà':'Come Home'}
+        </button>
+      </div>
+
+      {/* keeps the last stacked panel scrollable above the dock on mobile */}
+      {mob&&mobEnd>0&&<div aria-hidden style={{position:'absolute',top:mobEnd,left:0,width:1,height:90,pointerEvents:'none'}}/>}
+
       {openPopover==='youtube'&&!zen&&(
         <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:9,width:'min(320px,calc(100vw - 24px))',padding:16,...glassPanel,borderRadius:20,boxShadow:'0 22px 60px rgba(0,0,0,.42)'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
@@ -1701,47 +1885,8 @@ export function EmbedClient() {
         </div>
       )}
 
-      {/* ── Companion (draggable) ── */}
-      {companionType==='coding'&&!zen&&(
-        <div
-          {...catDrag.dp}
-          style={{...wStyle(catDrag,mob?{right:12,bottom:76}:{left:32,bottom:88}),zIndex:5,cursor:'grab',lineHeight:0}}
-          onMouseEnter={()=>setCatHovered(true)}
-          onMouseLeave={()=>setCatHovered(false)}
-        >
-          <CodingCatVariant variant={catVariant} size={mob?Math.min(catSize,100):catSize} accent={accent}/>
-
-          {catHovered&&(
-            <>
-              {/* Close — top right */}
-              <button
-                onPointerDown={e=>e.stopPropagation()}
-                onClick={()=>setCompanionType('none')}
-                title={t.pet_hide_btn}
-                style={{position:'absolute',top:6,right:6,width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:'50%',border:'1px solid rgba(255,255,255,.25)',background:'rgba(0,0,0,.58)',backdropFilter:'blur(4px)',color:'rgba(255,255,255,.9)',cursor:'pointer',fontSize:13,lineHeight:1,padding:0,zIndex:2}}
-              >×</button>
-
-              {/* Size controls — bottom right, pill stacked */}
-              <div
-                onPointerDown={e=>e.stopPropagation()}
-                style={{position:'absolute',bottom:10,right:6,display:'flex',flexDirection:'column',gap:3,zIndex:2}}
-              >
-                {[
-                  {label:'+',title:t.pet_enlarge, action:()=>setCatSize(s=>Math.min(280,s+20))},
-                  {label:'−',title:t.pet_shrink,  action:()=>setCatSize(s=>Math.max(80, s-20))},
-                ].map(({label,title,action})=>(
-                  <button key={label} onClick={action} title={title}
-                    style={{width:22,height:22,display:'flex',alignItems:'center',justifyContent:'center',borderRadius:7,border:'1px solid rgba(255,255,255,.22)',background:'rgba(0,0,0,.55)',backdropFilter:'blur(4px)',color:'rgba(255,255,255,.85)',cursor:'pointer',fontSize:15,fontWeight:700,lineHeight:1,padding:0,fontFamily:'inherit'}}
-                  >{label}</button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
       {/* ── Day/Night badge ── */}
-      {mounted&&!started&&(
+      {mounted&&!started&&!mob&&(
         <div style={{position:'absolute',top:14,right:14,background:'rgba(0,0,0,0.55)',backdropFilter:'blur(8px)',border:'1px solid rgba(255,255,255,0.1)',borderRadius:20,padding:'4px 10px',display:'flex',alignItems:'center',gap:5,zIndex:5,pointerEvents:'none',animation:'dnFade 4s ease forwards'}}>
           <span style={{fontSize:13}}>{dn.emoji}</span>
           <span style={{fontSize:10,color:'rgba(255,255,255,0.5)'}}>{t.dn_labels[dn.period]||dn.label}</span>
@@ -1936,59 +2081,14 @@ export function EmbedClient() {
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:'absolute',right:5,top:5,opacity:.6}}><path d="M7 17L17 7M9 7h8v8"/></svg>
         </a>
 
-        <a href="/blog" target="_blank" rel="noopener noreferrer" style={{...chip(false),position:'relative',textDecoration:'none'}} title="Blog">
-          <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>Blog</span>
-          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{position:'absolute',right:5,top:5,opacity:.6}}><path d="M7 17L17 7M9 7h8v8"/></svg>
-        </a>
-
         <div style={divider}/>
 
         {/* Utility cluster */}
         <div style={{display:'flex',alignItems:'center',gap:1}}>
-          <Tip label={t.share_copy}>
-          <button onClick={handleShare} style={{...dockBtn(copied),flexShrink:0}} title={t.share_copy}>
-            {copied
-              ?<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-              :<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>}
-          </button>
-          </Tip>
-
-          <Tip label={t.switch_theme}>
-          <button onClick={()=>setTheme(th=>th==='glass'?'warm':'glass')} style={{display:'flex',width:dbSz,height:dbSz,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:'transparent',color:'var(--dim)',cursor:'pointer'}} title={t.switch_theme}>
-            {theme==='glass'
-              ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-              :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8"/></svg>}
-          </button>
-          </Tip>
-
-          <Tip label={t.tip_lang}>
-          <div style={{display:'flex',gap:2,padding:'0 2px',flexShrink:0}}>
-            {(['en','vi'] as const).map(l=>(
-              <button key={l} onClick={()=>setLang(l)} style={{display:'flex',height:dbSz,padding:'0 8px',alignItems:'center',justifyContent:'center',border:'none',borderRadius:8,cursor:'pointer',transition:'all .16s ease',fontSize:11,fontWeight:700,letterSpacing:.5,
-                background:lang===l?accentSoft:'transparent',color:lang===l?accent:'var(--dim)'}}>
-                {l.toUpperCase()}
-              </button>
-            ))}
-          </div>
-          </Tip>
-
-          <Tip label={t.tip_support}>
-          <button onClick={()=>setShowSupport(true)} style={{...dockBtn(false),flexShrink:0,color:'#f472b6'}} title={t.tip_support}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-          </button>
-          </Tip>
-
           <Tip label={zen?t.zen_hint:`${t.zen_label} (Z)`}>
           <button onClick={()=>setZen(v=>!v)} style={{...dockBtn(zen),flexShrink:0}} title={zen?t.zen_hint:`${t.zen_label} (Z)`}>
             {/* leaf — "hide everything but the timer" */}
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
-          </button>
-          </Tip>
-
-          <Tip label={t.shortcuts_title}>
-          <button onClick={()=>setShowShortcuts(true)} style={{...dockBtn(showShortcuts),flexShrink:0}} title={t.shortcuts_title}>
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
           </button>
           </Tip>
 
@@ -1997,6 +2097,12 @@ export function EmbedClient() {
             {isFullscreen
               ?<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 0 2 2v3M16 21v-3a2 2 0 0 1 2-2h3"/></svg>
               :<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>}
+          </button>
+          </Tip>
+
+          <Tip label={lang==='vi'?'Thêm':'More'}>
+          <button onClick={()=>setOpenPopover(v=>v==='more'?null:'more')} aria-expanded={openPopover==='more'} style={{...dockBtn(openPopover==='more'),flexShrink:0}} title={lang==='vi'?'Thêm':'More'}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
           </button>
           </Tip>
         </div>
@@ -2009,8 +2115,6 @@ export function EmbedClient() {
         Powered by LofiSpace
       </a>
 
-      {/* ── Hidden YT player — off-screen (opacity:0 causes Chrome to pause media) ── */}
-      <div style={{position:'fixed',left:'-400px',top:0,width:'320px',height:'180px',pointerEvents:'none'}}><div ref={ytRef}/></div>
 
       {/* ── Onboarding tip (first visit only) ── */}
       {showOnboard&&(
@@ -2075,6 +2179,9 @@ export function EmbedClient() {
       {newLevelReached&&(
         <LevelUpOverlay key={newLevelReached} level={newLevelReached} onDismiss={dismissLevelUp} accent={accent}/>
       )}
+      </div>{/* end focus-only UI */}
+
+      {home&&<ComeHome audio={homeAudio} lang={lang} onExit={exitHome} setBackdrop={setBackdrop}/>}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
@@ -2091,6 +2198,7 @@ export function EmbedClient() {
         ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--track);border-radius:2px}
         .lf-dock::-webkit-scrollbar{display:none}.lf-dock{scrollbar-width:none;-ms-overflow-style:none}
         .lf-tip{display:inline-flex;flex-shrink:0}
+        .lf-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
         @media (max-width:639px){.lf-dock{mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent);-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 28px),transparent)}}
       `}</style>
     </div>

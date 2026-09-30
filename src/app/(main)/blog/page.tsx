@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { BLOG_POSTS } from '@/lib/blogPosts'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/seo/JsonLd'
@@ -57,6 +58,18 @@ export default function BlogPage() {
       {/* AdSense — Top */}
       <div className="mb-10">
         <AdBanner slot={process.env.NEXT_PUBLIC_AD_SLOT_BLOG_TOP ?? ''} format="horizontal" style={{ minHeight: 72 }} />
+      </div>
+
+      {/* Evening Reset cluster → Come Home */}
+      <div className="mb-10 flex flex-col gap-3 rounded-2xl border border-amber-200/10 bg-gradient-to-r from-[#24181f] to-[#141019] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-amber-100/90">🌙 Evening Reset guides</p>
+          <p className="mt-1 text-sm text-white/55">How to relax after work, clear your mind before bed, and stop overthinking at night.</p>
+        </div>
+        <div className="flex shrink-0 gap-3 text-sm">
+          <Link href="/blog/category/evening-reset" className="rounded-full border border-white/15 px-4 py-2 text-white/80 hover:border-white/30">Read the guides</Link>
+          <Link href="/come-home" className="rounded-full bg-amber-200/90 px-4 py-2 font-semibold text-[#2a1a14] hover:bg-amber-100">Come Home</Link>
+        </div>
       </div>
 
       {/* Client component handles category filter + post grid */}

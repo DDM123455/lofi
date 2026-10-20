@@ -70,21 +70,45 @@ function bgTypeFromUrl(url:string):BgType {
 
 const DEFAULT_YT='7NOSDKb0HlU'
 
-// Loads YouTube's iframe_api once. If the script fails (flaky network, filter lists) the
-// cached promise is dropped so the next call injects a fresh <script> instead of hanging.
+// Loads YouTube's iframe_api. Connections to Google hosts can fail intermittently on some
+// networks (dropped QUIC/HTTP3, flaky ISPs) — one failed attempt used to leave the player
+// "connecting…" for good until a hard reload. So it retries with backoff, each attempt with
+// a fresh URL so a cached failure isn't reused, and also times out an attempt whose second
+// stage (iframe_api pulls in www-widgetapi.js, which has no error hook of ours) never lands.
+// Only after every attempt fails does it reject; the next call then starts over.
+const YT_API_RETRIES=[0,1200,3000,6000]
 let ytApiPromise:Promise<void>|null=null
 function loadYtApi():Promise<void> {
   const w=window as any
   if(w.YT?.Player)return Promise.resolve()
   if(ytApiPromise)return ytApiPromise
   ytApiPromise=new Promise<void>((resolve,reject)=>{
+    let done=false
+    const finish=()=>{ if(!done&&w.YT?.Player){ done=true; resolve() } }
     const prev=w.onYouTubeIframeAPIReady
-    w.onYouTubeIframeAPIReady=()=>{ try{prev?.()}catch{/* ignore */} resolve() }
-    document.getElementById('yt-api')?.remove()
-    const el=document.createElement('script')
-    el.id='yt-api';el.src='https://www.youtube.com/iframe_api';el.async=true
-    el.onerror=()=>{ el.remove(); ytApiPromise=null; reject(new Error('yt-api')) }
-    document.head.appendChild(el)
+    w.onYouTubeIframeAPIReady=()=>{ try{prev?.()}catch{/* ignore */} finish() }
+    const attempt=(n:number)=>{
+      if(done)return
+      if(n>=YT_API_RETRIES.length){ ytApiPromise=null; reject(new Error('yt-api')); return }
+      setTimeout(()=>{
+        if(done)return
+        if(w.YT?.Player){ finish(); return }
+        // A half-loaded previous attempt leaves window.YT with `loading` set, which makes the
+        // next iframe_api skip loading its second stage — clear it so the retry really retries.
+        if(n){ try{ delete w.YT }catch{ w.YT=undefined } document.querySelectorAll('script[src*="www-widgetapi"]').forEach(s=>s.remove()) }
+        document.getElementById('yt-api')?.remove()
+        const el=document.createElement('script')
+        el.id='yt-api';el.async=true
+        el.src='https://www.youtube.com/iframe_api'+(n?`?r=${n}`:'')
+        let settled=false
+        const next=()=>{ if(settled||done)return; settled=true; clearTimeout(t); attempt(n+1) }
+        el.onerror=()=>{ el.remove(); next() }
+        // Loaded but never became ready (second-stage script failed) → try again.
+        const t=setTimeout(()=>{ if(!w.YT?.Player)next() },9000)
+        document.head.appendChild(el)
+      },YT_API_RETRIES[n])
+    }
+    attempt(0)
   })
   return ytApiPromise
 }
@@ -765,24 +789,26 @@ export function EmbedClient() {
 
   const armYtWatch=useCallback(()=>{
     clearYtWatch()
-    const check=(waited:number)=>{
+    const check=()=>{
       ytTimer.current=null
       if(!ytWantRef.current)return
       const p=ytPlayer.current
       let st:number|null=null
       try{ st=ytReadyRef.current&&p?.getPlayerState?p.getPlayerState():null }catch{/* ignore */}
       if(st===1)return
-      // Live streams can sit in BUFFERING for a while on a slow link — keep waiting.
-      if(st===3&&waited<24000){ ytTimer.current=setTimeout(()=>check(waited+4000),4000); return }
       if(ytDeadRef.current.has(ytVidRef.current??''))return // already reported as unavailable
+      // Still silent after a few seconds: put the real player on screen instead of waiting
+      // on it invisibly. Whatever is in the way — browser autoplay block, a YouTube-side
+      // screen ("Sign in to confirm you're not a bot", an ad), a slow buffer — is then
+      // visible and tappable there; it hides again by itself once the stream plays.
       if(ytReadyRef.current){ setYtStatus('tap'); return }
       if(!ytAutoRetriedRef.current){
         ytAutoRetriedRef.current=true
         createYtRef.current(ytTargetRef.current??activeYtIdRef.current)
-        ytTimer.current=setTimeout(()=>check(0),10000)
+        ytTimer.current=setTimeout(check,10000)
       }else setYtStatus('blocked')
     }
-    ytTimer.current=setTimeout(()=>check(8000),8000)
+    ytTimer.current=setTimeout(check,5000)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[])
 
@@ -1602,7 +1628,8 @@ export function EmbedClient() {
                 <div style={{display:'flex',flexDirection:'column',gap:6}}>
                   {LOFI_STREAMS.map(s=>{
                     const active=lofiId===s.id
-                    const live=active&&playing&&started
+                    // Only claim LIVE once YouTube actually reports playback, not while connecting
+                    const live=active&&playing&&started&&ytStatus==='ready'
                     return(
                       <div key={s.id} onClick={()=>handleLofiChange(s.id)} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:10,padding:'11px 13px',borderRadius:12,cursor:'pointer',transition:'all .16s ease',border:`1px solid ${active?accentSoft:'transparent'}`,background:active?accentSoft:'transparent'}}>
                         <div style={{display:'flex',alignItems:'center',gap:11,minWidth:0}}>

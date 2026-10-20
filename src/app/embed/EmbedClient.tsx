@@ -1664,9 +1664,14 @@ export function EmbedClient() {
                   {ytStatus==='tap'&&(
                     <p style={{margin:'2px 0 0',padding:'9px 12px',borderRadius:10,background:accent,color:'#16121f',fontWeight:600,fontSize:12.5,textAlign:'center'}}>▼ {t.music_tap_play}</p>
                   )}
-                  <div style={{marginTop:10,padding:'9px 12px',borderRadius:11,background:'var(--input)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
-                    <span style={{fontSize:11.5,color:'var(--dim)'}}>{t.music_custom_yt}</span>
-                    <button onClick={()=>setOpenPopover('youtube')} style={{padding:'5px 12px',border:'none',borderRadius:8,background:accentSoft,color:accent,fontWeight:600,fontSize:12,cursor:'pointer',flexShrink:0}}>YouTube</button>
+                  {/* Paste-a-link right here — this row used to look like an input but was only a
+                      label + a button that opened a separate popover, so people typed into nothing. */}
+                  <div style={{marginTop:10,display:'flex',gap:6}}>
+                    <input value={customLofiInput} onChange={e=>setCustomLofiInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')applyCustomLofi()}} onFocus={focusScroll}
+                      placeholder={t.music_custom_placeholder} aria-label={t.music_custom_yt}
+                      style={{flex:1,minWidth:0,padding:'9px 12px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:11,fontSize:12.5,outline:'none',fontFamily:'inherit'}}/>
+                    <button onClick={applyCustomLofi} disabled={!parseYtId(customLofiInput)} title={t.music_play_btn}
+                      style={{padding:'0 14px',border:'none',borderRadius:11,background:parseYtId(customLofiInput)?accent:accentSoft,color:parseYtId(customLofiInput)?'#16121f':accent,fontWeight:600,fontSize:12.5,cursor:parseYtId(customLofiInput)?'pointer':'default',flexShrink:0}}>▶ {t.music_play_btn}</button>
                   </div>
                 </div>
               </div>

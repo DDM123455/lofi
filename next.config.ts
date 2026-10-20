@@ -29,26 +29,35 @@ const withBundleAnalyzer = createBundleAnalyzer({
 //   https://www.google.com/g/collect and *.analytics.google.com — without those the hits
 //   were being blocked on every page under this policy. Clarity's tag loads its script
 //   from scripts.clarity.ms and uploads to a sharded *.clarity.ms collector.
-// - frame-src 'self': the only live <iframe> rendered on non-/workspace/-/embed pages is
-//   the embed-code live preview (src/components/embed/EmbedGenerator.tsx), which points at
-//   our own /embed route (same-origin). The actual YouTube IFrame API/player
-//   (src/hooks/useYouTubePlayer.ts, src/app/embed/EmbedClient.tsx) only runs inside
-//   /workspace and /embed, which are excluded from this policy, so youtube.com is not
-//   needed in frame-src here.
+// - The WORKSPACE's own needs are also allowed here, even though /workspace itself is
+//   excluded from this policy. A CSP belongs to the document, and Next.js <Link> navigations
+//   are client-side: someone who lands on the homepage / a blog post / a landing page and
+//   then clicks "Open Workspace" is still running under THIS policy. Without these entries
+//   the YouTube player, its fonts and the weather widget were blocked ((blocked:csp)) on that
+//   path — music silently never started until a fresh tab or a hard reload. Needed:
+//     script-src  https://www.youtube.com https://s.ytimg.com   (IFrame API + widgetapi)
+//     frame-src   https://www.youtube.com https://www.youtube-nocookie.com (player, YT backgrounds)
+//     style-src / font-src  fonts.googleapis.com / fonts.gstatic.com (Outfit, Space Grotesk)
+//     connect-src api.open-meteo.com, nominatim.openstreetmap.org (weather widget)
+//     media-src   https: blob:  (custom background video URLs)
+// - frame-src 'self' additionally covers the embed-code live preview
+//   (src/components/embed/EmbedGenerator.tsx), which points at our own /embed route.
 // - img-src 'self' data: https:: next/image renders remote YouTube thumbnails
 //   (img.youtube.com, see images.remotePatterns below) plus AdSense ad creative images;
 //   allowing https: broadly avoids an ever-growing thumbnail/ad-image allowlist.
-// - font-src 'self': fonts are self-hosted via next/font (Geist/Geist Mono), no external CDN.
+// - font-src: Geist is self-hosted via next/font; the workspace pulls Outfit/Space Grotesk
+//   from Google Fonts (see above).
 // - object-src 'none', base-uri 'self': standard hardening, nothing in the app needs plugins
 //   or dynamic <base> rewriting.
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms https://*.clarity.ms",
-  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms https://*.clarity.ms https://www.youtube.com https://s.ytimg.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: https:",
-  "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms https://*.clarity.ms https://www.google.com https://*.analytics.google.com",
-  "frame-src 'self'",
-  "font-src 'self'",
+  "media-src 'self' https: blob:",
+  "connect-src 'self' https://www.google-analytics.com https://*.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://googleads.g.doubleclick.net https://www.clarity.ms https://*.clarity.ms https://www.google.com https://*.analytics.google.com https://api.open-meteo.com https://nominatim.openstreetmap.org",
+  "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com",
+  "font-src 'self' https://fonts.gstatic.com",
   "object-src 'none'",
   "base-uri 'self'",
 ].join('; ')

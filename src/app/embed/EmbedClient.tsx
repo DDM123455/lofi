@@ -749,7 +749,9 @@ export function EmbedClient() {
                 ytStallTimer.current=null
                 let st:number|null=null
                 try{ st=p.getPlayerState() }catch{/* ignore */}
-                if(ytWantRef.current&&st!==1&&st!==3)setYtStatus('tap')
+                // A removed / non-embeddable video also sits at -1 — that's already reported
+                // as "can't be played here"; don't overwrite it with a pointless tap prompt.
+                if(ytWantRef.current&&st!==1&&st!==3&&!ytDeadRef.current.has(ytVidRef.current??''))setYtStatus('tap')
               },2500)
             }
           },
@@ -772,6 +774,7 @@ export function EmbedClient() {
       if(st===1)return
       // Live streams can sit in BUFFERING for a while on a slow link — keep waiting.
       if(st===3&&waited<24000){ ytTimer.current=setTimeout(()=>check(waited+4000),4000); return }
+      if(ytDeadRef.current.has(ytVidRef.current??''))return // already reported as unavailable
       if(ytReadyRef.current){ setYtStatus('tap'); return }
       if(!ytAutoRetriedRef.current){
         ytAutoRetriedRef.current=true
@@ -797,6 +800,9 @@ export function EmbedClient() {
       try{
         p.unMute();p.setVolume(effYt(lofiVolRef.current))
         if(ytVidRef.current!==ytId){ytVidRef.current=ytId;p.loadVideoById(ytId);setYtStatus('loading')}
+        // A Retry on the same video after a failure reloads it, so YouTube re-checks it and
+        // re-fires onError if it's still dead (a bare playVideo() on it reports nothing).
+        else if(userInitiated&&(ytStatusRef.current==='unavailable'||ytStatusRef.current==='blocked')){ p.loadVideoById(ytId); setYtStatus('loading') }
         else{ p.playVideo(); if(p.getPlayerState?.()!==1)setYtStatus('loading') }
         armYtWatch()
         return
@@ -831,6 +837,7 @@ export function EmbedClient() {
           const next=LOFI_STREAMS.find(x=>!ytDeadRef.current.has(x.youtubeId))
           if(next){ setLofiId(next.id); playYt(next.youtubeId); return }
         }
+        if(ytStallTimer.current){clearTimeout(ytStallTimer.current);ytStallTimer.current=null}
         setYtStatus('unavailable'); return
       }
       clearYtWatch()

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useContext, createCo
 import { preconnect } from 'react-dom'
 import { getDayNightConfig } from '@/hooks/useDayNight'
 import { LOFI_STREAMS, AMBIENT_SOUNDS } from '@/lib/lofiStreams'
-import { BG_PRESETS, getBgPresetByUrl } from '@/lib/backgrounds'
+import { BG_PRESETS, getBgPresetByUrl, mediaUrl } from '@/lib/backgrounds'
 import { useGameStore, xpProgress, ACHIEVEMENT_DEFS, localDate } from '@/lib/gameStore'
 import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
 import { analytics } from '@/lib/analytics'
@@ -563,7 +563,7 @@ export function EmbedClient() {
     const vel=bgElRef.current
     // Skipped when the element is already on this clip (first mount) — a redundant load()
     // would abort the in-flight fetch and restart it.
-    if(vel instanceof HTMLVideoElement&&vel.currentSrc&&!vel.currentSrc.endsWith(bgUrl)){ try{ vel.load() }catch{/* no-op */} }
+    if(vel instanceof HTMLVideoElement&&vel.currentSrc&&!vel.currentSrc.endsWith(mediaUrl(bgUrl))){ try{ vel.load() }catch{/* no-op */} }
     // Known presets ship a pre-generated first-frame poster (tiny JPG) — the <video poster>
     // attribute paints it immediately, well before the clip itself buffers, so there's no
     // reason to keep showing the old background while we wait: that's what made switching
@@ -602,7 +602,7 @@ export function EmbedClient() {
     if(openPopover!=='background'||bgPrefetchedRef.current)return
     const conn=(navigator as any).connection
     if(conn?.saveData||conn?.effectiveType==='2g'||conn?.effectiveType==='slow-2g')return
-    const posters=BG_PRESETS.filter(p=>p.url!==bgUrl).map(p=>p.poster)
+    const posters=BG_PRESETS.filter(p=>p.url!==bgUrl).map(p=>mediaUrl(p.poster))
     Promise.allSettled(posters.map(u=>fetch(u,{credentials:'omit'})))
       .then(()=>{ bgPrefetchedRef.current=true })
   },[openPopover,bgUrl])
@@ -611,7 +611,7 @@ export function EmbedClient() {
   const prefetchScene=useCallback((url:string)=>{
     const conn=(navigator as any).connection
     if(conn?.saveData||conn?.effectiveType==='2g'||conn?.effectiveType==='slow-2g')return
-    fetch(url,{credentials:'omit',priority:'low'} as RequestInit).catch(()=>{})
+    fetch(mediaUrl(url),{credentials:'omit',priority:'low'} as RequestInit).catch(()=>{})
   },[])
   useEffect(()=>{
     if(pom.completions===0) return
@@ -1292,7 +1292,8 @@ export function EmbedClient() {
   const ytNeedsTap = ytStatus==='tap'&&started&&playing&&!home
   const YT_TAP_BOTTOM = mob?96:118
   const bgGradient=getBgPresetByUrl(bgUrl)?.gradient ?? ['#0d0d14','#1a1a24']
-  const bgPoster=getBgPresetByUrl(bgUrl)?.poster
+  const bgPoster0=getBgPresetByUrl(bgUrl)?.poster
+  const bgPoster=bgPoster0?mediaUrl(bgPoster0):undefined
 
   // On mobile, panel widths grow to near-full-viewport (see width:Math.min(N,vw-M) below),
   // so the desktop two-column left/right placement collides. Stack them in one column instead.
@@ -1321,7 +1322,7 @@ export function EmbedClient() {
       <div style={{position:'fixed',inset:0,background:`linear-gradient(160deg,${bgGradient[0]},${bgGradient[1]})`}}/>
       {/* Crossfade base: last-shown background stays visible until the new one finishes loading */}
       {prevBg&&(prevBg.type==='video'
-        ?<video key={`prev-${prevBg.url}`} src={prevBg.url} autoPlay loop muted playsInline aria-hidden
+        ?<video key={`prev-${prevBg.url}`} src={mediaUrl(prevBg.url)} autoPlay loop muted playsInline aria-hidden
             style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover'}}/>
         :prevBg.type==='gif'
           // eslint-disable-next-line @next/next/no-img-element
@@ -1332,7 +1333,7 @@ export function EmbedClient() {
         // No React key: the element is reused across scene switches (src swapped + .load()ed
         // imperatively in the bgUrl effect) so the decoder/buffer isn't torn down and rebuilt
         // on every change. The <prevBg> layer above covers the visual gap while the new clip buffers.
-        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} src={bgUrl} poster={bgPoster} autoPlay loop muted playsInline preload="auto" aria-hidden
+        ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} src={mediaUrl(bgUrl)} poster={bgPoster} autoPlay loop muted playsInline preload="auto" aria-hidden
             onCanPlay={handleBgReady}
             style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'

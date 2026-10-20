@@ -7,6 +7,10 @@
 // background EmbedClient will pick (?bgv= / Come Home / saved settings / default) and
 // starts painting its poster + playing the clip straight from the HTML. By the time
 // React mounts, the clip is already in the HTTP cache, so the real player starts instantly.
+import { MEDIA_VERSION } from '@/lib/backgrounds'
+
+// Must request exactly the URLs EmbedClient's <video> uses (mediaUrl()), or the early
+// download is wasted and the cache-busting version is skipped.
 const BOOT = `(function(){try{
 var d=document.getElementById('lf-boot');if(!d)return;
 var q=new URLSearchParams(location.search),u=q.get('bgv'),s={};
@@ -16,7 +20,7 @@ if(!u)u=s.bgUrl||'/video/street-scene.mp4';
 var o=parseInt(q.get('bgo')||(s.bgOpacity!=null?s.bgOpacity:35),10);
 d.lastChild.style.opacity=String(Math.min(90,Math.max(0,o||0))/100);
 if(!/^\\/video\\/[\\w-]+\\.mp4$/.test(u))return;
-var p=u.replace(/\\.mp4$/,'-poster.jpg');
+var p=u.replace(/\\.mp4$/,'-poster.jpg')+'?v=${MEDIA_VERSION}';u+='?v=${MEDIA_VERSION}';
 d.style.backgroundImage='url('+p+')';
 var v=document.createElement('video');
 v.muted=true;v.defaultMuted=true;v.loop=true;v.autoplay=true;v.playsInline=true;

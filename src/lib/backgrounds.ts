@@ -23,6 +23,20 @@ export const BG_PRESETS: BgPreset[] = [
   { id: 'balcony-twilight',label: 'Balcony Twilight',emoji: '🏮', url: '/video/balcony-twilight.mp4', poster: '/video/balcony-twilight-poster.jpg', gradient: ['#0e0814', '#1a1028'] },
 ]
 
+/**
+ * /video/* is served `Cache-Control: immutable, max-age=1y` under fixed filenames, so a
+ * re-encoded clip would never reach anyone who has the old one cached. Bump this whenever
+ * the files in public/video change, and run every <video src> / poster through mediaUrl().
+ * The plain URLs stay the identity everywhere else (presets, saved settings, ?bgv= links).
+ *   v2 (2026-10): clips rebuilt as seamless loops (scripts/seamless-loop.py) + new posters.
+ */
+export const MEDIA_VERSION = '2'
+
+export function mediaUrl(url: string): string {
+  if (!url.startsWith('/video/')) return url
+  return `${url}${url.includes('?') ? '&' : '?'}v=${MEDIA_VERSION}`
+}
+
 export function getBgPresetByUrl(url: string): BgPreset | undefined {
   return BG_PRESETS.find(p => p.url === url)
 }

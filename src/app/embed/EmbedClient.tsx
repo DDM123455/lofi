@@ -69,6 +69,8 @@ function bgTypeFromUrl(url:string):BgType {
 }
 
 const DEFAULT_YT='7NOSDKb0HlU'
+// Background clips play at this speed (see the <video className="lf-bgvid">)
+const BG_RATE=0.8
 
 // Loads YouTube's iframe_api. Connections to Google hosts can fail intermittently on some
 // networks (dropped QUIC/HTTP3, flaky ISPs) — one failed attempt used to leave the player
@@ -1333,7 +1335,11 @@ export function EmbedClient() {
         // No React key: the element is reused across scene switches (src swapped + .load()ed
         // imperatively in the bgUrl effect) so the decoder/buffer isn't torn down and rebuilt
         // on every change. The <prevBg> layer above covers the visual gap while the new clip buffers.
+        // Played a little slower than recorded: calmer motion, and each pass of the short loop
+        // lasts longer, so the repetition is much harder to notice (with the slow lf-drift).
         ?<video ref={bgElRef as React.RefObject<HTMLVideoElement>} src={mediaUrl(bgUrl)} poster={bgPoster} autoPlay loop muted playsInline preload="auto" aria-hidden
+            className="lf-bgvid"
+            onLoadedMetadata={e=>{const v=e.currentTarget;v.defaultPlaybackRate=BG_RATE;v.playbackRate=BG_RATE}}
             onCanPlay={handleBgReady}
             style={{position:'fixed',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:bgReady?1:0,transition:'opacity .5s ease'}}/>
         :bgType==='gif'
@@ -2372,6 +2378,11 @@ export function EmbedClient() {
         @keyframes lf-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.82)}}
         @keyframes lf-flame{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.12) rotate(2deg)}}
         @keyframes spin{to{transform:rotate(360deg)}}
+        /* Background "camera": a very slow zoom + drift (80s each way) so the frame as a whole
+           never repeats exactly — the eye stops noticing that the clip itself is a short loop. */
+        @keyframes lf-drift{0%{transform:scale(1.04) translate3d(0,0,0)}50%{transform:scale(1.1) translate3d(-1.6%,-1%,0)}100%{transform:scale(1.06) translate3d(1.4%,.8%,0)}}
+        .lf-bgvid{animation:lf-drift 160s ease-in-out infinite alternate;will-change:transform}
+        @media (prefers-reduced-motion: reduce){.lf-bgvid{animation:none}}
         @keyframes dnFade{0%{opacity:1}70%{opacity:1}100%{opacity:0;pointer-events:none}}
         @keyframes xpFloat{0%{opacity:0;transform:translate(-50%,0) scale(.7)}15%{opacity:1;transform:translate(-50%,-8px) scale(1)}80%{opacity:1;transform:translate(-50%,-24px) scale(1)}100%{opacity:0;transform:translate(-50%,-36px) scale(.9)}}
         @keyframes onboardIn{0%{opacity:0;transform:translateX(-50%) translateY(10px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}

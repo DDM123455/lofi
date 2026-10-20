@@ -456,6 +456,7 @@ export function EmbedClient() {
   const ytDeadRef   = useRef<Set<string>>(new Set()) // ids that errored as removed / not embeddable
   const ytErrorRef  = useRef<(code:number,id?:string)=>void>(()=>{})
   const ytStatusRef = useRef<string>('idle')
+  const ytStallTimer = useRef<ReturnType<typeof setTimeout>|null>(null) // "stopped by itself" grace period
   const noteTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const shownBgRef  = useRef<{url:string;type:BgType}|null>(null)
   const prevBgTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
@@ -733,9 +734,24 @@ export function EmbedClient() {
             }catch{/* ignore */}
           },
           onStateChange:(e:any)=>{
+            if(ytStallTimer.current){clearTimeout(ytStallTimer.current);ytStallTimer.current=null}
             if(e.data===1){ clearYtWatch(); ytAutoRetriedRef.current=false; setYtStatus('ready') }
             // Live streams occasionally report ENDED on a reconnect — pick them back up.
             else if(e.data===0&&ytWantRef.current){ try{e.target.loadVideoById(ytVidRef.current)}catch{/* ignore */} }
+            // Stopped on its own while we still want sound (paused / unstarted / cued). The usual
+            // cause is the browser's autoplay policy: the stream starts for a moment, so state 1
+            // already cleared the watchdog, then gets paused — the person hears nothing and saw
+            // no prompt. Give it a moment (live streams dip into -1 while re-buffering), then ask
+            // for a tap, which plays inside a real user gesture.
+            else if((e.data===2||e.data===-1||e.data===5)&&ytWantRef.current){
+              const p=e.target
+              ytStallTimer.current=setTimeout(()=>{
+                ytStallTimer.current=null
+                let st:number|null=null
+                try{ st=p.getPlayerState() }catch{/* ignore */}
+                if(ytWantRef.current&&st!==1&&st!==3)setYtStatus('tap')
+              },2500)
+            }
           },
           onError:(e:any)=>ytErrorRef.current(e.data),
         },
@@ -796,6 +812,7 @@ export function EmbedClient() {
   const pauseYt=useCallback(()=>{
     ytWantRef.current=false
     clearYtWatch()
+    if(ytStallTimer.current){clearTimeout(ytStallTimer.current);ytStallTimer.current=null}
     setYtStatus(s=>s==='tap'||s==='loading'?'idle':s)
     try{ytPlayer.current?.pauseVideo()}catch{/* ignore */}
   },[])
@@ -1238,6 +1255,9 @@ export function EmbedClient() {
     const el=e.currentTarget
     setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300)
   }
+  // Stream held back by the browser → show the real player above the dock to be tapped.
+  const ytNeedsTap = ytStatus==='tap'&&started&&playing&&!home
+  const YT_TAP_BOTTOM = mob?96:118
   const bgGradient=getBgPresetByUrl(bgUrl)?.gradient ?? ['#0d0d14','#1a1a24']
   const bgPoster=getBgPresetByUrl(bgUrl)?.poster
 
@@ -1299,8 +1319,14 @@ export function EmbedClient() {
       )}
 
       {/* ── Hidden YT player — off-screen (opacity:0 causes Chrome to pause media). Kept outside the
-          focus-only wrapper below so it survives Come Home mode. ── */}
-      <div style={{position:'fixed',left:'-400px',top:0,width:'320px',height:'180px',pointerEvents:'none'}}><div ref={ytRef}/></div>
+          focus-only wrapper below so it survives Come Home mode.
+          When the browser refuses to start it (mobile Chrome, iOS Safari, strict autoplay settings),
+          a tap on OUR page isn't enough — the gesture has to land inside YouTube's cross-origin
+          iframe. So in that state the same player node is brought on-screen to be tapped
+          (only its style changes; moving the node would reload the iframe). ── */}
+      <div style={ytNeedsTap
+        ?{position:'fixed',left:'50%',bottom:YT_TAP_BOTTOM,transform:'translateX(-50%)',width:'320px',height:'180px',zIndex:13,borderRadius:14,overflow:'hidden',boxShadow:'0 14px 40px rgba(0,0,0,.55)',outline:`2px solid ${accent}`}
+        :{position:'fixed',left:'-400px',top:0,width:'320px',height:'180px',pointerEvents:'none'}}><div ref={ytRef}/></div>
 
       {/* Focus-mode UI. `display:contents` keeps the existing absolute layout untouched; in Come
           Home it's hidden (not unmounted), so timers, todos and panel state survive the round trip. */}
@@ -1602,7 +1628,7 @@ export function EmbedClient() {
                     <p style={{fontSize:10.5,color:'#f97316',margin:'2px 0 0',lineHeight:1.5,background:'rgba(249,115,22,0.1)',padding:'7px 9px',borderRadius:8}}>{t.music_yt_unavailable}</p>
                   )}
                   {ytStatus==='tap'&&(
-                    <button onClick={retryYT} style={{marginTop:2,padding:'9px 12px',border:'none',borderRadius:10,background:accent,color:'#16121f',fontWeight:600,fontSize:12.5,cursor:'pointer'}}>▶ {t.music_tap_play}</button>
+                    <p style={{margin:'2px 0 0',padding:'9px 12px',borderRadius:10,background:accent,color:'#16121f',fontWeight:600,fontSize:12.5,textAlign:'center'}}>▼ {t.music_tap_play}</p>
                   )}
                   <div style={{marginTop:10,padding:'9px 12px',borderRadius:11,background:'var(--input)',border:'1px solid var(--border)',display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
                     <span style={{fontSize:11.5,color:'var(--dim)'}}>{t.music_custom_yt}</span>
@@ -1875,10 +1901,11 @@ export function EmbedClient() {
 
       {/* Browser refused to autoplay the stream (iOS/Safari, strict autoplay settings) —
           one tap here calls playVideo() inside a real user gesture. */}
-      {ytStatus==='tap'&&started&&playing&&!home&&(
-        <button onClick={retryYT} style={{position:'fixed',top:mob?60:64,left:'50%',transform:'translateX(-50%)',zIndex:12,display:'flex',alignItems:'center',gap:8,padding:'9px 16px',border:'none',borderRadius:999,background:accent,color:'#16121f',fontWeight:700,fontSize:13,cursor:'pointer',boxShadow:'0 8px 24px rgba(0,0,0,.35)',fontFamily:'inherit'}}>
-          ▶ {t.music_tap_play}
-        </button>
+      {ytNeedsTap&&(
+        // A label, not a button: a tap here can't unlock YouTube's iframe (see the player note above).
+        <div role="status" style={{position:'fixed',bottom:YT_TAP_BOTTOM+180+12,left:'50%',transform:'translateX(-50%)',zIndex:13,whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:8,padding:'9px 16px',borderRadius:999,background:accent,color:'#16121f',fontWeight:700,fontSize:13,boxShadow:'0 8px 24px rgba(0,0,0,.35)',pointerEvents:'none'}}>
+          ▼ {t.music_tap_play}
+        </div>
       )}
 
       {/* ── Mode switch: Focus / Come Home. Above the start overlay so evening visitors can
@@ -2234,7 +2261,7 @@ export function EmbedClient() {
 
 
       {/* ── Onboarding tip (first visit only) ── */}
-      {showOnboard&&(
+      {showOnboard&&!ytNeedsTap&&(
         <div onClick={dismissOnboard} style={{position:'fixed',bottom:mob?76:96,left:'50%',zIndex:30,cursor:'pointer',animation:'onboardIn 0.35s ease forwards',pointerEvents:'all'}}>
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderRadius:14,background:'rgba(20,17,40,0.92)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:`1px solid ${accent}55`,boxShadow:`0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${accent}22`,whiteSpace:'nowrap',maxWidth:'calc(100vw - 32px)'}}>
             <span style={{fontSize:18,flexShrink:0}}>🎵</span>

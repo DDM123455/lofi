@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { CATEGORY_LABELS, sceneToWorkspaceUrl, sceneToEmbedUrl } from '@/lib/scenes'
 import type { Scene, SceneCategory } from '@/lib/scenes'
+import { mediaUrl } from '@/lib/backgrounds'
 
 interface Props { scenes: Scene[] }
 
@@ -60,7 +61,7 @@ export function SceneGrid({ scenes }: Props) {
               {hoveredId === scene.id ? (
                 /\.(mp4|webm|mov)$/i.test(scene.gifUrl) ? (
                   <video
-                    src={scene.gifUrl}
+                    src={mediaUrl(scene.gifUrl)}
                     autoPlay muted playsInline
                     className="absolute inset-0 h-full w-full object-cover"
                     style={{ opacity: 1 - scene.overlay / 100 + 0.3 }}
@@ -72,7 +73,7 @@ export function SceneGrid({ scenes }: Props) {
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={scene.gifUrl}
+                    src={mediaUrl(scene.gifUrl)}
                     alt={scene.description}
                     className="absolute inset-0 h-full w-full object-cover"
                     style={{ opacity: 1 - scene.overlay / 100 + 0.3 }}

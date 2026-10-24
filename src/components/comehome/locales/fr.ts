@@ -121,6 +121,11 @@ const fr: HomeCopy = {
   closed_title: 'Bonne nuit.',
   closed_sub: 'Le son est coupé. Vous pouvez fermer cet onglet quand vous voulez.',
   closed_reopen: 'Revenir',
+  support_hint: "Plus lourd qu'une mauvaise journée ? Vous pouvez parler à quelqu'un, gratuitement et en toute confidentialité.",
+  support_link: "Trouver quelqu'un à qui parler →",
+  support_title: "Ce que vous avez écrit semble vraiment lourd.",
+  support_body: "Vous n'avez pas à porter cela seul. Si vous pensez à mettre fin à vos jours ou à vous faire du mal, contactez quelqu'un dès maintenant : des personnes formées peuvent vous écouter, gratuitement et en toute confidentialité, jour et nuit.",
+  support_after: "Si vous le souhaitez encore, vous pouvez laisser partir le reste ci-dessous.",
 }
 
 export default fr

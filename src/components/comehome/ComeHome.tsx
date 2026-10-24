@@ -5,6 +5,7 @@ import { analytics } from '@/lib/analytics'
 import type { Lang } from '@/lib/i18n'
 import { EXP_EMOJI, HOME_COPY, HUB, loadHomeCopy, MOOD_EMOJI, MOOD_SUGGEST, NEED_MIX, RITUAL_MIX, type Exp, type HomeCopy, type Mood, type Ritual } from './copy'
 import { loadSky, useFocusOnMount, useReducedMotion } from './hooks'
+import { SUPPORT_URL } from './support'
 import { BrainDump, MemorySky, OneThing, StarField, type Exits } from './Release'
 import { CalmBreath, CompanyRoom, QuietMixer, RestRoom, SleepWindDown, type HomeAudio } from './Experiences'
 import { NIGHT_ROOM_CSS } from './NightRoom'
@@ -270,6 +271,7 @@ function Hub({ c, mood, skyCount, onPick }: { c: HomeCopy; mood: Mood | null; sk
       <StarField count={20} />
       <div className="ch-col ch-wide">
         {mood && <p className="ch-sub ch-reply">{c.mood_reply[mood]}</p>}
+        {mood === 'heavy' && <SupportLine c={c} strong />}
         <h2 ref={h} tabIndex={-1} className="ch-h2">{c.need_q}</h2>
         {HUB.map(({ group, items }) => (
           <section key={group} className="ch-group" aria-labelledby={`ch-g-${group}`}>
@@ -291,8 +293,19 @@ function Hub({ c, mood, skyCount, onPick }: { c: HomeCopy; mood: Mood | null; sk
             </div>
           </section>
         ))}
+        {mood !== 'heavy' && <SupportLine c={c} />}
       </div>
     </div>
+  )
+}
+
+/** A quiet way to reach a real person — present on every visit, stronger after "heavy". */
+function SupportLine({ c, strong = false }: { c: HomeCopy; strong?: boolean }) {
+  return (
+    <p className={`ch-support${strong ? ' is-strong' : ''}`}>
+      {c.support_hint}{' '}
+      <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">{c.support_link}</a>
+    </p>
   )
 }
 

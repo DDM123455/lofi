@@ -121,6 +121,11 @@ const id: HomeCopy = {
   closed_title: 'Selamat tidur.',
   closed_sub: 'Suara sudah dimatikan. Kamu bisa menutup tab ini kapan saja.',
   closed_reopen: 'Masuk lagi',
+  support_hint: "Lebih berat dari sekadar hari yang buruk? Kamu bisa bicara dengan seseorang — gratis dan rahasia.",
+  support_link: "Cari seseorang untuk diajak bicara →",
+  support_title: "Yang kamu tulis terdengar sangat berat.",
+  support_body: "Kamu tidak harus menanggungnya sendirian. Jika kamu berpikir untuk mengakhiri hidup atau menyakiti diri sendiri, tolong hubungi seseorang sekarang juga — ada orang terlatih yang siap mendengarkan, gratis dan rahasia, siang maupun malam.",
+  support_after: "Kalau kamu masih mau, sisanya bisa kamu lepaskan di bawah.",
 }
 
 export default id

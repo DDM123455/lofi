@@ -121,6 +121,11 @@ const es: HomeCopy = {
   closed_title: 'Buenas noches.',
   closed_sub: 'El sonido está apagado. Puedes cerrar esta pestaña cuando quieras.',
   closed_reopen: 'Volver a entrar',
+  support_hint: "¿Más pesado que un mal día? Puedes hablar con alguien, gratis y de forma confidencial.",
+  support_link: "Encuentra a alguien con quien hablar →",
+  support_title: "Lo que escribiste suena muy pesado.",
+  support_body: "No tienes que cargar con esto a solas. Si estás pensando en quitarte la vida o en hacerte daño, por favor busca a alguien ahora mismo: hay personas preparadas para escucharte, gratis y de forma confidencial, de día o de noche.",
+  support_after: "Si aún quieres, puedes soltar el resto aquí abajo.",
 }
 
 export default es

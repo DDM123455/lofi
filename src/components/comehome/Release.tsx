@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties, type For
 import { localeOf, type Lang } from '@/lib/i18n'
 import { RITUAL_EMOJI, RITUAL_ORDER, type HomeCopy, type Ritual } from './copy'
 import { loadSky, newStar, saveSky, SKY_MAX, starPos, useFocusOnMount, type SkyStar } from './hooks'
+import { needsSupport, SUPPORT_URL } from './support'
 
 /*
  * Privacy contract for everything in this file:
@@ -103,6 +104,19 @@ export function AfterActions({ c, line, exits, children }: { c: HomeCopy; line: 
   )
 }
 
+/** Warm, non-blocking note shown above the choices when the writing contains clear
+ *  self-harm language (checked locally — see support.ts; nothing is stored or tracked). */
+function CareNote({ c }: { c: HomeCopy }) {
+  return (
+    <div className="ch-care" role="note">
+      <h3>{c.support_title}</h3>
+      <p>{c.support_body}</p>
+      <a className="ch-btn ch-btn-main" href={SUPPORT_URL} target="_blank" rel="noopener noreferrer">{c.support_link}</a>
+      <p className="ch-fine">{c.support_after}</p>
+    </div>
+  )
+}
+
 function RitualPicker({ c, value, onChange }: { c: HomeCopy; value: Ritual; onChange: (r: Ritual) => void }) {
   return (
     <div className="ch-rituals" role="radiogroup" aria-label={c.mind_choose_title}>
@@ -187,6 +201,7 @@ export function BrainDump({ c, reduced, track, onRitual, exits }: {
   }
   const toChoose = () => { if (text.trim()) setStep('choose') }
   const pick = (r: Ritual) => { setRitual(r); saveRitual(r) }
+  const careNeeded = useMemo(() => step === 'choose' && needsSupport(text), [step, text])
 
   const release = () => {
     const list = toCards(text)
@@ -222,6 +237,7 @@ export function BrainDump({ c, reduced, track, onRitual, exits }: {
       <div className="ch-screen ch-center" key="choose">
         <div className="ch-col ch-wide">
           <Steps labels={labels} current={1} />
+          {careNeeded && <CareNote c={c} />}
           <h2 ref={h} tabIndex={-1} className="ch-h2">{c.mind_choose_title}</h2>
           <p className="ch-sub">{c.mind_choose_sub}</p>
           <RitualPicker c={c} value={ritual} onChange={pick} />
@@ -325,6 +341,7 @@ export function OneThing({ c, reduced, track, onRitual, onOpenSky, onKept, exits
       <div className="ch-screen ch-center" key="choose">
         <div className="ch-col ch-wide">
           <Steps labels={labels} current={1} />
+          {step === 'choose' && needsSupport(text) && <CareNote c={c} />}
           <h2 ref={h} tabIndex={-1} className="ch-h2">{c.one_choose_title}</h2>
           <div className="ch-quote" data-clarity-mask="True">{c.one_prefix} {text.trim()}</div>
           <button className="ch-ritual ch-keep" onClick={() => act('keep')}>

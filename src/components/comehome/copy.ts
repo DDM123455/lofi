@@ -104,6 +104,11 @@ export interface HomeCopy {
   closed_title: string
   closed_sub: string
   closed_reopen: string
+  support_hint: string
+  support_link: string
+  support_title: string
+  support_body: string
+  support_after: string
 }
 
 const en: HomeCopy = {
@@ -227,6 +232,11 @@ const en: HomeCopy = {
   closed_title: 'Good night.',
   closed_sub: 'Sound is off. You can close this tab whenever you like.',
   closed_reopen: 'Come back in',
+  support_hint: "Heavier than a hard day? You can talk to someone — free and confidential.",
+  support_link: "Find someone to talk to →",
+  support_title: "What you wrote sounds really heavy.",
+  support_body: "You don't have to carry this alone. If you're thinking about ending your life or hurting yourself, please reach out to someone right now — a trained person can listen, free and confidential, day or night.",
+  support_after: "If you'd still like to, you can let the rest go below.",
 }
 
 const vi: HomeCopy = {
@@ -350,6 +360,11 @@ const vi: HomeCopy = {
   closed_title: 'Chúc ngủ ngon.',
   closed_sub: 'Âm thanh đã tắt. Bạn có thể đóng tab này bất cứ lúc nào.',
   closed_reopen: 'Quay lại',
+  support_hint: "Nặng hơn một ngày tệ? Bạn có thể nói chuyện với ai đó — miễn phí và kín đáo.",
+  support_link: "Tìm người lắng nghe →",
+  support_title: "Những điều bạn viết nghe thật sự rất nặng.",
+  support_body: "Bạn không phải mang nó một mình. Nếu bạn đang nghĩ đến việc kết thúc cuộc sống hay làm tổn thương bản thân, hãy liên hệ với ai đó ngay bây giờ — có những người được đào tạo để lắng nghe, miễn phí và kín đáo, cả ngày lẫn đêm.",
+  support_after: "Nếu bạn vẫn muốn, bạn có thể buông phần còn lại ở bên dưới.",
 }
 
 export const HOME_COPY: Record<'en' | 'vi', HomeCopy> = { en, vi }

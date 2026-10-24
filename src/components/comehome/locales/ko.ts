@@ -121,6 +121,11 @@ const ko: HomeCopy = {
   closed_title: '잘 자요.',
   closed_sub: '소리가 꺼졌어요. 언제든 이 탭을 닫아도 돼요.',
   closed_reopen: '다시 들어가기',
+  support_hint: "힘든 하루보다 더 무거운가요? 누군가와 이야기할 수 있어요 — 무료이고 비밀이 보장돼요.",
+  support_link: "이야기할 사람 찾기 →",
+  support_title: "적어 주신 내용이 정말 무겁게 느껴져요.",
+  support_body: "혼자 짊어지지 않아도 돼요. 삶을 끝내거나 스스로를 해칠 생각이 든다면, 지금 바로 누군가에게 연락해 주세요. 훈련받은 분들이 무료로, 비밀을 지키며, 밤낮없이 이야기를 들어 줄 거예요.",
+  support_after: "그래도 원한다면, 나머지는 아래에서 놓아 보낼 수 있어요.",
 }
 
 export default ko

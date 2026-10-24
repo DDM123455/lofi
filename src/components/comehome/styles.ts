@@ -48,6 +48,17 @@ export const COME_HOME_CSS = `
 .ch-reply{font-style:italic;margin-bottom:4px}
 .ch-dim{color:var(--ch-dim)}
 .ch-fine{margin:4px 0 0;font-size:12px;color:var(--ch-dim2)}
+/* Crisis support: a quiet line on the hub, a warm card when someone writes something heavy */
+.ch-support{margin:22px auto 0;max-width:520px;font-size:13px;line-height:1.6;color:var(--ch-dim2)}
+.ch-support a{color:var(--ch-dim);text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(244,236,228,.3);white-space:nowrap}
+.ch-support a:hover{color:var(--ch-text)}
+.ch-support.is-strong{margin:2px auto 6px;padding:12px 16px;border-radius:14px;background:rgba(255,240,230,.05);border:1px solid var(--ch-line);color:var(--ch-dim)}
+.ch-support.is-strong a{color:var(--ch-accent)}
+.ch-care{width:100%;max-width:560px;padding:20px 22px;border-radius:18px;text-align:left;background:linear-gradient(160deg,rgba(255,214,170,.1),rgba(255,240,230,.04));border:1px solid rgba(240,184,138,.32);box-shadow:0 18px 50px rgba(0,0,0,.25)}
+.ch-care h3{margin:0 0 8px;font-size:18px;font-weight:600;color:var(--ch-text)}
+.ch-care p{margin:0 0 14px;font-size:14.5px;line-height:1.65;color:var(--ch-dim)}
+.ch-care a.ch-btn{display:inline-block;text-decoration:none}
+.ch-care .ch-fine{margin-top:12px}
 .ch-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center}
 .ch-moon{font-size:44px;line-height:1;margin:8px 0;animation:ch-float 9s ease-in-out infinite}
 

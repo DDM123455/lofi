@@ -121,6 +121,11 @@ const de: HomeCopy = {
   closed_title: 'Gute Nacht.',
   closed_sub: 'Der Ton ist aus. Du kannst diesen Tab schließen, wann immer du willst.',
   closed_reopen: 'Wieder hinein',
+  support_hint: "Schwerer als ein schlechter Tag? Du kannst mit jemandem reden – kostenlos und vertraulich.",
+  support_link: "Jemanden zum Reden finden →",
+  support_title: "Was du geschrieben hast, klingt sehr schwer.",
+  support_body: "Du musst das nicht allein tragen. Wenn du daran denkst, dir das Leben zu nehmen oder dir etwas anzutun, wende dich bitte jetzt an jemanden – geschulte Menschen hören dir zu, kostenlos und vertraulich, Tag und Nacht.",
+  support_after: "Wenn du möchtest, kannst du den Rest unten trotzdem loslassen.",
 }
 
 export default de

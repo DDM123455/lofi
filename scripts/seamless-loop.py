@@ -1,97 +1,129 @@
-"""Make the background clips loop seamlessly.
+"""Make background clips loop seamlessly (and import new, longer ones).
 
-Each clip is ~5.9s and its last frame doesn't match its first, so <video loop> visibly
-jumps every few seconds. This rebuilds a clip C (N frames) as:
+A clip C of N frames is rebuilt as
 
     C[D .. N-D)  then  crossfade( C[N-D .. N) -> C[0 .. D) )
 
-so the output (N-D frames) ends exactly where it begins: the last output frame is
-(almost) C[D-1] and playback wraps to C[D]. No new tools needed — decoding/encoding uses
-Remotion's bundled ffmpeg (it has no xfade filter, so the blend is done here in numpy).
+so it ends exactly where it begins (the last frame is ~C[D-1], playback wraps to C[D]).
+Blending is harmless for a clip that already loops (it only trims D frames); pass --no-blend
+to keep such a clip at full length. Note: even a frame-perfect loop keeps a small texture
+"shimmer" at the wrap — the first frame is an I-frame whose compression noise differs from
+the P-frames before it (measured ~2-4 mean abs diff vs ~0.5 for a normal step, regardless
+of CRF). Longer clips simply make the wrap rarer. Remotion's bundled ffmpeg is used for decode/encode; it
+has no xfade filter, so frames go through PNG files and the blend is done in numpy — only
+the 2*D blended frames are ever held in memory, so long 1080p clips are fine.
 
-Usage:  python scripts/seamless-loop.py [clip.mp4 ...]   (default: every public/video/*.mp4)
-Writes in place (originals are in git) and refreshes the matching -poster.jpg.
+Usage
+  python scripts/seamless-loop.py                         # every public/video/*.mp4, in place
+  python scripts/seamless-loop.py public/video/forest.mp4 # one clip, in place
+  python scripts/seamless-loop.py D:/ai/forest-30s.mp4 --as forest [--no-blend]
+        # import a new clip as public/video/forest.mp4 (+ forest-poster.jpg)
+
+After replacing any clip, bump MEDIA_VERSION in src/lib/backgrounds.ts — /video/* is cached
+immutable, so browsers would otherwise keep the old file for a year.
 """
+import argparse
 import glob
 import json
 import os
+import re
+import shutil
 import subprocess
-import sys
 import tempfile
 
 import numpy as np
 from PIL import Image
 
 FFMPEG = r"E:\WEB\lofispace-ads\node_modules\@remotion\compositor-win32-x64-msvc\ffmpeg.exe"
+VIDEO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "public", "video")
 XFADE_SECONDS = 0.8
+MAX_WIDTH = 1280      # backgrounds sit under a dark overlay; larger only costs bandwidth
+MAXRATE = "800k"      # keeps a 20 s clip around 2 MB
 
 
 def probe(path):
     out = subprocess.run([FFMPEG, "-hide_banner", "-i", path], capture_output=True, text=True).stderr
-    import re
-    w, h = map(int, re.search(r"Video: .*?(\d{3,4})x(\d{3,4})", out).groups())
     fps = float(re.search(r"([\d.]+) fps", out).group(1))
-    return w, h, fps
+    return fps
 
 
-def decode(path, w, h):
-    # This ffmpeg build has no rawvideo muxer, so frames go through PNG files on disk.
+def decode_to(path, d):
+    """Decode every frame to d/f00001.png (downscaled to MAX_WIDTH, even dimensions)."""
+    vf = f"scale='min({MAX_WIDTH},iw)':-2:flags=lanczos"
+    subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-i", path, "-vf", vf,
+                    "-pix_fmt", "rgb24", os.path.join(d, "f%05d.png")], check=True)
+    return sorted(glob.glob(os.path.join(d, "f*.png")))
+
+
+def load(p):
+    return np.asarray(Image.open(p).convert("RGB")).astype(np.int16)
+
+
+def diff(a, b):
+    return float(np.abs(a - b).mean())
+
+
+def encode_from(files, fps, out_path):
     with tempfile.TemporaryDirectory() as d:
-        subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-i", path,
-                        "-pix_fmt", "rgb24", os.path.join(d, "f%05d.png")], check=True)
-        files = sorted(glob.glob(os.path.join(d, "f*.png")))
-        return np.stack([np.asarray(Image.open(f).convert("RGB")) for f in files])
-
-
-def encode(frames, path, w, h, fps):
-    tmp = path + ".tmp.mp4"
-    with tempfile.TemporaryDirectory() as d:
-        for i, fr in enumerate(frames):
-            Image.fromarray(fr).save(os.path.join(d, f"o{i:05d}.png"), compress_level=1)
+        for i, f in enumerate(files):
+            # Hard links / copies give ffmpeg a gap-free o00000.png sequence.
+            dst = os.path.join(d, f"o{i:05d}.png")
+            try:
+                os.link(f, dst)
+            except OSError:
+                shutil.copyfile(f, dst)
+        tmp = out_path + ".tmp.mp4"
         subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-y",
                         "-framerate", str(fps), "-i", os.path.join(d, "o%05d.png"),
                         "-an", "-c:v", "libx264", "-preset", "slow", "-crf", "26",
-                        "-maxrate", "750k", "-bufsize", "1500k", "-pix_fmt", "yuv420p",
+                        "-maxrate", MAXRATE, "-bufsize", "1600k", "-pix_fmt", "yuv420p",
                         "-profile:v", "high", "-movflags", "+faststart", tmp], check=True)
-    os.replace(tmp, path)
+        os.replace(tmp, out_path)
 
 
-def seam(frames):
-    """Mean abs difference between last and first frame vs. a typical step between frames."""
-    f = frames.astype(np.int16)
-    wrap = float(np.abs(f[-1] - f[0]).mean())
-    step = float(np.mean([np.abs(f[i + 1] - f[i]).mean() for i in range(0, len(f) - 1, max(1, len(f) // 12))]))
-    return wrap, step
-
-
-def make_seamless(frames, fps):
-    n = len(frames)
-    d = max(2, round(XFADE_SECONDS * fps))
-    body = frames[d:n - d]
-    tail, head = frames[n - d:].astype(np.float32), frames[:d].astype(np.float32)
-    t = (np.arange(1, d + 1) / (d + 1)).reshape(-1, 1, 1, 1)
-    a = t * t * (3 - 2 * t)  # smoothstep: no visible "start/stop" of the blend
-    blend = (tail * (1 - a) + head * a).round().clip(0, 255).astype(np.uint8)
-    return np.concatenate([body, blend])
+def process(src, dst, blend=True):
+    fps = probe(src)
+    with tempfile.TemporaryDirectory() as d:
+        files = decode_to(src, d)
+        n = len(files)
+        first, last = load(files[0]), load(files[-1])
+        step = float(np.mean([diff(load(files[i]), load(files[i + 1]))
+                              for i in range(0, n - 1, max(1, n // 10))]))
+        seam_before = diff(last, first)
+        k = max(2, round(XFADE_SECONDS * fps))
+        if not blend:
+            out_files, blended = files, False
+        else:
+            t = np.arange(1, k + 1) / (k + 1)
+            a = t * t * (3 - 2 * t)  # smoothstep
+            blend_files = []
+            for j in range(k):
+                fr = load(files[n - k + j]) * (1 - a[j]) + load(files[j]) * a[j]
+                bp = os.path.join(d, f"b{j:05d}.png")
+                Image.fromarray(fr.round().clip(0, 255).astype(np.uint8)).save(bp, compress_level=1)
+                blend_files.append(bp)
+            out_files, blended = files[k:n - k] + blend_files, True
+        seam_after = diff(load(out_files[-1]), load(out_files[0]))
+        encode_from(out_files, fps, dst)
+        Image.open(out_files[0]).convert("RGB").save(dst[:-4] + "-poster.jpg", quality=68, optimize=True, progressive=True, subsampling=2)
+    return {"seconds": round(len(out_files) / fps, 1), "blended": blended,
+            "seam_before": round(seam_before, 1), "seam_after": round(seam_after, 1),
+            "normal_step": round(step, 1), "kb": os.path.getsize(dst) // 1024}
 
 
 def main():
-    paths = sys.argv[1:] or sorted(glob.glob(os.path.join(os.path.dirname(__file__), "..", "public", "video", "*.mp4")))
-    report = {}
-    for path in paths:
-        w, h, fps = probe(path)
-        frames = decode(path, w, h)
-        before = seam(frames)
-        out = make_seamless(frames, fps)
-        after = seam(out)
-        encode(out, path, w, h, fps)
-        poster = path[:-4] + "-poster.jpg"
-        Image.fromarray(out[0]).save(poster, quality=82, optimize=True, progressive=True)
-        name = os.path.basename(path)
-        report[name] = {"frames": [len(frames), len(out)], "seam_before": round(before[0], 1),
-                        "seam_after": round(after[0], 1), "normal_step": round(after[1], 1),
-                        "kb": os.path.getsize(path) // 1024}
-        print(name, json.dumps(report[name]), flush=True)
+    ap = argparse.ArgumentParser()
+    ap.add_argument("clips", nargs="*")
+    ap.add_argument("--as", dest="name", help="import the (single) clip as public/video/<name>.mp4")
+    ap.add_argument("--no-blend", action="store_true", help="clip already loops (same first/last frame): don't crossfade")
+    args = ap.parse_args()
+    clips = args.clips or sorted(glob.glob(os.path.join(VIDEO_DIR, "*.mp4")))
+    if args.name and len(clips) != 1:
+        ap.error("--as takes exactly one clip")
+    for src in clips:
+        dst = os.path.join(VIDEO_DIR, args.name + ".mp4") if args.name else src
+        print(os.path.basename(dst), json.dumps(process(src, dst, blend=not args.no_blend)), flush=True)
+    print("\nNext: bump MEDIA_VERSION in src/lib/backgrounds.ts so browsers fetch the new files.")
 
 
 if __name__ == "__main__":

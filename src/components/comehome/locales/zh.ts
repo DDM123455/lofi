@@ -121,6 +121,11 @@ const zh: HomeCopy = {
   closed_title: '晚安。',
   closed_sub: '声音已关闭。你随时可以关掉这个标签页。',
   closed_reopen: '再回来',
+  support_hint: "比糟糕的一天更沉重吗？你可以找人聊聊——免费且保密。",
+  support_link: "找一个可以倾诉的人 →",
+  support_title: "你写下的内容听起来真的很沉重。",
+  support_body: "你不必独自承受这些。如果你正在想结束生命或伤害自己，请现在就联系一个人——有受过训练的人会倾听你，免费、保密，白天黑夜都在。",
+  support_after: "如果你仍然想，可以在下面放下其余的部分。",
 }
 
 export default zh

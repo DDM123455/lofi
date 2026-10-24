@@ -121,6 +121,11 @@ const pt: HomeCopy = {
   closed_title: 'Boa noite.',
   closed_sub: 'O som está desligado. Pode fechar esta aba quando quiser.',
   closed_reopen: 'Entrar de novo',
+  support_hint: "Mais pesado que um dia ruim? Você pode conversar com alguém — de graça e com sigilo.",
+  support_link: "Encontre alguém para conversar →",
+  support_title: "O que você escreveu parece muito pesado.",
+  support_body: "Você não precisa carregar isso sozinho. Se está pensando em tirar a própria vida ou se machucar, por favor procure alguém agora mesmo — há pessoas preparadas para ouvir, de graça e com sigilo, dia e noite.",
+  support_after: "Se ainda quiser, você pode deixar o resto ir aqui embaixo.",
 }
 
 export default pt

@@ -29,8 +29,9 @@ export const BG_PRESETS: BgPreset[] = [
  * the files in public/video change, and run every <video src> / poster through mediaUrl().
  * The plain URLs stay the identity everywhere else (presets, saved settings, ?bgv= links).
  *   v2 (2026-10): clips rebuilt as seamless loops (scripts/seamless-loop.py) + new posters.
+ *   v3 (2026-10): posters re-encoded smaller.
  */
-export const MEDIA_VERSION = '2'
+export const MEDIA_VERSION = '3'
 
 export function mediaUrl(url: string): string {
   if (!url.startsWith('/video/')) return url

@@ -105,7 +105,7 @@ def process(src, dst, blend=True):
             out_files, blended = files[k:n - k] + blend_files, True
         seam_after = diff(load(out_files[-1]), load(out_files[0]))
         encode_from(out_files, fps, dst)
-        Image.open(out_files[0]).convert("RGB").save(dst[:-4] + "-poster.jpg", quality=82, optimize=True, progressive=True)
+        Image.open(out_files[0]).convert("RGB").save(dst[:-4] + "-poster.jpg", quality=68, optimize=True, progressive=True, subsampling=2)
     return {"seconds": round(len(out_files) / fps, 1), "blended": blended,
             "seam_before": round(seam_before, 1), "seam_after": round(seam_after, 1),
             "normal_step": round(step, 1), "kb": os.path.getsize(dst) // 1024}

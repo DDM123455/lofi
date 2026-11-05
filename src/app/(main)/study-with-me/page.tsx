@@ -49,7 +49,7 @@ const FAQ = [
   },
   {
     q: 'Can I study with real friends using LofiSpace?',
-    a: 'Yes. Share your workspace URL with a friend and you can both open the exact same scene, sounds, and settings — creating a synchronised virtual study environment. Use video call alongside LofiSpace for a full "study with me" experience.',
+    a: 'Yes. Use Share to send your room setup to a friend. Each person runs their own timer. You can agree on a start time over a call.',
   },
   {
     q: 'Is it free?',

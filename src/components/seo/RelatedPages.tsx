@@ -14,7 +14,7 @@ const ALL_STUDY_ROOMS: RelatedPage[] = [
   { href: '/focus-room',           emoji: '🎯', title: 'Focus Room',           description: 'Deep work preset, minimal distractions' },
   { href: '/deep-work-room',       emoji: '🧠', title: 'Deep Work Room',       description: 'Flow state environment for hard problems' },
   { href: '/adhd-focus-room',      emoji: '⚡', title: 'ADHD Focus Room',      description: 'Structured focus for ADHD & neurodivergent' },
-  { href: '/virtual-study-room',   emoji: '🖥️', title: 'Virtual Study Room',   description: 'Study together online, any time zone' },
+  { href: '/virtual-study-room',   emoji: '🖥️', title: 'Virtual Study Room',   description: 'Choose and share a study room setup' },
   { href: '/coffee-shop-sounds',   emoji: '☕', title: 'Coffee Shop Sounds',   description: 'Café ambience for focus & relaxation' },
   { href: '/study-music',          emoji: '🎵', title: 'Study Music',          description: 'Background music for studying & focus' },
   { href: '/coding-music',         emoji: '🎧', title: 'Coding Music',         description: 'Lofi & synthwave for coding sessions' },

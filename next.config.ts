@@ -83,6 +83,11 @@ const nextConfig: NextConfig = {
         destination: '/workspace',
         permanent: true,
       },
+      {
+        source: '/lofi-study-timer',
+        destination: '/lofi-timer-for-studying',
+        permanent: true,
+      },
       // Phase 5: Vietnamese blog slugs → English slugs (301 permanent)
       {
         source: '/blog/trang-tri-notion-widget-lofi',

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef, useCallback, useMemo, useContext, createCo
 import { preconnect } from 'react-dom'
 import { getDayNightConfig } from '@/hooks/useDayNight'
 import { LOFI_STREAMS, AMBIENT_SOUNDS } from '@/lib/lofiStreams'
-import { BG_PRESETS, getBgPresetByUrl, mediaUrl } from '@/lib/backgrounds'
+import { BG_PRESETS, getBgPresetByUrl, mediaUrl, readBackgroundParam } from '@/lib/backgrounds'
 import { useGameStore, xpProgress, ACHIEVEMENT_DEFS, localDate } from '@/lib/gameStore'
 import { AchievementToast, LevelUpOverlay } from '@/components/notifications/AchievementToast'
 import { analytics } from '@/lib/analytics'
@@ -229,7 +229,11 @@ const phaseSecs=(p:PomoPhase,c:PomoCfg)=>(p==='work'?c.workMin:p==='break'?c.bre
  * `completions` is a session-only counter that drives the XP side-effect in the parent — it
  * is deliberately NOT persisted.
  */
-function usePomodoro(init:PomoCfg){
+function usePomodoro(init:PomoCfg, configuredByLink:boolean){
+  // A configured embed or shared preset must not resume or overwrite the main timer.
+  const [storageKey] = useState(() => configuredByLink
+    ? `${POMO_KEY}:preset:${init.workMin},${init.breakMin},${init.longMin},${init.cyclesBeforeLong},${Number(init.autoStart)}`
+    : POMO_KEY)
   const[cfg,setCfg]=useState<PomoCfg>(init)
   const[phase,setPhase]=useState<PomoPhase>('work')
   const[on,setOn]=useState(false)
@@ -265,7 +269,7 @@ function usePomodoro(init:PomoCfg){
   // Rehydrate once on mount
   useEffect(()=>{
     try{
-      const raw=localStorage.getItem(POMO_KEY)
+      const raw=localStorage.getItem(storageKey)
       if(raw){
         const s=JSON.parse(raw)
         const nc:PomoCfg=s.cfg?{...init,...s.cfg}:init
@@ -295,8 +299,8 @@ function usePomodoro(init:PomoCfg){
   // Persist (after hydration so we never clobber saved state with the initial defaults)
   useEffect(()=>{
     if(!hydrated)return
-    try{localStorage.setItem(POMO_KEY,JSON.stringify({cfg,phase,on,endsAt,remaining,cycleCount}))}catch{/* ignore */}
-  },[hydrated,cfg,phase,on,endsAt,remaining,cycleCount])
+    try{localStorage.setItem(storageKey,JSON.stringify({cfg,phase,on,endsAt,remaining,cycleCount}))}catch{/* ignore */}
+  },[storageKey,hydrated,cfg,phase,on,endsAt,remaining,cycleCount])
 
   // Ticker — derives `remaining` from `endsAt`; flips phase when it hits zero
   useEffect(()=>{
@@ -354,12 +358,13 @@ export function EmbedClient() {
   const sp = useSearchParams()
   const dn = getDayNightConfig()
   const { lang, setLang, t } = useLanguage()
-  const hasBgParam = sp.has('bgv')
+  const bgParam = readBackgroundParam(sp.get('bgv'))
+  const hasBgParam = bgParam !== null
 
   // Resolve the saved background on the very first render (instead of in a post-mount effect)
   // so the default clip is never fetched just to be swapped out a frame later. Safe: this
   // tree always client-renders (useSearchParams bails the route out of prerendering).
-  const [initBgUrl] = useState(()=>hasBgParam ? decodeURIComponent(sp.get('bgv')!) : (savedBgUrl() ?? '/video/street-scene.mp4'))
+  const [initBgUrl] = useState(() => bgParam ?? savedBgUrl() ?? '/video/street-scene.mp4')
   const initBgOp   = Math.min(90, Math.max(0, parseInt(sp.get('bgo') ?? String(dn.overlay))))
   const initBlur   = Math.min(20, Math.max(0, parseInt(sp.get('bl') ?? '0')))
   const initWorkMin  = Math.min(90, Math.max(1, parseInt(sp.get('pw') ?? '25') || 25))
@@ -401,7 +406,8 @@ export function EmbedClient() {
 
   // Pomodoro
   const [showPom,     setShowPom]     = useState(sp.get('pom')!=='0')
-  const pom = usePomodoro({workMin:initWorkMin,breakMin:initBreakMin,longMin:initLongMin,cyclesBeforeLong:initCycles,autoStart:initAutoStart})
+  const hasTimerParams = ['pw', 'pb', 'plb', 'pc', 'pas'].some(param => sp.has(param))
+  const pom = usePomodoro({workMin:initWorkMin,breakMin:initBreakMin,longMin:initLongMin,cyclesBeforeLong:initCycles,autoStart:initAutoStart}, hasTimerParams)
 
   // Note / Todo
   const [showNote,    setShowNote]    = useState(sp.get('note')!=='0')
@@ -983,7 +989,7 @@ export function EmbedClient() {
     const snap=homeSnap.current
     homeSnap.current=null
     setMode('focus')
-    try{const u=new URL(window.location.href);u.searchParams.delete('mode');window.history.replaceState(window.history.state,'',u)}catch{/* ignore */}
+    try{const u=new URL(window.location.href);u.searchParams.delete('mode');u.searchParams.delete('exp');window.history.replaceState(window.history.state,'',u)}catch{/* ignore */}
     if(!snap)return
     setMasterVol(snap.masterVol)
     setBgUrl(snap.bgUrl);setBgType(snap.bgType);setBgOpacity(snap.bgOpacity);setBgBlur(snap.bgBlur);setAtmosphere(snap.atmosphere)
@@ -1022,7 +1028,11 @@ export function EmbedClient() {
       if(ambVols[id]!==undefined){stopAmbient(id);setAmbVols(prev=>{const n={...prev};delete n[id];return n})}
       else{const next={...ambVols,[id]:30};setAmbVols(next);homeSoundOn(next)} // choosing a sound is consent to hear it
     },
-    setVol:(id:string,v:number)=>{setAmbVols(prev=>({...prev,[id]:v}));if(started&&playing)setAmbVol(id,v)},
+    setVol:(id:string,v:number)=>{
+      setAmbVols(prev=>({...prev,[id]:v}))
+      if(started&&playing&&ambVols[id]!==undefined)setAmbVol(id,v)
+      else homeSoundOn({...ambVols,[id]:v}) // dragging a slider is consent to hear it, same as tapping its name
+    },
     master:masterVol,
     setMaster:setMasterVol,
     setMix:(mix:Record<string,number>)=>applyMix(mix,started&&playing),
@@ -1218,14 +1228,19 @@ export function EmbedClient() {
   const shareUrl=useMemo(()=>{
     if(!mounted)return''
     const p=new URLSearchParams()
-    p.set('bgv',encodeURIComponent(bgUrl));p.set('bgo',String(bgOpacity))
+    p.set('bgv',bgUrl);p.set('bgo',String(bgOpacity))
     if(bgBlur>0)p.set('bl',String(bgBlur))
     p.set('ls',lofiId);p.set('lv',String(lofiVol));p.set('ac',accent.replace('#',''))
     if(!showClock)p.set('clk','0');if(!showPom)p.set('pom','0');if(!showNote)p.set('note','0')
+    p.set('pw', String(pom.cfg.workMin))
+    p.set('pb', String(pom.cfg.breakMin))
+    p.set('plb', String(pom.cfg.longMin))
+    p.set('pc', String(pom.cfg.cyclesBeforeLong))
+    if (!pom.cfg.autoStart) p.set('pas', '0')
     const at=Object.entries(ambVols).map(([id,v])=>`${id}:${v}`).join(',');if(at)p.set('at',at)
     if(wxData){p.set('city',wxData.city);p.set('temp',String(wxData.temp));p.set('wdesc',wxData.desc);p.set('wemoji',wxData.emoji)}
     return`${window.location.origin}/embed?${p.toString()}`
-  },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,theme,urlAccent,showClock,showPom,showNote,ambVols,wxData])
+  },[mounted,bgUrl,bgOpacity,bgBlur,lofiId,lofiVol,accent,showClock,showPom,showNote,pom.cfg,ambVols,wxData])
 
   const atmOverlay:Record<string,string>={
     'none':'','day':'linear-gradient(rgba(255,250,245,.04),rgba(255,235,245,.07))',

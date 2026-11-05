@@ -22,7 +22,7 @@ export function EmbedGenerator() {
   const [showClock, setShowClock] = useState(true)
   const [workMin, setWorkMin] = useState(25)
   const [breakMin, setBreakMin] = useState(5)
-  const [copied, setCopied] = useState(false)
+  const [feedback, setFeedback] = useState<{ url: string; message: string } | null>(null)
 
   const bgPreset = BG_PRESETS.find(b => b.id === bgId) ?? BG_PRESETS[0]
 
@@ -43,14 +43,16 @@ export function EmbedGenerator() {
   // /workspace (not /embed — that's a legacy 308 redirect) is the canonical
   // iframe target: it's the only route with ALLOWALL frame headers set in next.config.ts
   const embedPath = `/workspace?${query}`
-  const embedCode = `<iframe src="${BASE}${embedPath}" width="400" height="300" style="border:0;border-radius:12px" allow="autoplay" loading="lazy"></iframe>`
+  const embedUrl = `${BASE}${embedPath}`
+  const embedCode = `<iframe src="${embedUrl.replaceAll('&', '&amp;')}" width="400" height="300" style="border:0;border-radius:12px" allow="autoplay" loading="lazy" title="LofiSpace workspace"></iframe>`
 
-  const copyCode = async () => {
+  const copy = async (format: 'url' | 'html') => {
     try {
-      await navigator.clipboard.writeText(embedCode)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2200)
-    } catch {}
+      await navigator.clipboard.writeText(format === 'url' ? embedUrl : embedCode)
+      setFeedback({ url: embedUrl, message: format === 'url' ? 'Notion URL copied.' : 'HTML iframe copied.' })
+    } catch {
+      setFeedback({ url: embedUrl, message: 'Clipboard unavailable. Select and copy the text below.' })
+    }
   }
 
   return (
@@ -58,8 +60,9 @@ export function EmbedGenerator() {
       {/* Controls */}
       <div className="space-y-5 rounded-xl border border-white/10 bg-white/3 p-5">
         <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Background</label>
+          <label htmlFor="embed-background" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Background</label>
           <select
+            id="embed-background"
             value={bgId}
             onChange={e => setBgId(e.target.value)}
             className="w-full rounded-lg border border-white/10 bg-[#14121f] px-3 py-2 text-sm text-white/85 focus:border-violet-500/50 focus:outline-none"
@@ -71,8 +74,9 @@ export function EmbedGenerator() {
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Lofi Stream</label>
+          <label htmlFor="embed-stream" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Lofi Stream</label>
           <select
+            id="embed-stream"
             value={lofiId}
             onChange={e => setLofiId(e.target.value)}
             className="w-full rounded-lg border border-white/10 bg-[#14121f] px-3 py-2 text-sm text-white/85 focus:border-violet-500/50 focus:outline-none"
@@ -92,6 +96,8 @@ export function EmbedGenerator() {
                 type="button"
                 onClick={() => setAccent(a.hex)}
                 title={a.label}
+                aria-label={a.label}
+                aria-pressed={accent === a.hex}
                 className="h-8 w-8 rounded-full transition-all"
                 style={{
                   background: `#${a.hex}`,
@@ -105,16 +111,18 @@ export function EmbedGenerator() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Focus (min)</label>
+            <label htmlFor="embed-focus" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Focus (min)</label>
             <input
+              id="embed-focus"
               type="number" min={1} max={60} value={workMin}
               onChange={e => setWorkMin(Math.min(60, Math.max(1, parseInt(e.target.value) || 25)))}
               className="w-full rounded-lg border border-white/10 bg-[#14121f] px-3 py-2 text-sm text-white/85 focus:border-violet-500/50 focus:outline-none"
             />
           </div>
           <div>
-            <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Break (min)</label>
+            <label htmlFor="embed-break" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-white/40">Break (min)</label>
             <input
+              id="embed-break"
               type="number" min={1} max={30} value={breakMin}
               onChange={e => setBreakMin(Math.min(30, Math.max(1, parseInt(e.target.value) || 5)))}
               className="w-full rounded-lg border border-white/10 bg-[#14121f] px-3 py-2 text-sm text-white/85 focus:border-violet-500/50 focus:outline-none"
@@ -149,20 +157,25 @@ export function EmbedGenerator() {
         </div>
 
         <div>
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-white/40">Embed Code</span>
+          <label htmlFor="notion-embed-url" className="mb-2 block text-sm font-semibold text-white/80">Notion embed URL</label>
+          <input id="notion-embed-url" readOnly value={embedUrl} onFocus={event => event.currentTarget.select()} className="w-full rounded-lg border border-white/10 bg-[#0a0912] p-3 text-sm text-violet-200" />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={copyCode}
-              className="rounded-full bg-violet-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-violet-500 transition-colors"
+              onClick={() => copy('url')}
+              className="rounded-full bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
             >
-              {copied ? 'Copied ✓' : 'Copy Code'}
+              Copy Notion URL
             </button>
+            <a href={embedPath} target="_blank" rel="noopener noreferrer" className="px-2 py-2 text-sm text-violet-200 underline">Open live preview</a>
           </div>
-          <pre className="overflow-x-auto rounded-lg border border-white/10 bg-[#0a0912] p-3 text-xs text-violet-200/80">
-            <code>{embedCode}</code>
-          </pre>
-          <p className="mt-2 text-xs text-white/30">Paste this into Notion&apos;s /embed block, or any page that accepts an iframe.</p>
+          <p className="mt-2 text-sm text-white/65">In Notion, type <code>/embed</code>, select Embed, then paste the URL.</p>
+          <details className="mt-4 text-sm text-white/65">
+            <summary className="cursor-pointer py-2">HTML iframe for websites</summary>
+            <textarea aria-label="HTML iframe" readOnly value={embedCode} onFocus={event => event.currentTarget.select()} className="w-full rounded-lg border border-white/10 bg-[#0a0912] p-3 font-mono text-xs text-violet-200" />
+            <button type="button" onClick={() => copy('html')} className="mt-2 rounded-full border border-white/20 px-4 py-2 text-white">Copy HTML iframe</button>
+          </details>
+          <p role="status" className="mt-2 text-sm text-violet-200">{feedback?.url === embedUrl ? feedback.message : ''}</p>
         </div>
       </div>
     </div>

@@ -196,7 +196,8 @@ export const COME_HOME_CSS = `
 .ch-snd{display:flex;align-items:center;gap:10px;padding:6px 4px;border:none;background:none;color:var(--ch-dim);font-size:14.5px;cursor:pointer;text-align:left}
 .ch-mixer li.is-on .ch-snd{color:var(--ch-text)}
 .ch-snd span:first-child{font-size:19px}
-.ch-mixer input[type=range]:disabled{opacity:.3}
+.ch-mixer li:not(.is-on) input[type=range]{opacity:.45}
+.ch-mixer input[type=range]{cursor:pointer}
 .ch-master{display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center;width:100%;padding:14px 12px 4px;border-top:1px solid var(--ch-line);margin-top:6px;font-size:13px;color:var(--ch-dim);text-align:left}
 
 /* sleep */

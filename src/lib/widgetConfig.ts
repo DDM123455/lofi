@@ -1,4 +1,5 @@
 import type { WidgetConfig } from '@/types/widget'
+import { readBackgroundParam } from './backgrounds'
 import { DEFAULT_AMBIENT_TRACKS, LOFI_STREAMS } from './youtubeStreams'
 
 export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
@@ -24,7 +25,7 @@ export function serializeConfig(config: WidgetConfig): string {
   const params = new URLSearchParams()
 
   params.set('bg', config.backgroundType[0]) // g/u/c
-  params.set('bgv', encodeURIComponent(config.backgroundValue))
+  params.set('bgv', config.backgroundValue)
   params.set('bgo', String(config.backgroundOpacity))
   params.set('ls', config.lofiStreamId)
   params.set('lv', String(Math.round(config.lofiVolume * 100)))
@@ -56,8 +57,8 @@ export function deserializeConfig(search: string): WidgetConfig {
   const bg = params.get('bg')
   if (bg && bgMap[bg]) config.backgroundType = bgMap[bg]
 
-  const bgv = params.get('bgv')
-  if (bgv) config.backgroundValue = decodeURIComponent(bgv)
+  const bgv = readBackgroundParam(params.get('bgv'))
+  if (bgv) config.backgroundValue = bgv
 
   const bgo = params.get('bgo')
   if (bgo) config.backgroundOpacity = Math.min(100, Math.max(0, parseInt(bgo)))

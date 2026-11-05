@@ -250,7 +250,7 @@ export default function VirtualStudyRoomPage() {
               { step: '2', title: 'Customise your sounds', body: 'Open the Sounds panel and layer rain, café, fire, or other ambient sounds over the music. Adjust volumes until the mix feels right. Your settings are immediately reflected in the URL.' },
               { step: '3', title: 'Write your session task', body: 'Before hitting Start, type your focus task for this session into the to-do list. A specific task ("finish chapter 4 summary") beats a vague one ("study").' },
               { step: '4', title: 'Start the Pomodoro timer', body: '25 minutes, nothing else. At the end of each session, you earn XP and your streak grows. After 4 Pomodoros, take a longer 20-minute break.' },
-              { step: '5', title: 'Save and share your room', body: 'Copy the URL at any time to save your exact room setup — music genre, sounds, volumes, timer settings. Send it to a friend for a synchronised study session.' },
+              { step: '5', title: 'Save and share your room', body: 'Use Share to copy your room setup. Your friend can open the same scene, sounds and timer settings, then run their own timer.' },
             ].map(s => (
               <div key={s.step} className="flex gap-4">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white">

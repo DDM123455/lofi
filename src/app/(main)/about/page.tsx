@@ -65,7 +65,7 @@ export default function AboutPage() {
         <h2>What&apos;s free</h2>
         <p>
           Everything. Every scene, every ambient sound, the Pomodoro timer, the XP and streak system, and the{' '}
-          <Link href="/notion-widget">Notion embed</Link> are free with no account required and no feature paywall.
+          <Link href="/notion-widget">Notion embed</Link>{' '}are free with no account required and no feature paywall.
           If LofiSpace has been useful to your study or work sessions, the small support options in the app help
           keep the servers running — but they&apos;re optional.
         </p>

@@ -5,6 +5,7 @@ import { RelatedPages } from '@/components/seo/RelatedPages'
 import DashboardClient from './DashboardClient'
 
 export const metadata: Metadata = {
+  robots: { index: false },
   title: 'Focus Dashboard — Pomodoro Streaks, Heatmap & Stats',
   description:
     'Track your daily focus time, Pomodoro streak, weekly progress and a GitHub-style focus heatmap. 100% free, no sign-up, stored on your device.',
@@ -14,11 +15,6 @@ export const metadata: Metadata = {
   ],
   alternates: {
     canonical: 'https://www.focusworkspace.app/dashboard',
-    languages: {
-      en: 'https://www.focusworkspace.app/dashboard',
-      vi: 'https://www.focusworkspace.app/vi/bang-thong-ke-hoc-tap',
-      'x-default': 'https://www.focusworkspace.app/dashboard',
-    },
   },
   openGraph: {
     title: 'Focus Dashboard — Pomodoro Streaks, Heatmap & Stats | LofiSpace',

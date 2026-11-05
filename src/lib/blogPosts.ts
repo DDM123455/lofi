@@ -1,4 +1,5 @@
 import { EVENING_POSTS } from './blogPostsEvening'
+import { GOOD_THINGS_POSTS } from './blogPostsGoodThings'
 import { FEATURE_POSTS } from './blogPostsFeatures'
 
 export interface BlogPost {
@@ -644,7 +645,7 @@ const CORE_POSTS: BlogPost[] = [
 <p>For heavier use, a standalone <a href="/dashboard">focus dashboard</a> that aggregates session history, streaks, and time-per-project across weeks gives a clearer long-term picture than a single embedded widget on one Notion page can. The Notion embed is best treated as the daily driver — the thing you actually open to start a session — while a dedicated dashboard is where you review the trend after a few weeks of data have accumulated. Running both together, rather than picking one, tends to work best: the embed handles the moment-to-moment session, the dashboard handles the retrospective.</p>
 
 <h2>Shared workspace use across a small team</h2>
-<p>The setup described so far assumes a single user, but the same mechanics extend to a shared team workspace with one adjustment: rather than embedding the timer on an individual's personal page, teams running synchronized focus blocks — a "quiet hours" period, for instance — often place it inside a synced block on a shared team page, so the same running timer is visible to everyone regardless of which page they're viewing it from. This works well for teams that have agreed on a specific meeting-free window each day and want a visible, shared signal that the block is currently active, rather than relying on everyone remembering the agreement independently.</p>
+<p>A team can put the same timer embed on a shared Notion page to give everyone the same settings. Each person starts and controls their own timer. For shared quiet hours, post the agreed start and end times on the page so everyone knows the schedule.</p>
 
 <h2>Measuring whether it's actually working</h2>
 <p>The easiest trap with any focus-tracking setup is treating session count as the goal itself rather than as a proxy for the thing you actually care about — completed, meaningful output. A week with fewer logged sessions but a shipped project is a better week than one with more sessions and nothing finished. The project or client database mentioned earlier is what keeps the session log honest: reviewing focus time against what actually got delivered, rather than against the raw hour count, is the only way to tell whether the dashboard is measuring something real or just measuring activity. If session counts climb but delivered output doesn't follow, that's usually a sign sessions are being logged without matching real, uninterrupted focus — worth investigating before assuming the system itself needs more tracking rather than less.</p>
@@ -1086,7 +1087,7 @@ const CORE_POSTS: BlogPost[] = [
 
 // Evening Reset and Product Updates posts go after the core posts so the homepage's
 // "latest 3" teaser and existing listing order stay exactly as they were.
-export const BLOG_POSTS: BlogPost[] = [...CORE_POSTS, ...EVENING_POSTS, ...FEATURE_POSTS]
+export const BLOG_POSTS: BlogPost[] = [...CORE_POSTS, ...EVENING_POSTS, ...FEATURE_POSTS, ...GOOD_THINGS_POSTS]
 
 export function getPostBySlug(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find(p => p.slug === slug)

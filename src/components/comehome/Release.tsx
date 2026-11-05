@@ -106,7 +106,7 @@ export function AfterActions({ c, line, exits, children }: { c: HomeCopy; line: 
 
 /** Warm, non-blocking note shown above the choices when the writing contains clear
  *  self-harm language (checked locally — see support.ts; nothing is stored or tracked). */
-function CareNote({ c }: { c: HomeCopy }) {
+export function CareNote({ c }: { c: HomeCopy }) {
   return (
     <div className="ch-care" role="note">
       <h3>{c.support_title}</h3>
@@ -455,6 +455,7 @@ export function MemorySky({ c, lang, track, onChange }: {
         <div className="ch-memcard" role="dialog" aria-label={fmt(active.at)} data-clarity-mask="True">
           <div className="ch-dim" style={{ fontSize: 12 }}>{fmt(active.at)}</div>
           <p style={{ margin: '6px 0 12px', lineHeight: 1.5 }}>{active.text}</p>
+          {active.why && <p className="ch-dim" style={{ margin: '-6px 0 12px', fontSize: 14, lineHeight: 1.5 }}>{active.why}</p>}
           <div className="ch-row" style={{ justifyContent: 'space-between' }}>
             <button className="ch-link" onClick={() => forget(active.id)}>{c.sky_forget}</button>
             <button className="ch-link" onClick={() => setOpen(null)} aria-label={c.close}>✕</button>

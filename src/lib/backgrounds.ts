@@ -38,6 +38,17 @@ export function mediaUrl(url: string): string {
   return `${url}${url.includes('?') ? '&' : '?'}v=${MEDIA_VERSION}`
 }
 
+/** URLSearchParams already decoded new links. Only unwrap the legacy URL form. */
+export function readBackgroundParam(value: string | null): string | null {
+  if (!value) return null
+  if (!/^(?:%2f|https?%3a)/i.test(value)) return value
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return null
+  }
+}
+
 export function getBgPresetByUrl(url: string): BgPreset | undefined {
   return BG_PRESETS.find(p => p.url === url)
 }

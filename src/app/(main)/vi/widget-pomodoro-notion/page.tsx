@@ -8,7 +8,7 @@ import { PomodoroCompare } from '@/components/seo/PomodoroCompare'
 export const metadata: Metadata = {
   title: 'Widget Pomodoro Cho Notion — Nhúng Đồng Hồ Đếm Giờ Thật Vào Trang Notion',
   description:
-    'Nhúng một đồng hồ Pomodoro hoạt động thật — có nhạc lofi và âm thanh nền — thẳng vào trang Notion của bạn. Tuỳ chỉnh thời lượng, âm thanh, màu sắc rồi dán một đoạn iframe.',
+    'Nhúng một đồng hồ Pomodoro hoạt động thật — có nhạc lofi và âm thanh nền — thẳng vào trang Notion của bạn. Tuỳ chỉnh thời lượng, âm thanh, màu sắc rồi sao chép URL nhúng cho Notion.',
   keywords: [
     'widget pomodoro notion', 'pomodoro notion', 'nhúng pomodoro vào notion', 'notion timer',
     'notion pomodoro tiếng việt', 'embed pomodoro notion', 'notion focus timer',
@@ -45,11 +45,11 @@ const FAQ = [
   },
   {
     q: 'Có thể đặt thời lượng tập trung/nghỉ theo ý mình không?',
-    a: 'Có. Công cụ tạo embed cho phép bạn đặt số phút tập trung và nghỉ trước khi sao chép mã nhúng — không bị khoá cứng ở mức 25/5.',
+    a: 'Có. Công cụ tạo embed cho phép bạn đặt số phút tập trung và nghỉ trước khi sao chép URL nhúng — không bị khoá cứng ở mức 25/5.',
   },
   {
     q: 'Nhúng vào Notion thì có được tính streak không?',
-    a: 'Có, miễn là sau đó bạn mở Focus Dashboard trên cùng trình duyệt — các phiên hoàn thành trong widget nhúng ở Notion được lưu vào cùng lịch sử phiên với workspace chính.',
+    a: 'Trình duyệt có thể lưu riêng lịch sử trong Notion và trên website. Hãy chạy phiên trực tiếp trên workspace để xem lịch sử trong Focus Dashboard.',
   },
   {
     q: 'Widget này có làm chậm trang Notion không?',
@@ -59,9 +59,9 @@ const FAQ = [
 
 const STEPS = [
   { step: '1', title: 'Cấu hình', desc: 'Chọn hình nền, kênh lofi, màu nhấn và thời lượng Pomodoro trong công cụ tạo embed.' },
-  { step: '2', title: 'Sao chép iframe', desc: 'Một cú nhấp để sao chép đoạn <iframe> sẵn sàng dán — không cần API key hay OAuth.' },
+  { step: '2', title: 'Sao chép URL Notion', desc: 'Bấm Copy Notion URL trong công cụ tạo widget để lấy liên kết.' },
   { step: '3', title: 'Dán vào Notion', desc: 'Gõ /embed trong bất kỳ trang Notion nào, dán link, đồng hồ sẽ hiện trực tiếp ngay trong trang.' },
-  { step: '4', title: 'Tập trung', desc: 'Nhấp một lần để bật tiếng, rồi bắt đầu đếm giờ. Phiên hoàn thành sẽ tự lưu vào Focus Dashboard.' },
+  { step: '4', title: 'Tập trung', desc: 'Nhấp một lần để bật tiếng, rồi bắt đầu đếm giờ. Mở workspace trực tiếp để xem lịch sử trong Focus Dashboard.' },
 ]
 
 export default function WidgetPomodoroNotionPage() {
@@ -141,8 +141,8 @@ export default function WidgetPomodoroNotionPage() {
             </p>
             <p>
               Khác với một template gif đếm ngược tĩnh, đây là một iframe sống — đồng hồ thật sự
-              đếm ngược, nhạc lofi thật sự phát, và một Pomodoro hoàn thành thật sự được ghi vào
-              streak và Focus Dashboard của bạn, y hệt như khi chạy workspace đầy đủ.
+              đếm ngược và nhạc lofi phát sau khi bạn bật âm thanh. Để xem lịch sử và streak ở một nơi,
+              hãy chạy các phiên trên workspace.
             </p>
             <p>
               Widget hoạt động trong trang Notion cá nhân, wiki nhóm dùng chung, hay một trang

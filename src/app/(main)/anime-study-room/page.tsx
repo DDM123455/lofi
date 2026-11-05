@@ -143,9 +143,8 @@ export default function AnimeStudyRoomPage() {
               to your brain it's time to focus.
             </p>
             <p>
-              Soft rain sounds act as white noise, masking distractions. Japanese city-pop
-              lofi has a BPM (70–90) proven to support concentration without engaging the
-              language-processing areas of the brain.
+              Soft rain may make nearby sounds less noticeable. Try a quiet instrumental track
+              and adjust it to suit the task.
             </p>
             <p>
               The Pomodoro technique built into LofiSpace turns each 25-minute session into

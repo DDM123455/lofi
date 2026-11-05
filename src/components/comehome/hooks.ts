@@ -58,13 +58,15 @@ export function useFocusOnMount<T extends HTMLElement>(key?: unknown) {
 }
 
 // ── Memory sky (local-only "good moments") ─────────────────────────────────
-export interface SkyStar { id: string; text: string; at: string }
+export interface SkyStar { id: string; text: string; at: string; why?: string }
 const SKY_KEY = 'comehome-sky'
 /** A year of nightly moments; older stars fade out first. */
 export const SKY_MAX = 365
 
-export function newStar(text: string): SkyStar {
-  return { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, text: text.slice(0, 280), at: new Date().toISOString() }
+export function newStar(text: string, why?: string): SkyStar {
+  const star: SkyStar = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, text: text.slice(0, 280), at: new Date().toISOString() }
+  if (why?.trim()) star.why = why.trim().slice(0, 140)
+  return star
 }
 
 export function loadSky(): SkyStar[] {

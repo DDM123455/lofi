@@ -132,7 +132,7 @@ export function QuietMixer({ c, audio }: { c: HomeCopy; audio: HomeAudio }) {
                   <span>{label}</span>
                 </button>
                 <input
-                  type="range" min={0} max={100} value={vol} disabled={!on}
+                  type="range" min={0} max={100} value={vol}
                   aria-label={`${label} ${c.quiet_volume}`}
                   onChange={e => audio.setVol(id, +e.target.value)}
                 />

@@ -7,8 +7,8 @@ import type { Lang } from '@/lib/i18n'
 export type Mood = 'heavy' | 'okay' | 'good' | 'lovely'
 export type Need = 'rest' | 'calm' | 'mind' | 'quiet' | 'company' | 'sleep'
 /** Everything the hub can open. */
-export type Exp = Need | 'one' | 'sky'
-export type HubGroup = 'out' | 'settle' | 'sleep'
+export type Exp = Need | 'one' | 'sky' | 'good'
+export type HubGroup = 'out' | 'light' | 'settle' | 'sleep'
 /** Ways to let go of what you wrote. */
 export type Ritual = 'sky' | 'river' | 'burn' | 'wind' | 'rain'
 
@@ -76,6 +76,31 @@ export interface HomeCopy {
   sky_add: string
   sky_added: string
 
+  good: {
+    title: string
+    sub: string
+    note: string
+    show: string
+    note_title: string
+    note_more: string
+    one_is_enough: string
+    /** Tap-to-change prompts for when nothing comes to mind; `example` is the placeholder. */
+    hints: { label: string; example: string }[]
+    why_label: string
+    why_placeholder: string
+    keep: string
+    enough: string
+    /** `{date}` is replaced with the localized date. */
+    own_label: string
+    somewhere_label: string
+    another: string
+    after_kept: string
+    after_read: string
+    privacy: string
+    /** "Somewhere tonight…" lines for people with nothing saved yet. */
+    world: string[]
+  }
+
   rest_hint: string
   rest_objects: { lamp: string; window: string; curtain: string; tea: string; fire: string }
   room_label: string
@@ -136,7 +161,7 @@ const en: HomeCopy = {
   mood_skip: 'Skip',
 
   need_q: 'What do you need right now?',
-  hub_groups: { out: 'Let it out', settle: 'Settle in', sleep: 'Wind down' },
+  hub_groups: { light: "Let the light in", out: 'Let it out', settle: 'Settle in', sleep: 'Wind down' },
   cards: {
     mind: { title: 'Clear my mind', desc: 'Write it all down, then let it go.' },
     one: { title: 'One thing from today', desc: 'Keep it as a star, or release it.' },
@@ -145,9 +170,10 @@ const en: HomeCopy = {
     quiet: { title: 'Some quiet', desc: 'Only the sounds you choose.' },
     company: { title: 'Some company', desc: 'Lit windows across the street.' },
     sleep: { title: 'Get ready for sleep', desc: 'Five minutes, slowly fading out.' },
+    good: { title: "Good things happen", desc: "Notice one, or let one find you." },
     sky: { title: 'Your sky', desc: 'Good moments you kept, as stars.' },
   },
-  exp_titles: { mind: 'Clear my mind', one: 'One thing', rest: 'Rest', calm: 'Calm', quiet: 'Quiet', company: 'Company', sleep: 'Sleep', sky: 'Your sky' },
+  exp_titles: { good: "Good things", mind: 'Clear my mind', one: 'One thing', rest: 'Rest', calm: 'Calm', quiet: 'Quiet', company: 'Company', sleep: 'Sleep', sky: 'Your sky' },
   suggested: 'for tonight',
 
   steps: { write: 'Write', choose: 'Choose', release: 'Let go' },
@@ -192,6 +218,28 @@ const en: HomeCopy = {
   sky_add_placeholder: 'A good moment to keep…',
   sky_add: 'Add a star',
   sky_added: 'A new star is in your sky.',
+
+  good: {
+    title: "Good things happen.",
+    sub: "Even on days that didn't feel like it.",
+    note: "Notice one from today",
+    show: "Just show me one",
+    note_title: "What was one small good thing today?",
+    note_more: "Anything else, however small?",
+    one_is_enough: "One is enough. Small counts.",
+    hints: [{"label": "Something you ate", "example": "a warm bowl of noodles"}, {"label": "Someone kind", "example": "a coworker saved me a seat"}, {"label": "It went okay", "example": "the meeting was shorter than I feared"}, {"label": "Something you saw", "example": "the sky turned pink on the way home"}, {"label": "Something you did", "example": "I went outside for ten minutes"}],
+    why_label: "Why do you think it happened? (optional)",
+    why_placeholder: "because…",
+    keep: "Keep it",
+    enough: "That's enough for tonight",
+    own_label: "You kept this on {date}",
+    somewhere_label: "Somewhere tonight",
+    another: "Show me another",
+    after_kept: "It happened. It's in your sky now.",
+    after_read: "You don't have to feel it tonight. It's still true.",
+    privacy: "Stays only in this browser.",
+    world: ["Someone is reading the message they were hoping for.", "A kettle is on for a friend who needed to talk.", "Someone just laughed until they cried.", "A stranger is holding a door without thinking about it.", "Someone is finally hearing good news.", "A child is falling asleep on a warm shoulder.", "Someone is being told, \"I'm glad you're here.\"", "A small plant on a windowsill has a new leaf.", "Someone who was hurting is having an easier evening.", "A dog is overjoyed that someone came home."],
+  },
 
   rest_hint: 'Nothing to do. Things here respond if you touch them.',
   rest_objects: { lamp: 'Lamp', window: 'Window — rain', curtain: 'Curtain', tea: 'Cup of tea', fire: 'Fireplace' },
@@ -264,7 +312,7 @@ const vi: HomeCopy = {
   mood_skip: 'Bỏ qua',
 
   need_q: 'Lúc này bạn cần gì?',
-  hub_groups: { out: 'Trút bỏ', settle: 'Thả lỏng', sleep: 'Chuẩn bị ngủ' },
+  hub_groups: { light: "Đón chút ánh sáng", out: 'Trút bỏ', settle: 'Thả lỏng', sleep: 'Chuẩn bị ngủ' },
   cards: {
     mind: { title: 'Gỡ rối đầu óc', desc: 'Viết hết ra, rồi buông nó đi.' },
     one: { title: 'Một điều hôm nay', desc: 'Giữ lại thành sao, hoặc buông đi.' },
@@ -273,9 +321,10 @@ const vi: HomeCopy = {
     quiet: { title: 'Chút yên tĩnh', desc: 'Chỉ những âm thanh bạn chọn.' },
     company: { title: 'Có người bên cạnh', desc: 'Những ô cửa sáng đèn bên kia đường.' },
     sleep: { title: 'Chuẩn bị đi ngủ', desc: 'Năm phút, mọi thứ dịu dần.' },
+    good: { title: "Điều tốt vẫn đến", desc: "Ghi lại một điều, hoặc để một điều tìm đến bạn." },
     sky: { title: 'Bầu trời của bạn', desc: 'Những khoảnh khắc đẹp, hoá thành sao.' },
   },
-  exp_titles: { mind: 'Gỡ rối', one: 'Một điều', rest: 'Nghỉ ngơi', calm: 'Bình tĩnh', quiet: 'Yên tĩnh', company: 'Bầu bạn', sleep: 'Đi ngủ', sky: 'Bầu trời' },
+  exp_titles: { good: "Điều tốt", mind: 'Gỡ rối', one: 'Một điều', rest: 'Nghỉ ngơi', calm: 'Bình tĩnh', quiet: 'Yên tĩnh', company: 'Bầu bạn', sleep: 'Đi ngủ', sky: 'Bầu trời' },
   suggested: 'hợp với tối nay',
 
   steps: { write: 'Viết', choose: 'Chọn', release: 'Buông' },
@@ -320,6 +369,28 @@ const vi: HomeCopy = {
   sky_add_placeholder: 'Một khoảnh khắc đẹp muốn giữ…',
   sky_add: 'Thêm sao',
   sky_added: 'Một ngôi sao mới đã sáng trên bầu trời.',
+
+  good: {
+    title: "Điều tốt vẫn đến.",
+    sub: "Kể cả vào những ngày không thấy vậy.",
+    note: "Ghi lại một điều hôm nay",
+    show: "Chỉ cần cho mình xem một điều",
+    note_title: "Hôm nay có điều gì nhỏ mà tốt không?",
+    note_more: "Còn gì nữa không, nhỏ thôi cũng được?",
+    one_is_enough: "Một điều là đủ. Nhỏ cũng tính.",
+    hints: [{"label": "Món gì đó ngon", "example": "một tô phở nóng"}, {"label": "Ai đó tử tế", "example": "đồng nghiệp để phần mình ly cà phê"}, {"label": "Việc suôn sẻ", "example": "cuộc họp ngắn hơn mình tưởng"}, {"label": "Điều bạn thấy", "example": "trời hồng trên đường về"}, {"label": "Việc bạn làm", "example": "mình đã ra ngoài đi bộ mười phút"}],
+    why_label: "Vì sao điều đó xảy ra? (không bắt buộc)",
+    why_placeholder: "vì…",
+    keep: "Giữ lại",
+    enough: "Tối nay vậy là đủ rồi",
+    own_label: "Bạn đã giữ lại điều này vào {date}",
+    somewhere_label: "Đâu đó tối nay",
+    another: "Cho mình xem điều khác",
+    after_kept: "Nó đã xảy ra. Giờ nó nằm trên bầu trời của bạn.",
+    after_read: "Tối nay chưa cảm thấy cũng không sao. Điều đó vẫn là thật.",
+    privacy: "Chỉ lưu trong trình duyệt này.",
+    world: ["Có người đang đọc tin nhắn họ mong đợi bấy lâu.", "Có ấm nước đang sôi cho một người bạn cần tâm sự.", "Có người vừa cười đến chảy nước mắt.", "Một người lạ đang giữ cửa cho ai đó mà chẳng nghĩ ngợi gì.", "Có người cuối cùng cũng nhận được tin vui.", "Một em bé đang ngủ thiếp đi trên vai ai đó thật ấm.", "Có người đang được nghe câu: \"May mà có bạn ở đây.\"", "Chậu cây nhỏ bên cửa sổ vừa ra một chiếc lá mới.", "Một người từng đau lòng đang có một buổi tối dễ chịu hơn.", "Một chú chó đang mừng rỡ vì có người vừa về nhà."],
+  },
 
   rest_hint: 'Không có gì phải làm. Đồ vật ở đây sẽ phản hồi nếu bạn chạm vào.',
   rest_objects: { lamp: 'Đèn', window: 'Cửa sổ — mưa', curtain: 'Rèm cửa', tea: 'Tách trà', fire: 'Lò sưởi' },
@@ -389,16 +460,17 @@ export async function loadHomeCopy(lang: Lang): Promise<HomeCopy> {
 }
 
 export const MOOD_EMOJI: Record<Mood, string> = { heavy: '😫', okay: '😐', good: '🙂', lovely: '❤️' }
-export const EXP_EMOJI: Record<Exp, string> = { mind: '💭', one: '✍️', rest: '🛋️', calm: '🌬️', quiet: '🎧', company: '🏙️', sleep: '🌙', sky: '✦' }
+export const EXP_EMOJI: Record<Exp, string> = { mind: '💭', one: '✍️', rest: '🛋️', calm: '🌬️', quiet: '🎧', company: '🏙️', sleep: '🌙', sky: '✦', good: '🌟' }
 
 /** Hub layout: what's in each group, in order. */
 export const HUB: { group: HubGroup; items: Exp[] }[] = [
   { group: 'out', items: ['mind', 'one'] },
+  { group: 'light', items: ['good', 'sky'] },
   { group: 'settle', items: ['rest', 'calm', 'quiet', 'company'] },
-  { group: 'sleep', items: ['sleep', 'sky'] },
+  { group: 'sleep', items: ['sleep'] },
 ]
 /** Gentle suggestion per mood — highlighted on the hub, never forced. */
-export const MOOD_SUGGEST: Record<Mood, Exp> = { heavy: 'mind', okay: 'rest', good: 'one', lovely: 'one' }
+export const MOOD_SUGGEST: Record<Mood, Exp> = { heavy: 'mind', okay: 'rest', good: 'good', lovely: 'good' }
 
 /** Gentle ambient mix each experience suggests (ids from AMBIENT_SOUNDS, 0-100). */
 export const NEED_MIX: Record<Need | 'welcome', Record<string, number>> = {

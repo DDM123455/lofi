@@ -36,6 +36,7 @@ const FOCUS_TOOLS = [
   { href: "/ambient-focus-timer",  label: "Ambient Focus Timer" },
   { href: "/notion-pomodoro-widget", label: "Notion Pomodoro Widget" },
   { href: "/come-home",            label: "🌙 Come Home (evening)" },
+  { href: "/good-things",          label: "🌟 Good Things Happen" },
 ];
 
 export function Header() {

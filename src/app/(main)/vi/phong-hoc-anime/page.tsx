@@ -151,9 +151,8 @@ export default function PhongHocAnimePage() {
               gửi tín hiệu đến não bộ rằng đã đến lúc tập trung học bài.
             </p>
             <p>
-              Tiếng mưa nhẹ hoạt động như một lớp âm thanh nền che lấp những tạp âm gây xao nhãng.
-              Nhạc lofi city-pop Nhật thường có tempo 70-90 BPM — mức nhịp đã được chứng minh giúp
-              hỗ trợ tập trung mà không kích hoạt vùng xử lý ngôn ngữ trong não.
+              Tiếng mưa nhẹ có thể giúp tiếng động xung quanh bớt nổi bật. Nếu thích nghe nhạc khi học,
+              hãy thử một bản không lời ở âm lượng nhỏ.
             </p>
             <p>
               Đồng hồ Pomodoro tích hợp sẵn trong LofiSpace biến mỗi phiên 25 phút thành một mục

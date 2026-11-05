@@ -70,7 +70,7 @@ const FAQ = [
   },
   {
     q: 'Does the Notion embed auto-play music?',
-    a: 'Browsers block auto-play by default. Click anywhere inside the embed once to unmute. After that, music and sounds play automatically on future visits.',
+    a: 'Browsers block auto-play by default. Use the player controls to start audio. Your browser may require a click on each visit.',
   },
   {
     q: 'Can I share my Notion page with the LofiSpace widget?',
@@ -189,7 +189,7 @@ export default function NotionWidgetPage() {
         <section className="mb-16">
           <h2 className="mb-3 text-center text-2xl font-bold text-white">Build Your Embed Code</h2>
           <p className="mb-8 text-center text-white/45 text-sm">
-            Pick your scene and Pomodoro settings, preview it live, then copy the iframe code straight into Notion.
+            Pick your scene and Pomodoro settings, preview it live, then choose Copy Notion URL, then paste the link into a Notion Embed block.
           </p>
           <EmbedGenerator />
         </section>

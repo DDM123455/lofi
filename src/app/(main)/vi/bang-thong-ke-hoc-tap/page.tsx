@@ -15,11 +15,6 @@ export const metadata: Metadata = {
   ],
   alternates: {
     canonical: 'https://www.focusworkspace.app/vi/bang-thong-ke-hoc-tap',
-    languages: {
-      en: 'https://www.focusworkspace.app/dashboard',
-      vi: 'https://www.focusworkspace.app/vi/bang-thong-ke-hoc-tap',
-      'x-default': 'https://www.focusworkspace.app/dashboard',
-    },
   },
   openGraph: {
     title: 'Bảng Thống Kê Học Tập — Theo Dõi Chuỗi Ngày Tập Trung | LofiSpace',

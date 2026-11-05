@@ -42,7 +42,7 @@ const FAQ = [
   },
   {
     q: 'Does music improve focus and productivity?',
-    a: 'Yes, for most people and most tasks. Research shows moderate-tempo instrumental music improves performance on creative tasks, memorisation, and repetitive cognitive work. Tasks requiring heavy verbal processing (drafting, writing, editing) can be impaired by music with lyrics. The ideal: instrumental background music at ~50-65 dB.',
+    a: 'It depends on the person and the task. If nearby conversations distract you, try quiet instrumental music or ambient sound. For reading and writing, compare how you work with and without music.',
   },
   {
     q: 'Should I listen to music while studying?',
@@ -100,7 +100,7 @@ const MUSIC_TYPES = [
 const HOW_IT_AFFECTS_BRAIN = [
   {
     title: 'Arousal regulation',
-    body: 'Music modulates your brain\'s arousal level. Slow, consistent music calms an over-stimulated brain. Slightly faster tempo can raise alertness when you\'re fatigued. Lofi\'s 65-90 BPM sits in the optimal range for sustained cognitive work.',
+    body: 'Some people prefer steady, low-volume music while working. Try it alongside silence and see which makes your task easier.',
   },
   {
     title: 'Masking distracting noise',
@@ -108,7 +108,7 @@ const HOW_IT_AFFECTS_BRAIN = [
   },
   {
     title: 'Pavlovian conditioning',
-    body: 'If you always study with the same music, your brain begins to associate that music with focused work. Over 2-3 weeks, starting the music becomes a reliable trigger for entering a focus state — without needing willpower to get started.',
+    body: 'Starting the same playlist can be a cue to begin studying. Keep it if it helps you settle in, or switch to silence when it distracts you.',
   },
   {
     title: 'Mood elevation',

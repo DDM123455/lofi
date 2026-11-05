@@ -39,6 +39,7 @@ export function Footer() {
             <ul className="space-y-2 text-xs text-white/30">
               <li><Link href="/pomodoro-timer"     className="hover:text-white/70 transition-colors">Pomodoro Timer</Link></li>
               <li><Link href="/come-home"          className="hover:text-white/70 transition-colors">Come Home — Unwind After Work</Link></li>
+              <li><Link href="/good-things"        className="hover:text-white/70 transition-colors">Good Things Happen</Link></li>
               <li><Link href="/lofi-music"         className="hover:text-white/70 transition-colors">Lofi Music</Link></li>
               <li><Link href="/ambient-sounds"     className="hover:text-white/70 transition-colors">Ambient Sounds</Link></li>
               <li><Link href="/focus-music"        className="hover:text-white/70 transition-colors">Focus Music</Link></li>

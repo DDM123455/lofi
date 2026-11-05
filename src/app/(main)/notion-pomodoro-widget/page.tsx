@@ -8,7 +8,7 @@ import { PomodoroCompare } from '@/components/seo/PomodoroCompare'
 export const metadata: Metadata = {
   title: 'Notion Pomodoro Widget — Run a Timer Inside Your Notion Page',
   description:
-    'Embed a working Pomodoro timer — with lofi music and ambient sounds — directly into your Notion workspace. Customize duration, sound and theme, then copy one iframe.',
+    'Embed a working Pomodoro timer — with lofi music and ambient sounds — directly into your Notion workspace. Customize duration, sound and theme, then copy the Notion embed URL.',
   keywords: [
     'notion pomodoro widget', 'notion pomodoro timer', 'pomodoro widget notion', 'embed pomodoro notion',
     'notion focus timer', 'notion timer embed', 'pomodoro notion template',
@@ -45,11 +45,11 @@ const FAQ = [
   },
   {
     q: 'Can I set a custom focus/break length?',
-    a: 'Yes. The embed generator lets you set the focus and break duration in minutes before you copy the code — it is not locked to 25/5.',
+    a: 'Yes. The embed generator lets you set the focus and break duration in minutes before you copy the URL — it is not locked to 25/5.',
   },
   {
     q: 'Does the Notion embed track my streak?',
-    a: 'Yes, if you open the same browser\'s Focus Dashboard afterward — sessions completed inside the Notion embed are saved to the same local session history as the main workspace.',
+    a: 'Browsers may keep Notion embed history separate from the standalone site. Run sessions in the standalone workspace to keep one Focus Dashboard history.',
   },
   {
     q: 'Will it slow down my Notion page?',
@@ -59,9 +59,9 @@ const FAQ = [
 
 const STEPS = [
   { step: '1', title: 'Configure', desc: 'Pick a background, lofi stream, accent color and Pomodoro duration in the embed generator.' },
-  { step: '2', title: 'Copy the iframe', desc: 'One click copies a ready-to-paste <iframe> snippet — no API key or OAuth required.' },
+  { step: '2', title: 'Copy Notion URL', desc: 'Copy the configured widget link from the generator.' },
   { step: '3', title: 'Paste in Notion', desc: 'Type /embed in any Notion page, paste the link, and the live timer appears inline.' },
-  { step: '4', title: 'Focus', desc: 'Click once to unmute, then start the timer. Completed sessions save to your Focus Dashboard.' },
+  { step: '4', title: 'Focus', desc: 'Click once to unmute, then start the timer. Use the standalone workspace to keep one Focus Dashboard history.' },
 ]
 
 export default function NotionPomodoroWidgetPage() {
@@ -140,8 +140,8 @@ export default function NotionPomodoroWidgetPage() {
             </p>
             <p>
               Unlike a static countdown-gif template, this is a live iframe — the timer actually
-              counts down, the lofi stream actually plays, and a completed Pomodoro actually logs
-              to your streak and Focus Dashboard, the same as running the full workspace.
+              counts down and the lofi stream can play after you start audio. Use the standalone
+              workspace to keep one Focus Dashboard history.
             </p>
             <p>
               It works in personal Notion pages, shared team wikis, or a public Notion site — anywhere

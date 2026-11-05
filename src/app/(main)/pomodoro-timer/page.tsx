@@ -42,7 +42,7 @@ const FAQ = [
   },
   {
     q: 'Why does the Pomodoro Technique work?',
-    a: 'The human brain cannot sustain peak concentration indefinitely. Research suggests that 25-minute intervals align with natural ultradian rhythms — cycles of high and low alertness that repeat roughly every 90 minutes. Short breaks prevent mental fatigue from compounding, keeping your output consistent throughout the day.',
+    a: 'Twenty-five minutes is the traditional Pomodoro interval. It gives you a stopping point and a short break before you decide what to do next. Adjust the interval to suit your task and energy.',
   },
   {
     q: 'Is the LofiSpace Pomodoro timer free?',
@@ -166,8 +166,7 @@ export default function PomodoroTimerPage() {
               The combination matters. Pavlovian conditioning — yes, the same principle as
               Pavlov&apos;s dogs — means that if you always start your Pomodoro sessions with the
               same sounds and the same visual environment, your brain begins to associate that
-              environment with focused work. Over 2–3 weeks, entering the workspace triggers
-              a focus response automatically.
+              environment with focused work. A familiar setup can give you a simple cue to start.
             </p>
             <p>
               You also get <strong className="text-white">25 XP per completed Pomodoro</strong>,

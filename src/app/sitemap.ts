@@ -5,6 +5,7 @@ import { BLOG_POSTS, BLOG_CATEGORIES } from '@/lib/blogPosts'
 import { BG_PRESETS } from '@/lib/backgrounds'
 
 const BASE = 'https://www.focusworkspace.app'
+const NOINDEX_MAIN_ROUTES = new Set(['/dashboard'])
 
 // Use real dates per content type — Google ignores identical programmatic dates
 const D = (iso: string) => new Date(iso)
@@ -78,7 +79,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/fireplace-sounds`,            lastModified: D('2026-07-01'), changeFrequency: 'monthly', priority: 0.8  },
     { url: `${BASE}/website-for-studying`,        lastModified: D('2026-07-01'), changeFrequency: 'monthly', priority: 0.85 },
     // Focus dashboard + streak/heatmap tracking (2026-07-03)
-    { url: `${BASE}/dashboard`,                   lastModified: D('2026-07-03'), changeFrequency: 'weekly',  priority: 0.85 },
     { url: `${BASE}/focus-dashboard`,             lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
     { url: `${BASE}/pomodoro-streak-tracker`,     lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.85 },
     { url: `${BASE}/lofi-pomodoro`,               lastModified: D('2026-07-03'), changeFrequency: 'monthly', priority: 0.9  },
@@ -119,6 +119,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/vi/gioi-thieu-bang-thong-ke`,     lastModified: D('2026-07-22'), changeFrequency: 'monthly', priority: 0.8 },
     // Come Home (evening mode) landing
     { url: `${BASE}/come-home`,                   lastModified: D('2026-09-25'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/good-things`,                 lastModified: D('2026-11-01'), changeFrequency: 'monthly', priority: 0.8 },
+    { url: `${BASE}/vi/dieu-tot-van-den`,         lastModified: D('2026-11-01'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vi/ve-nha`,                   lastModified: D('2026-09-25'), changeFrequency: 'monthly', priority: 0.8 },
     // Blog index
     { url: `${BASE}/blog`,                        lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 0.8 },
@@ -152,6 +154,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   let discovered: MetadataRoute.Sitemap = []
   try {
     discovered = discoverMainRoutes()
+      .filter(path => !NOINDEX_MAIN_ROUTES.has(path))
       .map(path => (path === '/' ? BASE : `${BASE}${path}`))
       .filter(url => !known.has(url) && !url.includes('/blog/category'))
       .map(url => ({ url, lastModified: newestBlog, changeFrequency: 'monthly' as const, priority: 0.6 }))

@@ -265,14 +265,15 @@ export function getSceneById(id: string) {
 /** Build /workspace URL from a scene */
 export function sceneToEmbedUrl(scene: Scene, base = ''): string {
   const p = new URLSearchParams()
-  p.set('bgv', encodeURIComponent(scene.gifUrl))
+  p.set('bgv', scene.gifUrl)
   p.set('bgo', String(scene.overlay))
+  if (scene.blur > 0) p.set('bl', String(scene.blur))
   p.set('ls', scene.lofiStreamId)
   p.set('lv', String(Math.round(scene.lofiVolume * 100)))
   const at = scene.ambientTracks.map(t => `${t.id}:${Math.round(t.volume * 100)}`).join(',')
   if (at) p.set('at', at)
-  if (scene.showClock) p.set('clk', '1')
-  if (scene.showPomodoro) p.set('pom', '1')
+  p.set('clk', scene.showClock ? '1' : '0')
+  p.set('pom', scene.showPomodoro ? '1' : '0')
   p.set('ac', scene.accentColor.replace('#', ''))
   return `${base}/workspace?${p.toString()}`
 }

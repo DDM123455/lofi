@@ -142,6 +142,7 @@ export interface Translations {
   more_pet: string
   more_xp: string
   more_share: string
+  more_reminder: string
 
   // Widgets subtab
   widgets_toggle: string
@@ -350,6 +351,7 @@ export const TRANSLATIONS: Record<'en' | 'vi', Translations> = {
     more_pet: '🐱 Cat',
     more_xp: '🏆 XP',
     more_share: '🔗 Share',
+    more_reminder: 'Daily reminder',
 
     widgets_toggle: 'Toggle Widgets',
     widgets_clock: '🕐 Clock',
@@ -578,6 +580,7 @@ export const TRANSLATIONS: Record<'en' | 'vi', Translations> = {
     more_pet: '🐱 Mèo',
     more_xp: '🏆 XP',
     more_share: '🔗 Chia sẻ',
+    more_reminder: 'Nhắc nhở hằng ngày',
 
     widgets_toggle: 'Bật / Tắt',
     widgets_clock: '🕐 Đồng hồ',

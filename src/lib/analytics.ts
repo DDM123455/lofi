@@ -47,6 +47,12 @@ export const analytics = {
     gtag(name, { event_category: 'come_home', ...params })
   },
 
+  /*
+   * Retention helpers (src/components/retention) use `custom` with these names — all anonymous:
+   * install_prompt_shown, install_prompt_accepted, install_instructions_shown {kind},
+   * calendar_added {via: 'google' | 'ics'}, welcome_back_shown — each with {surface: 'focus' | 'home'}.
+   */
+
   /** Generic custom event for one-off tracking. */
   custom(name: string, params?: GtagEventParams) {
     gtag(name, params)

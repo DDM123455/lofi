@@ -81,6 +81,7 @@ const th: Translations = {
   more_pet: '🐱 แมว',
   more_xp: '🏆 XP',
   more_share: '🔗 แชร์',
+  more_reminder: 'เตือนทุกวัน',
 
   widgets_toggle: 'แสดงวิดเจ็ต',
   widgets_clock: '🕐 นาฬิกา',

@@ -13,6 +13,7 @@ import { SmallStep, SMALL_STEP_CSS } from './SmallStep'
 import { NIGHT_ROOM_CSS } from './NightRoom'
 import { NEIGHBORS_CSS } from './Neighbors'
 import { COME_HOME_CSS } from './styles'
+import { HomeRetention } from '@/components/retention/lazy'
 
 export type { HomeAudio } from './Experiences'
 
@@ -332,6 +333,7 @@ function Final({ c, onMenu, onClose }: { c: HomeCopy; onMenu: () => void; onClos
           <button className="ch-btn" onClick={onMenu}>{c.after_menu}</button>
           <button className="ch-btn ch-btn-ghost" onClick={onClose}>{c.close}</button>
         </div>
+        <HomeRetention final />
       </div>
     </div>
   )

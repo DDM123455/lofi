@@ -15,6 +15,8 @@ import { LANGS, isLang, localeOf } from '@/lib/i18n'
 import { SupportModal } from '@/components/support/SupportModal'
 import { LiveClock } from '@/components/workspace/LiveClock'
 import type { HomeAudio } from '@/components/comehome/ComeHome'
+import { canShowNudge } from '@/lib/retention'
+import { NudgeCard, ReminderDialog, WelcomeBack } from '@/components/retention/lazy'
 
 // Come Home (evening) mode ships as its own chunk: focus-mode visitors never download it.
 const ComeHome = dynamic(()=>import('@/components/comehome/ComeHome').then(m=>m.ComeHome),{
@@ -465,6 +467,9 @@ export function EmbedClient() {
   const [showShortcuts,setShowShortcuts]= useState(false)
   const [showPomCfg,   setShowPomCfg]   = useState(false)
   const [tip,          setTip]          = useState<TipState>(null)
+  // Retention: install/reminder card after a finished focus session; reminder from "More"
+  const [nudge,        setNudge]        = useState(false)
+  const [showReminder, setShowReminder] = useState(false)
 
   // Come Home (evening decompression) mode. Everything focus-related stays mounted but hidden,
   // so switching back is instant and no timer/todo/audio state is lost.
@@ -627,6 +632,9 @@ export function EmbedClient() {
     completePomodoro(pom.workMin, activeTodo ? {id:activeTodo.id, title:activeTodo.text} : undefined)
     setXpToast({xp:pom.workMin,key:Date.now()})
     setTimeout(()=>setXpToast(null),2800)
+    // A finished focus session is the happy moment to offer "keep this one tap away" —
+    // never on load, never in Zen, at most once per page (canShowNudge tracks the rest).
+    if(!zen&&!home&&canShowNudge())setTimeout(()=>setNudge(true),3200)
     if(activeTodoId){
       setTodos(prev=>{
         const next=prev.map(x=>x.id===activeTodoId?{...x,actual:(x.actual??0)+1}:x)
@@ -1942,6 +1950,10 @@ export function EmbedClient() {
               {LANGS.map(l=><option key={l.code} value={l.code} style={{background:'#16121f',color:'#f3f3f8'}}>{l.label}</option>)}
             </select>
           </div>
+          <button onClick={()=>{setOpenPopover(null);setShowReminder(true)}} style={row} data-rt="more-reminder">
+            <svg {...ic}><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v3l2 1.2"/></svg>
+            <span style={{flex:1}}>{t.more_reminder}</span>
+          </button>
           <button onClick={()=>{setOpenPopover(null);setShowShortcuts(true)}} style={row}>
             <svg {...ic}><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>
             <span style={{flex:1}}>{t.shortcuts_title}</span>
@@ -2387,6 +2399,15 @@ export function EmbedClient() {
       </div>{/* end focus-only UI */}
 
       {home&&<ComeHome audio={homeAudio} lang={lang} onExit={exitHome} setBackdrop={setBackdrop}/>}
+
+      {/* ── Retention: welcome back (returning visits), post-pomodoro nudge, daily reminder ── */}
+      {mounted&&<WelcomeBack key={mode} surface={home?'home':'focus'} top={home?(mob?64:70):(mob?60:66)}/>}
+      {nudge&&!home&&!zen&&(
+        <div style={{position:'fixed',zIndex:21,...(mob?{left:'50%',bottom:76,transform:'translateX(-50%)'}:{right:20,bottom:108})}}>
+          <NudgeCard surface="focus" onClose={()=>setNudge(false)}/>
+        </div>
+      )}
+      {showReminder&&<ReminderDialog surface="focus" onClose={()=>setShowReminder(false)}/>}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');

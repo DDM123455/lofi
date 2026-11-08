@@ -81,6 +81,7 @@ const ko: Translations = {
   more_pet: '🐱 고양이',
   more_xp: '🏆 XP',
   more_share: '🔗 공유',
+  more_reminder: '매일 알림',
 
   widgets_toggle: '위젯 표시',
   widgets_clock: '🕐 시계',

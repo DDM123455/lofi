@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { analytics } from '@/lib/analytics'
 import type { Lang } from '@/lib/i18n'
-import { EXP_EMOJI, HOME_COPY, HUB, loadHomeCopy, MOOD_EMOJI, MOOD_SUGGEST, NEED_MIX, RITUAL_MIX, type Exp, type HomeCopy, type Mood, type Ritual } from './copy'
-import { loadSky, useFocusOnMount, useReducedMotion } from './hooks'
-import { BrainDump, MemorySky, OneThing, StarField, type Exits } from './Release'
+import { EXP_EMOJI, HOME_COPY, HUB, loadHomeCopy, MOOD_EMOJI, MOOD_SUGGEST, NEED_MIX, RITUAL_MIX, type CheckResult, type Exp, type HomeCopy, type Mood, type Ritual } from './copy'
+import { HEAVY_STREAK_MIN, heavyNoteHidden, heavyStreak, hideHeavyNote, loadSky, recordEveningMood, useFocusOnMount, useReducedMotion } from './hooks'
+import { BrainDump, CheckInAsk, MemorySky, OneThing, StarField, type CheckIn, type Exits } from './Release'
 import { CalmBreath, CompanyRoom, QuietMixer, RestRoom, SleepWindDown, type HomeAudio } from './Experiences'
 import { NIGHT_ROOM_CSS } from './NightRoom'
 import { NEIGHBORS_CSS } from './Neighbors'
@@ -22,7 +22,7 @@ type Screen =
   | { kind: 'welcome' }
   | { kind: 'hub' }
   | { kind: 'exp'; exp: Exp }
-  | { kind: 'final' }
+  | { kind: 'final'; via: string }
   | { kind: 'closed' }
 
 const VISITS_KEY = 'comehome-visits'
@@ -39,6 +39,8 @@ interface Props {
   onExit: () => void
   /** Swap the shared workspace background to one of BG_PRESETS by id. */
   setBackdrop: (presetId: string) => void
+  /** Append lines to the focus workspace's to-do list ("save for tomorrow"; local only). */
+  addTodos: (texts: string[]) => void
 }
 
 /** Copy for `lang`; null only while a not-yet-loaded language's chunk is in flight. */
@@ -61,13 +63,16 @@ export function ComeHome(props: Props) {
   return <ComeHomeView {...props} c={c} />
 }
 
-function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: HomeCopy }) {
+function ComeHomeView({ audio, lang, onExit, setBackdrop, addTodos, c }: Props & { c: HomeCopy }) {
   const reduced = useReducedMotion()
   const [screen, setScreen] = useState<Screen>({ kind: 'welcome' })
   const [mood, setMood] = useState<Mood | null>(null)
   const [leaving, setLeaving] = useState(false)
   const [skyCount, setSkyCount] = useState(() => loadSky().length)
   const [chromeIdle, setChromeIdle] = useState(false)
+  // "Feel lighter?" answer for the current experience (reset whenever a new one opens).
+  const [checkResult, setCheckResult] = useState<CheckResult | null>(null)
+  const [heavyLine, setHeavyLine] = useState(() => heavyStreak() >= HEAVY_STREAK_MIN && !heavyNoteHidden())
   const returning = useRef(false)
 
   // Anonymous product events only — never any text the person writes.
@@ -82,6 +87,14 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
     track('come_home_opened', { returning: visits > 0 })
   }, [track])
 
+  const pickMood = useCallback((m: Mood) => {
+    setMood(m)
+    track('mood_selected', { mood: m })
+    // Local-only streak of heavy evenings — a list of dates, never sent anywhere.
+    recordEveningMood(m === 'heavy')
+    setHeavyLine(heavyStreak() >= HEAVY_STREAK_MIN && !heavyNoteHidden())
+  }, [track])
+
   const leave = useCallback(() => {
     setLeaving(true)
     setTimeout(onExit, reduced ? 0 : 700)
@@ -89,6 +102,7 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
 
   const openExp = useCallback((exp: Exp) => {
     setScreen({ kind: 'exp', exp })
+    setCheckResult(null)
     const ev = START_EVENT[exp]
     if (ev) track(ev, mood ? { mood } : undefined)
     if (exp !== 'quiet' && exp !== 'sky' && exp !== 'one') audio.setMix(NEED_MIX[exp])
@@ -98,7 +112,7 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
   const toHub = useCallback(() => setScreen({ kind: 'hub' }), [])
 
   const finish = useCallback((via: string) => {
-    setScreen({ kind: 'final' })
+    setScreen({ kind: 'final', via })
     track('session_completed', { via, returning: returning.current })
   }, [track])
 
@@ -140,13 +154,26 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
     return () => { clearTimeout(t); setChromeIdle(false); window.removeEventListener('pointermove', wake); window.removeEventListener('keydown', wake) }
   }, [inSleep])
 
+  const checkVia = screen.kind === 'exp' ? screen.exp : screen.kind === 'final' ? screen.via : 'other'
+  const checkIn: CheckIn = useMemo(() => ({
+    result: checkResult,
+    onAnswer: (result: CheckResult) => {
+      setCheckResult(result)
+      // Anonymous: the tapped option, where, and the mood picked at the start. No text.
+      track('check_in', { result, via: checkVia, mood: mood ?? 'none' })
+    },
+    heavyStreak: heavyLine,
+    onDismissHeavy: () => { hideHeavyNote(); setHeavyLine(false) },
+  }), [checkResult, checkVia, heavyLine, mood, track])
+
   const onRitual = useCallback((r: Ritual) => audio.setMix(RITUAL_MIX[r]), [audio])
   const syncSky = useCallback(() => setSkyCount(loadSky().length), [])
   const exits: Exits = useMemo(() => ({
     onMenu: toHub,
     onRest: () => openExp('rest'),
     onDone: () => finish(screen.kind === 'exp' ? screen.exp : 'other'),
-  }), [toHub, openExp, finish, screen])
+    checkIn,
+  }), [toHub, openExp, finish, screen, checkIn])
 
   const screenKey = screen.kind === 'exp' ? `exp-${screen.exp}` : screen.kind
   const exp = screen.kind === 'exp' ? screen.exp : null
@@ -199,13 +226,13 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
         {screen.kind === 'welcome' && (
           <Welcome
             c={c}
-            onMood={m => { setMood(m); track('mood_selected', { mood: m }); toHub() }}
+            onMood={m => { pickMood(m); toHub() }}
             onSkip={() => { track('mood_skipped'); toHub() }}
           />
         )}
         {screen.kind === 'hub' && <Hub c={c} mood={mood} skyCount={skyCount} onPick={openExp} />}
 
-        {exp === 'mind' && <BrainDump c={c} reduced={reduced} track={track} onRitual={onRitual} exits={exits} />}
+        {exp === 'mind' && <BrainDump c={c} reduced={reduced} track={track} onRitual={onRitual} onSaveTodos={addTodos} exits={exits} />}
         {exp === 'one' && (
           <OneThing c={c} reduced={reduced} track={track} onRitual={onRitual} onKept={syncSky} onOpenSky={() => openExp('sky')} exits={exits} />
         )}
@@ -215,10 +242,15 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
         {exp === 'calm' && <CalmBreath c={c} reduced={reduced} exits={exits} />}
         {exp === 'quiet' && <QuietMixer c={c} audio={audio} />}
         {exp === 'sleep' && (
-          <SleepWindDown c={c} audio={audio} onStay={toHub} onClose={closeWorkspace} onComplete={() => track('session_completed', { via: 'sleep', returning: returning.current })} />
+          <SleepWindDown
+            c={c} audio={audio} onStay={toHub} onClose={closeWorkspace}
+            onComplete={() => track('session_completed', { via: 'sleep', returning: returning.current })}
+            onStart={t => track('sleep_timer_set', { minutes: t })}
+            onFaded={() => track('sleep_faded_out')}
+          />
         )}
 
-        {screen.kind === 'final' && <Final c={c} onMenu={toHub} onClose={closeWorkspace} />}
+        {screen.kind === 'final' && <Final c={c} checkIn={checkIn} onMenu={toHub} onClose={closeWorkspace} />}
         {screen.kind === 'closed' && (
           <div className="ch-screen ch-center ch-closed">
             <div className="ch-col">
@@ -296,8 +328,10 @@ function Hub({ c, mood, skyCount, onPick }: { c: HomeCopy; mood: Mood | null; sk
   )
 }
 
-function Final({ c, onMenu, onClose }: { c: HomeCopy; onMenu: () => void; onClose: () => void }) {
+function Final({ c, checkIn, onMenu, onClose }: { c: HomeCopy; checkIn: CheckIn; onMenu: () => void; onClose: () => void }) {
   const h = useFocusOnMount<HTMLParagraphElement>()
+  // Already answered on the screen before? Don't ask twice — just keep the support line.
+  const [ask] = useState(checkIn.result === null)
   return (
     <div className="ch-screen ch-center">
       <StarField count={50} />
@@ -306,6 +340,7 @@ function Final({ c, onMenu, onClose }: { c: HomeCopy; onMenu: () => void; onClos
         <p className="ch-sub">{c.final_2}</p>
         <div className="ch-moon" aria-hidden>🌙</div>
         <p className="ch-h2 ch-soft">{c.final_night}</p>
+        <CheckInAsk c={c} checkIn={checkIn} ask={ask} />
         <div className="ch-row">
           <button className="ch-btn" onClick={onMenu}>{c.after_menu}</button>
           <button className="ch-btn ch-btn-ghost" onClick={onClose}>{c.close}</button>

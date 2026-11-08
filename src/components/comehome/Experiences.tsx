@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { AMBIENT_SOUNDS } from '@/lib/lofiStreams'
-import type { HomeCopy } from './copy'
-import { useClock, useElapsed, useFocusOnMount } from './hooks'
+import { SLEEP_TIMERS, type HomeCopy, type SleepTimer } from './copy'
+import { useClock, useElapsed, useFocusOnMount, useWakeLock } from './hooks'
 import { NightRoom } from './NightRoom'
 import { Neighbors } from './Neighbors'
 import { AfterActions, StarField, type Exits } from './Release'
@@ -152,23 +152,76 @@ export function QuietMixer({ c, audio }: { c: HomeCopy; audio: HomeAudio }) {
   )
 }
 
-// ── Sleep (5-minute wind-down) ──────────────────────────────────────────────
+// ── Sleep (choose how long the sound stays → 5-minute wind-down → fade to silence) ──
 const SLEEP_SECS = 300
-export function SleepWindDown({ c, audio, onStay, onClose, onComplete }: {
+/** The last stretch before the timer ends, over which the sound fades to nothing. */
+const SLEEP_FADE_SECS = 180
+const DEFAULT_TIMER: SleepTimer = 30
+
+export function SleepWindDown({ c, audio, onStay, onClose, onComplete, onStart, onFaded }: {
   c: HomeCopy; audio: HomeAudio; onStay: () => void; onClose: () => void; onComplete: () => void
+  onStart: (t: SleepTimer) => void; onFaded: () => void
+}) {
+  const [timer, setTimer] = useState<SleepTimer>(DEFAULT_TIMER)
+  const [started, setStarted] = useState(false)
+  const h = useFocusOnMount<HTMLHeadingElement>()
+  // Keep the screen (and with it the audio) alive from the moment the person arrives.
+  const [faded, setFaded] = useState(false)
+  useWakeLock(!faded)
+
+  if (started) {
+    return <SleepRun c={c} audio={audio} minutes={timer} onStay={onStay} onClose={onClose} onComplete={onComplete}
+      onFaded={() => { setFaded(true); onFaded() }} faded={faded} />
+  }
+
+  return (
+    <div className="ch-screen ch-center ch-sleep">
+      <StarField count={24} />
+      <div className="ch-col" style={{ position: 'relative', zIndex: 2 }}>
+        <h2 ref={h} tabIndex={-1} className="ch-h2">{c.sleep_choose_title}</h2>
+        <p className="ch-sub">{c.sleep_choose_sub}</p>
+        <div className="ch-ritual-row ch-sleep-timers" role="radiogroup" aria-label={c.sleep_choose_title}>
+          {SLEEP_TIMERS.map(t => (
+            <button key={t} role="radio" aria-checked={timer === t} className={`ch-chip${timer === t ? ' is-on' : ''}`} onClick={() => setTimer(t)}>
+              {t ? c.sleep_minutes.replace('{n}', String(t)) : `🌧️ ${c.sleep_all_night}`}
+            </button>
+          ))}
+        </div>
+        {!audio.soundOn && (
+          <button className="ch-btn" onClick={audio.enableSound}>🔈 {c.sound_hint}</button>
+        )}
+        <button className="ch-btn ch-btn-main" onClick={() => { setStarted(true); onStart(timer) }}>🌙 {c.sleep_start}</button>
+      </div>
+    </div>
+  )
+}
+
+function SleepRun({ c, audio, minutes, faded, onStay, onClose, onComplete, onFaded }: {
+  c: HomeCopy; audio: HomeAudio; minutes: SleepTimer; faded: boolean
+  onStay: () => void; onClose: () => void; onComplete: () => void; onFaded: () => void
 }) {
   const elapsed = useElapsed(1000)
   const p = Math.min(1, elapsed / SLEEP_SECS)
+  const total = minutes * 60 // 0 = all night
   const startMaster = useRef<number | null>(null)
   const completed = useRef(false)
+  const [endsAt] = useState(() => Date.now() + total * 1000)
 
-  // Lower the audio gently over the five minutes (to ~35% of where it started).
+  // Lower the audio gently over the first five minutes (to ~35% of where it started), hold,
+  // then, if a timer was chosen, fade to silence over its last three minutes.
+  const tick = Math.floor(elapsed / 5)
   useEffect(() => {
+    if (faded) return
     if (startMaster.current === null) startMaster.current = audio.master
-    const target = Math.round(startMaster.current * (1 - 0.65 * p))
-    audio.setMaster(target)
+    const base = startMaster.current * (1 - 0.65 * p)
+    const fade = total ? Math.min(1, Math.max(0, (total - elapsed) / SLEEP_FADE_SECS)) : 1
+    audio.setMaster(Math.round(base * fade))
+    if (total && elapsed >= total) {
+      audio.disableSound()
+      onFaded()
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [Math.floor(elapsed / 10)])
+  }, [tick])
 
   useEffect(() => {
     if (p >= 1 && !completed.current) { completed.current = true; onComplete() }
@@ -182,6 +235,9 @@ export function SleepWindDown({ c, audio, onStay, onClose, onComplete }: {
   }, [])
 
   const line = elapsed < 20 ? c.sleep_intro : elapsed < 200 ? c.sleep_main : p < 1 ? c.sleep_eyes : null
+  const at = new Date(endsAt)
+  const endTime = `${String(at.getHours()).padStart(2, '0')}:${String(at.getMinutes()).padStart(2, '0')}`
+  const canWake = typeof navigator !== 'undefined' && 'wakeLock' in navigator
 
   return (
     <div className="ch-screen ch-center ch-sleep">
@@ -192,13 +248,19 @@ export function SleepWindDown({ c, audio, onStay, onClose, onComplete }: {
           <p key={line} className="ch-h2 ch-soft ch-line" aria-live="polite">{line}</p>
         ) : (
           <>
-            <p className="ch-h2 ch-soft ch-line" aria-live="polite">{c.sleep_night}</p>
+            <p className="ch-h2 ch-soft ch-line" aria-live="polite">{faded ? c.sleep_faded : c.sleep_night}</p>
             <div className="ch-moon" aria-hidden>🌙</div>
             <div className="ch-row">
               <button className="ch-btn" onClick={onClose}>{c.close_ws}</button>
               <button className="ch-btn ch-btn-ghost" onClick={onStay}>{c.after_menu}</button>
             </div>
           </>
+        )}
+        {!faded && (
+          <p className="ch-fine ch-sleep-timer">
+            {total ? `🌙 ${c.sleep_fades_at.replace('{t}', endTime)}` : `🌧️ ${c.sleep_stays_on}`}
+            {canWake && <><br />{c.sleep_screen_on}</>}
+          </p>
         )}
       </div>
     </div>

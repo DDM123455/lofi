@@ -1034,6 +1034,20 @@ export function EmbedClient() {
     if(noteTimer.current)clearTimeout(noteTimer.current)
     noteTimer.current=setTimeout(()=>localStorage.setItem('lofispace-todos',JSON.stringify(list)),500)
   }
+  // Come Home "save for tomorrow": lines the person explicitly pinned become ordinary todos.
+  // Functional update + immediate write, since Come Home may exit (and re-render) right after.
+  const addTodos=useCallback((texts:string[])=>{
+    setTodos(prev=>{
+      const open=new Set(prev.filter(t=>!t.done).map(t=>t.text))
+      const base=Date.now()
+      const add=texts.map(s=>s.trim()).filter(s=>s&&!open.has(s)).map((text,i)=>({id:String(base+i),text,done:false,actual:0}))
+      if(!add.length)return prev
+      const next=[...prev,...add]
+      if(noteTimer.current)clearTimeout(noteTimer.current)
+      try{localStorage.setItem('lofispace-todos',JSON.stringify(next))}catch{/* ignore */}
+      return next
+    })
+  },[])
   const addTodo=()=>{
     if(!todoInput.trim())return
     const est=parseInt(todoEstInput,10)
@@ -2371,7 +2385,7 @@ export function EmbedClient() {
       )}
       </div>{/* end focus-only UI */}
 
-      {home&&<ComeHome audio={homeAudio} lang={lang} onExit={exitHome} setBackdrop={setBackdrop}/>}
+      {home&&<ComeHome audio={homeAudio} lang={lang} onExit={exitHome} setBackdrop={setBackdrop} addTodos={addTodos}/>}
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');

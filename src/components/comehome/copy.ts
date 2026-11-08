@@ -14,6 +14,10 @@ export type StepId = (typeof STEP_IDS)[number]
 export type HubGroup = 'out' | 'light' | 'settle' | 'sleep'
 /** Ways to let go of what you wrote. */
 export type Ritual = 'sky' | 'river' | 'burn' | 'wind' | 'rain'
+/** One-tap end-of-session check-in. */
+export type CheckResult = 'lighter' | 'same' | 'heavier'
+/** Sleep wind-down: minutes until the sound fades to silence, or 0 = rain all night. */
+export type SleepTimer = 15 | 30 | 60 | 0
 
 export interface HomeCopy {
   mode_focus: string
@@ -55,6 +59,14 @@ export interface HomeCopy {
   mind_release: string
   mind_privacy: string
   rituals: Record<Ritual, { name: string; desc: string; after: string }>
+  mind_tomorrow_title: string
+  mind_tomorrow_sub: string
+  mind_tomorrow_privacy: string
+  mind_save_only: string
+  mind_saved_one: string
+  /** `{n}` is replaced with the count. */
+  mind_saved_many: string
+  mind_saved_where: string
 
   after_menu: string
   after_rest: string
@@ -141,6 +153,23 @@ export interface HomeCopy {
   sleep_eyes: string
   sleep_night: string
   close_ws: string
+  sleep_choose_title: string
+  sleep_choose_sub: string
+  /** `{n}` is replaced with the minutes. */
+  sleep_minutes: string
+  sleep_all_night: string
+  sleep_start: string
+  /** `{t}` is replaced with a clock time like 23:40. */
+  sleep_fades_at: string
+  sleep_stays_on: string
+  sleep_screen_on: string
+  sleep_faded: string
+
+  checkin_q: string
+  checkin: Record<CheckResult, string>
+  checkin_thanks: string
+  heavy_note: string
+  heavy_dismiss: string
 
   final_1: string
   final_2: string
@@ -215,6 +244,13 @@ const en: HomeCopy = {
     wind: { name: 'To the wind', desc: 'A gust picks it up and scatters it.', after: 'The wind has it. Your hands can rest.' },
     rain: { name: 'Into the rain', desc: 'The ink blurs and washes away.', after: 'Washed away. Tomorrow starts clean.' },
   },
+  mind_tomorrow_title: 'Anything to deal with tomorrow?',
+  mind_tomorrow_sub: 'Tap a line to save it to your to-do list. Everything else, you let go.',
+  mind_tomorrow_privacy: 'Saved lines go only to your to-do list in this browser.',
+  mind_save_only: 'Save for tomorrow',
+  mind_saved_one: '1 thing is waiting for you tomorrow.',
+  mind_saved_many: '{n} things are waiting for you tomorrow.',
+  mind_saved_where: "They're in your Focus to-do list. You can put them down for tonight.",
 
   after_menu: 'Something else',
   after_rest: 'Rest in the room',
@@ -324,6 +360,21 @@ const en: HomeCopy = {
   sleep_eyes: 'Let your eyes get heavy.',
   sleep_night: 'Good night.',
   close_ws: 'Close workspace',
+  sleep_choose_title: 'How long should the sound stay?',
+  sleep_choose_sub: 'It fades to silence on its own. Nothing to remember.',
+  sleep_minutes: '{n} min',
+  sleep_all_night: 'Rain all night',
+  sleep_start: 'Start winding down',
+  sleep_fades_at: 'Sound fades out at {t}',
+  sleep_stays_on: 'Rain stays on all night',
+  sleep_screen_on: 'The screen stays on, dimmed, so the sound keeps playing.',
+  sleep_faded: 'The sound has faded out. Sleep well.',
+
+  checkin_q: 'Feel lighter?',
+  checkin: { lighter: 'Lighter', same: 'Same', heavier: 'Heavier' },
+  checkin_thanks: 'Thank you for telling me.',
+  heavy_note: "It's been heavy for a few evenings now. Talking to someone you trust, or to a professional, can really help.",
+  heavy_dismiss: 'Hide this',
 
   final_1: 'You did enough today.',
   final_2: 'You can leave the rest for tomorrow.',
@@ -398,6 +449,13 @@ const vi: HomeCopy = {
     wind: { name: 'Gửi theo gió', desc: 'Một cơn gió cuốn đi, tan tác.', after: 'Gió mang đi rồi. Đôi tay bạn nghỉ được rồi.' },
     rain: { name: 'Tan vào mưa', desc: 'Mực nhoè dần rồi trôi mất.', after: 'Mưa rửa sạch rồi. Ngày mai bắt đầu lại.' },
   },
+  mind_tomorrow_title: 'Có việc gì cần làm vào ngày mai không?',
+  mind_tomorrow_sub: 'Chạm vào một dòng để lưu vào danh sách việc cần làm. Phần còn lại, cứ buông đi.',
+  mind_tomorrow_privacy: 'Dòng được lưu chỉ nằm trong danh sách việc cần làm ở trình duyệt này.',
+  mind_save_only: 'Để dành cho ngày mai',
+  mind_saved_one: 'Có 1 việc đang chờ bạn vào ngày mai.',
+  mind_saved_many: 'Có {n} việc đang chờ bạn vào ngày mai.',
+  mind_saved_where: 'Chúng nằm trong danh sách việc cần làm ở chế độ Tập trung. Tối nay bạn có thể đặt chúng xuống.',
 
   after_menu: 'Làm điều khác',
   after_rest: 'Nghỉ trong phòng',
@@ -507,6 +565,21 @@ const vi: HomeCopy = {
   sleep_eyes: 'Để đôi mắt nặng dần.',
   sleep_night: 'Chúc ngủ ngon.',
   close_ws: 'Đóng không gian',
+  sleep_choose_title: 'Bạn muốn âm thanh ở lại bao lâu?',
+  sleep_choose_sub: 'Nó sẽ tự nhỏ dần rồi tắt. Bạn không cần nhớ gì cả.',
+  sleep_minutes: '{n} phút',
+  sleep_all_night: 'Mưa suốt đêm',
+  sleep_start: 'Bắt đầu thư giãn',
+  sleep_fades_at: 'Âm thanh tắt dần lúc {t}',
+  sleep_stays_on: 'Tiếng mưa ở lại suốt đêm',
+  sleep_screen_on: 'Màn hình vẫn sáng mờ để âm thanh không bị ngắt.',
+  sleep_faded: 'Âm thanh đã tắt. Ngủ ngon nhé.',
+
+  checkin_q: 'Bạn thấy nhẹ lòng hơn chưa?',
+  checkin: { lighter: 'Nhẹ hơn', same: 'Như cũ', heavier: 'Nặng hơn' },
+  checkin_thanks: 'Cảm ơn bạn đã chia sẻ.',
+  heavy_note: 'Mấy buổi tối gần đây có vẻ nặng nề. Trò chuyện với người bạn tin tưởng, hoặc với chuyên gia, có thể giúp ích rất nhiều.',
+  heavy_dismiss: 'Ẩn đi',
 
   final_1: 'Hôm nay bạn đã làm đủ rồi.',
   final_2: 'Phần còn lại để mai tính.',
@@ -565,6 +638,10 @@ export const NEED_MIX: Record<Need | 'welcome', Record<string, number>> = {
   company: { rain: 24, fire: 20 },
   sleep: { rain: 24, wind: 10 },
 }
+
+export const CHECK_ORDER: CheckResult[] = ['lighter', 'same', 'heavier']
+export const CHECK_EMOJI: Record<CheckResult, string> = { lighter: '🪶', same: '😐', heavier: '🪨' }
+export const SLEEP_TIMERS: SleepTimer[] = [15, 30, 60, 0]
 
 export const RITUAL_ORDER: Ritual[] = ['sky', 'river', 'burn', 'wind', 'rain']
 export const RITUAL_EMOJI: Record<Ritual, string> = { sky: '🌌', river: '⛵', burn: '🔥', wind: '🍃', rain: '🌧️' }

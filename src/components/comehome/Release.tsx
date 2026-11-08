@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import { localeOf, type Lang } from '@/lib/i18n'
-import { RITUAL_EMOJI, RITUAL_ORDER, type HomeCopy, type Ritual } from './copy'
+import { CHECK_EMOJI, CHECK_ORDER, RITUAL_EMOJI, RITUAL_ORDER, type CheckResult, type HomeCopy, type Ritual } from './copy'
 import { loadSky, newStar, saveSky, SKY_MAX, starPos, useFocusOnMount, type SkyStar } from './hooks'
 import { needsSupport, SUPPORT_URL } from './support'
 import { HomeRetention } from '@/components/retention/lazy'
@@ -11,6 +11,8 @@ import { HomeRetention } from '@/components/retention/lazy'
  * Privacy contract for everything in this file:
  *  - Brain-dump text lives only in React state and is dropped the moment it's released.
  *    It is never written to storage, never sent anywhere, never passed to analytics.
+ *    The one exception: lines the person pins "for tomorrow" are handed to `onSaveTodos`,
+ *    which adds them to their own local to-do list. Analytics only ever see counts.
  *  - "Keep this moment" / "Add a star" is the only thing persisted, and only to this
  *    browser's localStorage (see hooks.ts), because the person explicitly asked to keep it.
  *  - Text-bearing nodes carry data-clarity-mask so session recording never captures them.
@@ -18,8 +20,17 @@ import { HomeRetention } from '@/components/retention/lazy'
 
 type Track = (name: string, params?: Record<string, string | number | boolean>) => void
 
+/** End-of-session "Feel lighter?" state, owned by ComeHome so every ending shares it. */
+export interface CheckIn {
+  result: CheckResult | null
+  onAnswer: (r: CheckResult) => void
+  /** Several heavy evenings in a row (local-only count) — show the gentle support line. */
+  heavyStreak: boolean
+  onDismissHeavy: () => void
+}
+
 /** Shared "what next" exits, so every experience ends the same way. */
-export interface Exits { onMenu: () => void; onRest: () => void; onDone: () => void }
+export interface Exits { onMenu: () => void; onRest: () => void; onDone: () => void; checkIn: CheckIn }
 
 const RITUAL_KEY = 'comehome-ritual' // last chosen ritual (a preference, never text)
 function loadRitual(): Ritual {
@@ -89,6 +100,33 @@ function Steps({ labels, current }: { labels: string[]; current: number }) {
   )
 }
 
+/** Optional one-tap "Feel lighter?" — anonymous, no text, never required. */
+export function CheckInAsk({ c, checkIn, ask = true }: { c: HomeCopy; checkIn: CheckIn; ask?: boolean }) {
+  if (!ask && !checkIn.heavyStreak) return null
+  return (
+    <div className="ch-checkin">
+      {!ask ? null : checkIn.result ? (
+        <p className="ch-checkin-thanks" aria-live="polite">{CHECK_EMOJI[checkIn.result]} {c.checkin_thanks}</p>
+      ) : (
+        <div className="ch-checkin-row" role="group" aria-labelledby="ch-checkin-q">
+          <span id="ch-checkin-q" className="ch-checkin-q">{c.checkin_q}</span>
+          {CHECK_ORDER.map(r => (
+            <button key={r} className="ch-chip" onClick={() => checkIn.onAnswer(r)}>
+              <span aria-hidden>{CHECK_EMOJI[r]}</span> {c.checkin[r]}
+            </button>
+          ))}
+        </div>
+      )}
+      {checkIn.heavyStreak && (
+        <div className="ch-support" role="note">
+          <p>{c.heavy_note}</p>
+          <button className="ch-link" onClick={checkIn.onDismissHeavy}>{c.heavy_dismiss}</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function AfterActions({ c, line, exits, children }: { c: HomeCopy; line: string; exits: Exits; children?: ReactNode }) {
   const h = useFocusOnMount<HTMLParagraphElement>()
   return (
@@ -96,6 +134,7 @@ export function AfterActions({ c, line, exits, children }: { c: HomeCopy; line: 
       <p ref={h} tabIndex={-1} className="ch-h2 ch-soft ch-line">{line}</p>
       <div className="ch-moon" aria-hidden>🌙</div>
       {children}
+      <CheckInAsk c={c} checkIn={exits.checkIn} />
       <div className="ch-row">
         <button className="ch-btn ch-btn-main" onClick={exits.onMenu}>{c.after_menu}</button>
         <button className="ch-btn" onClick={exits.onRest}>{c.after_rest}</button>
@@ -184,15 +223,23 @@ function RitualStage({ ritual, cards, prefix }: { ritual: Ritual; cards: string[
 // ── Clear My Mind: write → choose → let go → after ──────────────────────────
 type Step = 'write' | 'choose' | 'release' | 'after'
 
-export function BrainDump({ c, reduced, track, onRitual, exits }: {
-  c: HomeCopy; reduced: boolean; track: Track; onRitual: (r: Ritual) => void; exits: Exits
+export function BrainDump({ c, reduced, track, onRitual, onSaveTodos, exits }: {
+  c: HomeCopy; reduced: boolean; track: Track; onRitual: (r: Ritual) => void
+  /** Adds pinned lines to the focus workspace's to-do list (local only). */
+  onSaveTodos: (texts: string[]) => void
+  exits: Exits
 }) {
   const [step, setStep] = useState<Step>('write')
   const [text, setText] = useState('')
   const [ritual, setRitual] = useState<Ritual>(loadRitual)
   const [cards, setCards] = useState<string[]>([])
   const [typed, setTyped] = useState(false)
+  // Indexes into toCards(text) pinned "for tomorrow"; cleared whenever the text changes.
+  const [pinned, setPinned] = useState<Set<number>>(() => new Set())
+  const [saved, setSaved] = useState(0)
+  const [freed, setFreed] = useState(0)
   const h = useFocusOnMount<HTMLHeadingElement>(step)
+  const lines = useMemo(() => (step === 'choose' ? toCards(text) : []), [step, text])
 
   const backToWrite = useCallback(() => setStep('write'), [])
   useEscStep(step === 'choose', backToWrite)
@@ -200,19 +247,36 @@ export function BrainDump({ c, reduced, track, onRitual, exits }: {
   const onType = (v: string) => {
     if (!typed && v.trim()) { setTyped(true); track('brain_dump_started') }
     setText(v)
+    if (pinned.size) setPinned(new Set())
   }
   const toChoose = () => { if (text.trim()) setStep('choose') }
   const pick = (r: Ritual) => { setRitual(r); saveRitual(r) }
   const careNeeded = useMemo(() => step === 'choose' && needsSupport(text), [step, text])
+  const togglePin = (i: number) => setPinned(p => {
+    const n = new Set(p)
+    if (n.has(i)) n.delete(i); else n.add(i)
+    return n
+  })
 
   const release = () => {
     const list = toCards(text)
     if (!list.length) return
+    const keep = list.filter((_, i) => pinned.has(i))
+    const go = list.filter((_, i) => !pinned.has(i))
+    if (keep.length) onSaveTodos(keep)
+    setSaved(keep.length)
+    setFreed(go.length)
+    setPinned(new Set())
     setText('') // the only copy left is the transient animation below
-    setCards(list)
+    if (!go.length) {
+      setStep('after')
+      track('brain_dump_saved', { saved: keep.length })
+      return
+    }
+    setCards(go)
     setStep('release')
     onRitual(ritual)
-    track('brain_dump_released', { ritual, pieces: list.length })
+    track('brain_dump_released', { ritual, pieces: go.length, saved: keep.length })
   }
 
   useEffect(() => {
@@ -226,26 +290,55 @@ export function BrainDump({ c, reduced, track, onRitual, exits }: {
   if (step === 'release') return <RitualStage ritual={ritual} cards={cards} />
 
   if (step === 'after') {
+    const savedLine = saved === 1 ? c.mind_saved_one : c.mind_saved_many.replace('{n}', String(saved))
+    // Everything was pinned and nothing released: the saved line becomes the headline.
+    const allSaved = saved > 0 && freed === 0
     return (
       <div className="ch-screen ch-center">
         <StarField count={30} />
-        <AfterActions c={c} line={c.rituals[ritual].after} exits={exits} />
+        <AfterActions c={c} line={allSaved ? savedLine : c.rituals[ritual].after} exits={exits}>
+          {saved > 0 && (
+            <div className="ch-saved">
+              {!allSaved && <p className="ch-saved-line">📌 {savedLine}</p>}
+              <p className="ch-fine">{c.mind_saved_where}</p>
+            </div>
+          )}
+        </AfterActions>
       </div>
     )
   }
 
   if (step === 'choose') {
+    const allPinned = lines.length > 0 && pinned.size >= lines.length
     return (
       <div className="ch-screen ch-center" key="choose">
         <div className="ch-col ch-wide">
           <Steps labels={labels} current={1} />
           {careNeeded && <CareNote c={c} />}
-          <h2 ref={h} tabIndex={-1} className="ch-h2">{c.mind_choose_title}</h2>
-          <p className="ch-sub">{c.mind_choose_sub}</p>
-          <RitualPicker c={c} value={ritual} onChange={pick} />
+          <section className="ch-tomorrow" aria-labelledby="ch-tomorrow-q">
+            <h2 ref={h} tabIndex={-1} id="ch-tomorrow-q" className="ch-tomorrow-q">📌 {c.mind_tomorrow_title}</h2>
+            <p className="ch-fine">{c.mind_tomorrow_sub}</p>
+            <div className="ch-tomorrow-chips" data-clarity-mask="True">
+              {lines.map((l, i) => (
+                <button key={i} className={`ch-chip ch-line-chip${pinned.has(i) ? ' is-on' : ''}`} aria-pressed={pinned.has(i)} onClick={() => togglePin(i)}>
+                  {pinned.has(i) && <span aria-hidden>📌 </span>}{l}
+                </button>
+              ))}
+            </div>
+            {pinned.size > 0 && <p className="ch-fine">🔒 {c.mind_tomorrow_privacy}</p>}
+          </section>
+          {!allPinned && (
+            <>
+              <h2 className="ch-h2">{c.mind_choose_title}</h2>
+              <p className="ch-sub">{c.mind_choose_sub}</p>
+              <RitualPicker c={c} value={ritual} onChange={pick} />
+            </>
+          )}
           <div className="ch-row">
             <button className="ch-btn ch-btn-ghost" onClick={backToWrite}>← {c.edit}</button>
-            <button className="ch-btn ch-btn-main" onClick={release}>{RITUAL_EMOJI[ritual]} {c.mind_release}</button>
+            <button className="ch-btn ch-btn-main" onClick={release}>
+              {allPinned ? `📌 ${c.mind_save_only}` : `${RITUAL_EMOJI[ritual]} ${c.mind_release}`}
+            </button>
           </div>
         </div>
       </div>

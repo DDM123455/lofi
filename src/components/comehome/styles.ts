@@ -121,6 +121,29 @@ export const COME_HOME_CSS = `
 .ch-one-prefix{display:block;font-size:15px;color:var(--ch-accent);margin:0 0 6px 4px}
 .ch-one-area{min-height:110px;margin-top:0}
 
+/* save for tomorrow (brain dump) */
+.ch-tomorrow{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;padding:14px 16px 16px;margin-bottom:8px;border-radius:18px;border:1px dashed var(--ch-line);background:rgba(255,240,230,.03)}
+.ch-tomorrow-q{margin:0;font-size:16px;font-weight:500;color:var(--ch-text)}
+.ch-tomorrow-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-height:32vh;overflow-y:auto;padding:2px}
+.ch-line-chip{max-width:100%;text-align:left;line-height:1.4;color:var(--ch-text);transition:background .3s,border-color .3s,color .3s}
+.ch-line-chip:hover{border-color:rgba(240,184,138,.35)}
+.ch-saved{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ch-saved-line{margin:0;font-size:15px;color:var(--ch-accent)}
+
+/* end check-in */
+.ch-checkin{display:flex;flex-direction:column;align-items:center;gap:10px;margin:4px 0}
+.ch-checkin-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center}
+.ch-checkin-q{font-size:14px;color:var(--ch-dim);margin-right:2px}
+.ch-checkin-thanks{margin:0;font-size:14px;color:var(--ch-dim);animation:ch-line-in 1.2s ease both}
+.ch-support{max-width:440px;padding:12px 16px 8px;border-radius:16px;border:1px solid var(--ch-line);background:var(--ch-glass);font-size:14px;line-height:1.55;color:#fbe9d8}
+.ch-support p{margin:0}
+.ch-support .ch-link{font-size:12.5px}
+
+/* sleep timer */
+.ch-sleep-timers{margin:6px 0 4px}
+.ch-sleep-timers .ch-chip{padding:9px 16px;font-size:14px}
+.ch-sleep-timer{margin-top:14px;line-height:1.7}
+
 /* release */
 .ch-release{position:absolute;inset:0;overflow:hidden}
 .ch-cards{position:absolute;inset:0;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:12px;padding:100px 24px}
@@ -279,5 +302,5 @@ export const COME_HOME_CSS = `
 .is-reduced .ch-ember,.is-reduced .ch-wind span,.is-reduced .ch-wind i,.is-reduced .ch-rainfall,.is-reduced .ch-memstar.is-born{animation:none!important}
 .is-reduced .ch-orb,.is-reduced .ch-waves path,.is-reduced .ch-calm-curtain,.is-reduced .ch-starfield span,.is-reduced .ch-memstar,
 .is-reduced .ch-moon,.is-reduced .ch-river span,.is-reduced .ch-clouds span{animation:none!important}
-.is-reduced .ch-screen,.is-reduced .ch-line{animation-duration:.4s}
+.is-reduced .ch-screen,.is-reduced .ch-line,.is-reduced .ch-checkin-thanks{animation-duration:.4s}
 `

@@ -81,6 +81,7 @@ const ru: Translations = {
   more_pet: '🐱 Кот',
   more_xp: '🏆 Опыт',
   more_share: '🔗 Поделиться',
+  more_reminder: 'Ежедневное напоминание',
 
   widgets_toggle: 'Показать виджеты',
   widgets_clock: '🕐 Часы',

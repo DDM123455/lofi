@@ -5,6 +5,7 @@ import { localeOf, type Lang } from '@/lib/i18n'
 import { RITUAL_EMOJI, RITUAL_ORDER, type HomeCopy, type Ritual } from './copy'
 import { loadSky, newStar, saveSky, SKY_MAX, starPos, useFocusOnMount, type SkyStar } from './hooks'
 import { needsSupport, SUPPORT_URL } from './support'
+import { HomeRetention } from '@/components/retention/lazy'
 
 /*
  * Privacy contract for everything in this file:
@@ -100,6 +101,7 @@ export function AfterActions({ c, line, exits, children }: { c: HomeCopy; line: 
         <button className="ch-btn" onClick={exits.onRest}>{c.after_rest}</button>
       </div>
       <button className="ch-link" onClick={exits.onDone}>{c.done_tonight}</button>
+      <HomeRetention />
     </div>
   )
 }

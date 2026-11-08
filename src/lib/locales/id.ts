@@ -81,6 +81,7 @@ const id: Translations = {
   more_pet: '🐱 Kucing',
   more_xp: '🏆 XP',
   more_share: '🔗 Bagikan',
+  more_reminder: 'Pengingat harian',
 
   widgets_toggle: 'Tampilkan widget',
   widgets_clock: '🕐 Jam',

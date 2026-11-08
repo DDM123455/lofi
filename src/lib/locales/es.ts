@@ -81,6 +81,7 @@ const es: Translations = {
   more_pet: '🐱 Gato',
   more_xp: '🏆 XP',
   more_share: '🔗 Compartir',
+  more_reminder: 'Recordatorio diario',
 
   widgets_toggle: 'Mostrar widgets',
   widgets_clock: '🕐 Reloj',

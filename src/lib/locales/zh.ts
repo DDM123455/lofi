@@ -81,6 +81,7 @@ const zh: Translations = {
   more_pet: '🐱 猫咪',
   more_xp: '🏆 经验',
   more_share: '🔗 分享',
+  more_reminder: '每日提醒',
 
   widgets_toggle: '显示小组件',
   widgets_clock: '🕐 时钟',

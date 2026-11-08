@@ -81,6 +81,7 @@ const ja: Translations = {
   more_pet: '🐱 ネコ',
   more_xp: '🏆 XP',
   more_share: '🔗 共有',
+  more_reminder: '毎日のリマインダー',
 
   widgets_toggle: 'ウィジェットの表示',
   widgets_clock: '🕐 時計',

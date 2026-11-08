@@ -7,7 +7,10 @@ import type { Lang } from '@/lib/i18n'
 export type Mood = 'heavy' | 'okay' | 'good' | 'lovely'
 export type Need = 'rest' | 'calm' | 'mind' | 'quiet' | 'company' | 'sleep'
 /** Everything the hub can open. */
-export type Exp = Need | 'one' | 'sky' | 'good'
+export type Exp = Need | 'one' | 'sky' | 'good' | 'step'
+/** One Small Step suggestions; order is irrelevant (shuffled per visit). */
+export const STEP_IDS = ['water', 'window', 'face', 'stretch', 'eat', 'outside', 'tidy', 'song', 'text', 'hug', 'sky', 'write', 'see', 'clothes'] as const
+export type StepId = (typeof STEP_IDS)[number]
 export type HubGroup = 'out' | 'light' | 'settle' | 'sleep'
 /** Ways to let go of what you wrote. */
 export type Ritual = 'sky' | 'river' | 'burn' | 'wind' | 'rain'
@@ -101,6 +104,22 @@ export interface HomeCopy {
     world: string[]
   }
 
+  step: {
+    title: string
+    sub: string
+    about: string
+    accept: string
+    other: string
+    not_tonight: string
+    doing: string
+    done: string
+    skip: string
+    done_line: string
+    more: string
+    rest_line: string
+    steps: Record<StepId, { text: string; why: string }>
+  }
+
   rest_hint: string
   rest_objects: { lamp: string; window: string; curtain: string; tea: string; fire: string }
   room_label: string
@@ -170,10 +189,11 @@ const en: HomeCopy = {
     quiet: { title: 'Some quiet', desc: 'Only the sounds you choose.' },
     company: { title: 'Some company', desc: 'Lit windows across the street.' },
     sleep: { title: 'Get ready for sleep', desc: 'Five minutes, slowly fading out.' },
+    step: { title: "One small step", desc: "For when you can't get started." },
     good: { title: "Good things happen", desc: "Notice one, or let one find you." },
     sky: { title: 'Your sky', desc: 'Good moments you kept, as stars.' },
   },
-  exp_titles: { good: "Good things", mind: 'Clear my mind', one: 'One thing', rest: 'Rest', calm: 'Calm', quiet: 'Quiet', company: 'Company', sleep: 'Sleep', sky: 'Your sky' },
+  exp_titles: { step: "Small step", good: "Good things", mind: 'Clear my mind', one: 'One thing', rest: 'Rest', calm: 'Calm', quiet: 'Quiet', company: 'Company', sleep: 'Sleep', sky: 'Your sky' },
   suggested: 'for tonight',
 
   steps: { write: 'Write', choose: 'Choose', release: 'Let go' },
@@ -239,6 +259,37 @@ const en: HomeCopy = {
     after_read: "You don't have to feel it tonight. It's still true.",
     privacy: "Stays only in this browser.",
     world: ["Someone is reading the message they were hoping for.", "A kettle is on for a friend who needed to talk.", "Someone just laughed until they cried.", "A stranger is holding a door without thinking about it.", "Someone is finally hearing good news.", "A child is falling asleep on a warm shoulder.", "Someone is being told, \"I'm glad you're here.\"", "A small plant on a windowsill has a new leaf.", "Someone who was hurting is having an easier evening.", "A dog is overjoyed that someone came home."],
+  },
+
+  step: {
+    title: "One small step.",
+    sub: "When everything feels like too much, start tiny. Motivation usually comes after you move, not before.",
+    about: "about 2 minutes",
+    accept: "I'll do this",
+    other: "Something else",
+    not_tonight: "Not even this tonight",
+    doing: "Take your time. Come back when you're done.",
+    done: "Done",
+    skip: "Didn't do it — that's okay",
+    done_line: "You did one thing. That's enough for right now.",
+    more: "One more small step",
+    rest_line: "That's okay. Some nights, resting is the step.",
+    steps: {
+      water: {"text": "Drink a glass of water.", "why": "A tired mind is often a thirsty one."},
+      window: {"text": "Open a window and take three slow breaths.", "why": "Fresh air is a small reset."},
+      face: {"text": "Wash your face with warm water.", "why": "A little care still counts."},
+      stretch: {"text": "Stand up and stretch your arms over your head.", "why": "Your body has been holding the day."},
+      eat: {"text": "Eat something small. Fruit, bread, anything.", "why": "It's hard to feel okay on an empty stomach."},
+      outside: {"text": "Step outside your door for one minute.", "why": "A change of air, nothing more."},
+      tidy: {"text": "Put away just one thing near you.", "why": "One clear spot is enough."},
+      song: {"text": "Play one song you used to love.", "why": "Some songs remember who you are."},
+      text: {"text": "Send someone a short message: \"thinking of you\".", "why": "Small threads still connect us."},
+      hug: {"text": "Hug someone, or a pillow. Really.", "why": "Holding on helps, even to a pillow."},
+      sky: {"text": "Look out at the sky for a minute.", "why": "It has been there all along."},
+      write: {"text": "Write one sentence about how you feel. Any sentence.", "why": "Naming it makes it a little smaller."},
+      see: {"text": "Name three things you can see right now.", "why": "It brings you back to here."},
+      clothes: {"text": "Change into something comfortable.", "why": "You're allowed to be comfortable."},
+    },
   },
 
   rest_hint: 'Nothing to do. Things here respond if you touch them.',
@@ -321,10 +372,11 @@ const vi: HomeCopy = {
     quiet: { title: 'Chút yên tĩnh', desc: 'Chỉ những âm thanh bạn chọn.' },
     company: { title: 'Có người bên cạnh', desc: 'Những ô cửa sáng đèn bên kia đường.' },
     sleep: { title: 'Chuẩn bị đi ngủ', desc: 'Năm phút, mọi thứ dịu dần.' },
+    step: { title: "Một bước nhỏ", desc: "Cho những lúc chẳng muốn bắt đầu gì cả." },
     good: { title: "Điều tốt vẫn đến", desc: "Ghi lại một điều, hoặc để một điều tìm đến bạn." },
     sky: { title: 'Bầu trời của bạn', desc: 'Những khoảnh khắc đẹp, hoá thành sao.' },
   },
-  exp_titles: { good: "Điều tốt", mind: 'Gỡ rối', one: 'Một điều', rest: 'Nghỉ ngơi', calm: 'Bình tĩnh', quiet: 'Yên tĩnh', company: 'Bầu bạn', sleep: 'Đi ngủ', sky: 'Bầu trời' },
+  exp_titles: { step: "Bước nhỏ", good: "Điều tốt", mind: 'Gỡ rối', one: 'Một điều', rest: 'Nghỉ ngơi', calm: 'Bình tĩnh', quiet: 'Yên tĩnh', company: 'Bầu bạn', sleep: 'Đi ngủ', sky: 'Bầu trời' },
   suggested: 'hợp với tối nay',
 
   steps: { write: 'Viết', choose: 'Chọn', release: 'Buông' },
@@ -390,6 +442,37 @@ const vi: HomeCopy = {
     after_read: "Tối nay chưa cảm thấy cũng không sao. Điều đó vẫn là thật.",
     privacy: "Chỉ lưu trong trình duyệt này.",
     world: ["Có người đang đọc tin nhắn họ mong đợi bấy lâu.", "Có ấm nước đang sôi cho một người bạn cần tâm sự.", "Có người vừa cười đến chảy nước mắt.", "Một người lạ đang giữ cửa cho ai đó mà chẳng nghĩ ngợi gì.", "Có người cuối cùng cũng nhận được tin vui.", "Một em bé đang ngủ thiếp đi trên vai ai đó thật ấm.", "Có người đang được nghe câu: \"May mà có bạn ở đây.\"", "Chậu cây nhỏ bên cửa sổ vừa ra một chiếc lá mới.", "Một người từng đau lòng đang có một buổi tối dễ chịu hơn.", "Một chú chó đang mừng rỡ vì có người vừa về nhà."],
+  },
+
+  step: {
+    title: "Một bước nhỏ thôi.",
+    sub: "Khi mọi thứ đều quá sức, hãy bắt đầu thật nhỏ. Động lực thường đến sau khi mình nhúc nhích, chứ không phải trước.",
+    about: "khoảng 2 phút",
+    accept: "Mình làm việc này",
+    other: "Việc khác",
+    not_tonight: "Tối nay chưa làm nổi",
+    doing: "Cứ từ từ. Làm xong thì quay lại đây.",
+    done: "Xong rồi",
+    skip: "Chưa làm được — không sao cả",
+    done_line: "Bạn vừa làm được một điều. Vậy là đủ cho lúc này.",
+    more: "Thêm một bước nhỏ nữa",
+    rest_line: "Không sao đâu. Có những tối, nghỉ ngơi chính là bước nhỏ.",
+    steps: {
+      water: {"text": "Uống một cốc nước.", "why": "Đầu óc mệt thường là đang khát."},
+      window: {"text": "Mở cửa sổ và hít thở chậm ba lần.", "why": "Một chút không khí mới là đủ để làm mới."},
+      face: {"text": "Rửa mặt bằng nước ấm.", "why": "Chăm sóc mình một chút cũng là chăm sóc."},
+      stretch: {"text": "Đứng dậy, vươn hai tay qua đầu.", "why": "Cơ thể bạn đã gồng cả ngày rồi."},
+      eat: {"text": "Ăn một chút gì đó. Trái cây, bánh mì, gì cũng được.", "why": "Bụng đói thì khó mà thấy ổn."},
+      outside: {"text": "Bước ra khỏi cửa một phút.", "why": "Đổi không khí thôi, không cần gì hơn."},
+      tidy: {"text": "Cất gọn đúng một món đồ gần bạn.", "why": "Một góc gọn gàng là đủ."},
+      song: {"text": "Mở một bài hát bạn từng rất thích.", "why": "Có những bài hát còn nhớ bạn là ai."},
+      text: {"text": "Nhắn cho ai đó: \"tự nhiên nhớ bạn\".", "why": "Những sợi dây nhỏ vẫn kết nối mình với nhau."},
+      hug: {"text": "Ôm một ai đó, hoặc ôm cái gối. Thật đấy.", "why": "Được ôm giúp ích, kể cả là ôm gối."},
+      sky: {"text": "Nhìn bầu trời một phút.", "why": "Nó vẫn luôn ở đó."},
+      write: {"text": "Viết một câu về cảm giác của bạn. Câu gì cũng được.", "why": "Gọi được tên nó, nó nhỏ đi một chút."},
+      see: {"text": "Kể tên ba thứ bạn đang nhìn thấy.", "why": "Nó đưa bạn trở về với hiện tại."},
+      clothes: {"text": "Thay một bộ đồ thật thoải mái.", "why": "Bạn được phép thoải mái."},
+    },
   },
 
   rest_hint: 'Không có gì phải làm. Đồ vật ở đây sẽ phản hồi nếu bạn chạm vào.',
@@ -460,12 +543,12 @@ export async function loadHomeCopy(lang: Lang): Promise<HomeCopy> {
 }
 
 export const MOOD_EMOJI: Record<Mood, string> = { heavy: '😫', okay: '😐', good: '🙂', lovely: '❤️' }
-export const EXP_EMOJI: Record<Exp, string> = { mind: '💭', one: '✍️', rest: '🛋️', calm: '🌬️', quiet: '🎧', company: '🏙️', sleep: '🌙', sky: '✦', good: '🌟' }
+export const EXP_EMOJI: Record<Exp, string> = { mind: '💭', one: '✍️', rest: '🛋️', calm: '🌬️', quiet: '🎧', company: '🏙️', sleep: '🌙', sky: '✦', good: '🌟', step: '🌱' }
 
 /** Hub layout: what's in each group, in order. */
 export const HUB: { group: HubGroup; items: Exp[] }[] = [
   { group: 'out', items: ['mind', 'one'] },
-  { group: 'light', items: ['good', 'sky'] },
+  { group: 'light', items: ['step', 'good', 'sky'] },
   { group: 'settle', items: ['rest', 'calm', 'quiet', 'company'] },
   { group: 'sleep', items: ['sleep'] },
 ]
@@ -488,4 +571,21 @@ export const RITUAL_EMOJI: Record<Ritual, string> = { sky: '🌌', river: '⛵',
 /** Soft sound under each ritual (only plays if sound is already on). */
 export const RITUAL_MIX: Record<Ritual, Record<string, number>> = {
   sky: { wind: 12, rain: 14 }, river: { wave: 30 }, burn: { fire: 38 }, wind: { wind: 30 }, rain: { rain: 38 },
+}
+
+export const STEP_EMOJI: Record<StepId, string> = {
+  water: '💧',
+  window: '🪟',
+  face: '🫧',
+  stretch: '🙆',
+  eat: '🍎',
+  outside: '🚪',
+  tidy: '🧺',
+  song: '🎵',
+  text: '💬',
+  hug: '🤗',
+  sky: '🌙',
+  write: '✏️',
+  see: '👀',
+  clothes: '👕',
 }

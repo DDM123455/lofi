@@ -9,6 +9,7 @@ import { SUPPORT_URL } from './support'
 import { BrainDump, MemorySky, OneThing, StarField, type Exits } from './Release'
 import { CalmBreath, CompanyRoom, QuietMixer, RestRoom, SleepWindDown, type HomeAudio } from './Experiences'
 import { GoodThings, GOOD_THINGS_CSS } from './GoodThings'
+import { SmallStep, SMALL_STEP_CSS } from './SmallStep'
 import { NIGHT_ROOM_CSS } from './NightRoom'
 import { NEIGHBORS_CSS } from './Neighbors'
 import { COME_HOME_CSS } from './styles'
@@ -31,7 +32,7 @@ const VISITS_KEY = 'comehome-visits'
 const START_EVENT: Partial<Record<Exp, string>> = {
   rest: 'rest_mode_started', calm: 'calm_mode_started', quiet: 'quiet_mode_started',
   company: 'company_mode_started', sleep: 'sleep_mode_started', one: 'one_thing_started',
-  mind: 'brain_dump_opened', sky: 'sky_opened', good: 'good_things_started',
+  mind: 'brain_dump_opened', sky: 'sky_opened', good: 'good_things_started', step: 'small_step_started',
 }
 
 interface Props {
@@ -67,7 +68,7 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
   const reduced = useReducedMotion()
   // ?exp=good deep-links straight in (blog + landing CTAs)
   const [screen, setScreen] = useState<Screen>(() => (
-    new URLSearchParams(window.location.search).get('exp') === 'good' ? { kind: 'exp', exp: 'good' } : { kind: 'welcome' }
+    (e => (e === 'good' || e === 'step' ? { kind: 'exp', exp: e } : { kind: 'welcome' }))(new URLSearchParams(window.location.search).get('exp'))
   ))
   const [mood, setMood] = useState<Mood | null>(null)
   const [leaving, setLeaving] = useState(false)
@@ -96,7 +97,7 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
     setScreen({ kind: 'exp', exp })
     const ev = START_EVENT[exp]
     if (ev) track(ev, mood ? { mood } : undefined)
-    if (exp !== 'quiet' && exp !== 'sky' && exp !== 'one' && exp !== 'good') audio.setMix(NEED_MIX[exp])
+    if (exp !== 'quiet' && exp !== 'sky' && exp !== 'one' && exp !== 'good' && exp !== 'step') audio.setMix(NEED_MIX[exp])
     setBackdrop(exp === 'calm' ? 'beach-night' : 'lofi-bedroom')
   }, [audio, mood, setBackdrop, track])
 
@@ -158,7 +159,7 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
 
   return (
     <div className={`ch-root${leaving ? ' is-leaving' : ''}${reduced ? ' is-reduced' : ''}`} lang={lang}>
-      <style>{COME_HOME_CSS + NIGHT_ROOM_CSS + NEIGHBORS_CSS + GOOD_THINGS_CSS}</style>
+      <style>{COME_HOME_CSS + NIGHT_ROOM_CSS + NEIGHBORS_CSS + GOOD_THINGS_CSS + SMALL_STEP_CSS}</style>
       <div className="ch-veil" aria-hidden />
 
       {screen.kind !== 'closed' && (
@@ -214,6 +215,7 @@ function ComeHomeView({ audio, lang, onExit, setBackdrop, c }: Props & { c: Home
         {exp === 'one' && (
           <OneThing c={c} reduced={reduced} track={track} onRitual={onRitual} onKept={syncSky} onOpenSky={() => openExp('sky')} exits={exits} />
         )}
+        {exp === 'step' && <SmallStep c={c} track={track} exits={exits} />}
         {exp === 'good' && (
           <GoodThings c={c} lang={lang} mood={mood} reduced={reduced} track={track} onKept={syncSky} onOpenSky={() => openExp('sky')} exits={exits} />
         )}

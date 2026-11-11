@@ -284,7 +284,8 @@ const BOOT: Boot | null = typeof window !== 'undefined' ? readBoot() : null
 
 /** True when this is a returning visit to `surface` that hasn't been greeted yet today. */
 export function isReturningVisit(surface: Surface): boolean {
-  if (!BOOT) return false
+  // Never inside an embed (Notion, blogs): a greeting there is noise for whoever reads the page.
+  if (!BOOT || inIframe()) return false
   const today = localDate()
   // Live read too: switching modes remounts the greeter, which must not greet twice a day.
   if (BOOT.wbDay[surface] === today || readJson<Partial<Record<Surface, string>>>(WB_KEY, {})[surface] === today) return false

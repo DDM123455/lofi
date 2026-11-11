@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next'
 import { readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { BLOG_POSTS, BLOG_CATEGORIES } from '@/lib/blogPosts'
+import { STUDY_ROOM_LOCALES } from '@/lib/studyRoomLocales'
 import { BG_PRESETS } from '@/lib/backgrounds'
 
 const BASE = 'https://www.focusworkspace.app'
@@ -119,6 +120,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/vi/gioi-thieu-bang-thong-ke`,     lastModified: D('2026-07-22'), changeFrequency: 'monthly', priority: 0.8 },
     // Come Home (evening mode) landing
     { url: `${BASE}/come-home`,                   lastModified: D('2026-09-25'), changeFrequency: 'monthly', priority: 0.8 },
+    // Localized "online study room" pages (one hreflang cluster with /online-study-room)
+    ...STUDY_ROOM_LOCALES.map(l => ({ url: `${BASE}${l.path}`, lastModified: D('2026-11-11'), changeFrequency: 'monthly' as const, priority: 0.8 })),
     { url: `${BASE}/good-things`,                 lastModified: D('2026-11-01'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vi/dieu-tot-van-den`,         lastModified: D('2026-11-01'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vi/ve-nha`,                   lastModified: D('2026-09-25'), changeFrequency: 'monthly', priority: 0.8 },

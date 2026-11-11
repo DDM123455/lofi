@@ -17,6 +17,9 @@ import { LiveClock } from '@/components/workspace/LiveClock'
 import type { HomeAudio } from '@/components/comehome/ComeHome'
 import { canShowNudge } from '@/lib/retention'
 import { NudgeCard, ReminderDialog, WelcomeBack } from '@/components/retention/lazy'
+import { RoomsPanel, StartRooms } from '@/components/rooms/RoomsPanel'
+import { ROOMS_COPY } from '@/components/rooms/copy'
+import { sceneOfWeekSeen, type Room } from '@/lib/rooms'
 
 // Come Home (evening) mode ships as its own chunk: focus-mode visitors never download it.
 const ComeHome = dynamic(()=>import('@/components/comehome/ComeHome').then(m=>m.ComeHome),{
@@ -470,6 +473,9 @@ export function EmbedClient() {
   // Retention: install/reminder card after a finished focus session; reminder from "More"
   const [nudge,        setNudge]        = useState(false)
   const [showReminder, setShowReminder] = useState(false)
+  const [sowNew,       setSowNew]       = useState(false)
+  const [startNonce,   setStartNonce]   = useState(0)
+  const [notionCopied, setNotionCopied] = useState(false)
 
   // Come Home (evening decompression) mode. Everything focus-related stays mounted but hidden,
   // so switching back is instant and no timer/todo/audio state is lost.
@@ -516,7 +522,7 @@ export function EmbedClient() {
   const [xpToast, setXpToast] = useState<{xp:number;key:number}|null>(null)
   const [goalToast, setGoalToast] = useState<number|null>(null)
 
-  useEffect(()=>{ setMounted(true); analytics.workspaceOpen() },[])
+  useEffect(()=>{ setMounted(true); analytics.workspaceOpen(); setSowNew(!sceneOfWeekSeen()) },[])
   useEffect(()=>{
     const upd=()=>setVw(window.innerWidth)
     upd(); window.addEventListener('resize',upd)
@@ -1121,6 +1127,25 @@ export function EmbedClient() {
   },[])
 
   const handleShare=async()=>{try{await navigator.clipboard.writeText(shareUrl);setCopied(true);setTimeout(()=>setCopied(false),2000);analytics.shareClick()}catch(_){}}
+  const handleNotionEmbed=async()=>{try{await navigator.clipboard.writeText(shareUrl);setNotionCopied(true);setTimeout(()=>setNotionCopied(false),4000)}catch(_){}}
+
+  // ── My rooms ─────────────────────────────────────────────────────────────
+  const roomSnapshot=()=>({bgUrl,bgOpacity,bgBlur,atmosphere,lofiId,customLofiId,lofiVol,ambVols})
+  const applyRoom=(r:Room)=>{
+    setBgUrl(r.bgUrl);setBgType(bgTypeFromUrl(r.bgUrl));setBgOpacity(r.bgOpacity);setBgBlur(r.bgBlur)
+    setAtmosphere(r.atmosphere as typeof atmosphere);setLofiVol(r.lofiVol)
+    if(r.customLofiId)setCustomLofiId(r.customLofiId)
+    setLofiId(r.lofiId)
+    if(started){
+      const ytId=(r.lofiId==='custom'&&r.customLofiId)?r.customLofiId:(LOFI_STREAMS.find(s=>s.id===r.lofiId)?.youtubeId??DEFAULT_YT)
+      setPlaying(true);playYt(ytId,true)
+      try{ytPlayer.current?.setVolume(effYt(r.lofiVol))}catch(_){}
+    }
+    applyMix(r.ambVols,started)
+  }
+  // Start-screen room chips: apply first, then start once that state has rendered.
+  useEffect(()=>{ if(startNonce>0&&!started)doStart() // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[startNonce])
   const toggleFullscreen=useCallback(()=>{
     if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{})
     else document.exitFullscreen().catch(()=>{})
@@ -1964,6 +1989,13 @@ export function EmbedClient() {
               {LANGS.map(l=><option key={l.code} value={l.code} style={{background:'#16121f',color:'#f3f3f8'}}>{l.label}</option>)}
             </select>
           </div>
+          <div style={{...row,cursor:'default',padding:0}}>
+            <button onClick={handleNotionEmbed} style={{...row,flex:1}}>
+              <svg {...ic}><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M8.5 8v8M8.5 8l7 8M15.5 8v8"/></svg>
+              <span style={{flex:1}}>{notionCopied?(ROOMS_COPY[lang]??ROOMS_COPY.en).embed_copied:(ROOMS_COPY[lang]??ROOMS_COPY.en).embed_notion}</span>
+            </button>
+            <a href="/notion-widget" target="_blank" rel="noopener noreferrer" style={{fontSize:11,color:'var(--dim2)',padding:'0 12px',textDecoration:'underline',whiteSpace:'nowrap'}}>{(ROOMS_COPY[lang]??ROOMS_COPY.en).embed_how}</a>
+          </div>
           <button onClick={()=>{setOpenPopover(null);setShowReminder(true)}} style={row} data-rt="more-reminder">
             <svg {...ic}><rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M12 13v3l2 1.2"/></svg>
             <span style={{flex:1}}>{t.more_reminder}</span>
@@ -2051,6 +2083,7 @@ export function EmbedClient() {
             </button>
           </div>
           <div style={{padding:'14px 16px',maxHeight:'60vh',overflowY:'auto'}}>
+            <RoomsPanel lang={lang} accent={accent} accentSoft={accentSoft} snapshot={roomSnapshot} onApply={applyRoom} onTryScene={p=>{setBgUrl(p.url);setBgType(bgTypeFromUrl(p.url))}}/>
             <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:10}}>{t.scene_atm_title}</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:16}}>
               {([
@@ -2139,6 +2172,7 @@ export function EmbedClient() {
               :<div style={{width:22,height:22,border:'2.5px solid rgba(255,255,255,0.35)',borderTopColor:'#fff',borderRadius:'50%',animation:'spin .8s linear infinite'}}/>}
           </div>
           <p style={{fontSize:13,color:'rgba(255,255,255,0.75)',letterSpacing:'0.04em',margin:0}}>{mounted?t.click_to_start:t.app_loading}</p>
+          {mounted&&<StartRooms lang={lang} onPick={r=>{applyRoom(r);setStartNonce(n=>n+1)}}/>}
         </div>
       )}
 
@@ -2281,7 +2315,8 @@ export function EmbedClient() {
             <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>YouTube</span>
           </button>
 
-          <button onClick={()=>setOpenPopover(v=>v==='background'?null:'background')} style={chip(openPopover==='background')} title={t.tab_scene}>
+          <button onClick={()=>{setOpenPopover(v=>v==='background'?null:'background');setSowNew(false)}} style={{...chip(openPopover==='background'),position:'relative'}} title={t.tab_scene}>
+            {sowNew&&<span aria-label={(ROOMS_COPY[lang]??ROOMS_COPY.en).sow_new} style={{position:'absolute',top:5,right:7,width:7,height:7,borderRadius:'50%',background:accent2,boxShadow:`0 0 8px ${accent2}`}}/>}
             <svg width={mob?16:18} height={mob?16:18} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M21 16l-4.5-4.5L7 21"/></svg>
             <span style={{fontSize:mob?9.5:11,fontWeight:600,whiteSpace:'nowrap'}}>{t.dock_background}</span>
           </button>
@@ -2353,8 +2388,8 @@ export function EmbedClient() {
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',borderRadius:14,background:'rgba(20,17,40,0.92)',backdropFilter:'blur(16px)',WebkitBackdropFilter:'blur(16px)',border:`1px solid ${accent}55`,boxShadow:`0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px ${accent}22`,whiteSpace:'nowrap',maxWidth:'calc(100vw - 32px)'}}>
             <span style={{fontSize:18,flexShrink:0}}>🎵</span>
             <div style={{minWidth:0}}>
-              <p style={{margin:0,fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.3}}>Paste a YouTube link to listen to</p>
-              <p style={{margin:'2px 0 0',fontSize:11,color:'var(--dim)',lineHeight:1.3}}>Tap the music button → paste URL in Custom YouTube</p>
+              <p style={{margin:0,fontSize:13,fontWeight:600,color:'#fff',lineHeight:1.3}}>{(ROOMS_COPY[lang]??ROOMS_COPY.en).yt_tip_title}</p>
+              <p style={{margin:'2px 0 0',fontSize:11,color:'var(--dim)',lineHeight:1.3}}>{(ROOMS_COPY[lang]??ROOMS_COPY.en).yt_tip_body}</p>
             </div>
             <div style={{flexShrink:0,width:20,height:20,borderRadius:'50%',background:'rgba(255,255,255,0.1)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,color:'var(--dim)'}}>✕</div>
           </div>

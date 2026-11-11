@@ -100,6 +100,12 @@ export default function DashboardClient() {
   const topTasks = getTopTasksByFocusTime(5)
   const recent = getRecentSessions(10)
   const weekMax = Math.max(1, ...weekly.map(d => d.count))
+  // Rolling 7 days vs the 7 before — a reason to come back each week, never a guilt trip.
+  const last14 = getHeatmapData(14)
+  const sumSecs = (xs: typeof last14) => xs.reduce((a, d) => a + d.focusSeconds, 0)
+  const thisWeek = sumSecs(last14.slice(7)), prevWeek = sumSecs(last14.slice(0, 7))
+  const activeDays = last14.slice(7).filter(d => d.focusSeconds > 0).length
+  const diff = thisWeek - prevWeek
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14">
@@ -125,6 +131,23 @@ export default function DashboardClient() {
         <StatCard label="Current Streak" value={`${streak} 🔥`} sub={streak === 1 ? 'day' : 'days'} />
         <StatCard label="Best Streak" value={`${best} 🏆`} sub={best === 1 ? 'day' : 'days'} />
       </div>
+
+      {/* Weekly recap */}
+      <section className="mb-10 rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-900/25 to-transparent p-6">
+        <h2 className="mb-1 text-lg font-bold text-white">This week</h2>
+        <p className="text-2xl font-semibold text-white">
+          {formatDuration(thisWeek)} <span className="text-base font-normal text-white/50">of focus over {activeDays} {activeDays === 1 ? 'day' : 'days'}</span>
+        </p>
+        <p className="mt-2 text-sm text-white/55">
+          {prevWeek === 0 && thisWeek === 0
+            ? 'A fresh week. One short session is a great start.'
+            : prevWeek === 0
+              ? 'Your first week on the board. Nice.'
+              : diff >= 0
+                ? `${formatDuration(diff)} more than the 7 days before.`
+                : `${formatDuration(-diff)} less than the 7 days before, and that's okay. Rest counts too.`}
+        </p>
+      </section>
 
       {/* Weekly progress */}
       <section className="mb-10 rounded-2xl border border-white/8 bg-white/3 p-6">

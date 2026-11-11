@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { STUDY_ROOM_HREFLANG } from '@/lib/studyRoomLocales'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
 
 export const metadata: Metadata = {
-  title: 'Online Study Room — Free Virtual Study Space with Lofi Music',
+  title: 'Study Room Online — Free Lofi Study Room, No Sign-Up',
   description:
-    'Join a free online study room with lofi music, ambient sounds, Pomodoro timer, to-do list and XP system. Study smarter — no sign-up needed.',
+    'A free study room online: lofi music, rain and café sounds, a Pomodoro timer and to-do list in one tab. Open it and start studying in seconds, no account needed.',
   keywords: [
     'online study room', 'virtual study room', 'study with me online', 'lofi study room',
     'free study room', 'online focus room', 'pomodoro study room', 'study music online',
@@ -25,11 +26,7 @@ export const metadata: Metadata = {
   },
   alternates: {
     canonical: 'https://www.focusworkspace.app/online-study-room',
-    languages: {
-      en: 'https://www.focusworkspace.app/online-study-room',
-      vi: 'https://www.focusworkspace.app/vi/phong-hoc-online',
-      'x-default': 'https://www.focusworkspace.app/online-study-room',
-    },
+    languages: STUDY_ROOM_HREFLANG,
   },
 }
 

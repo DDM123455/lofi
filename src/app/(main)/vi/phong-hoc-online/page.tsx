@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { STUDY_ROOM_HREFLANG } from '@/lib/studyRoomLocales'
 import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { RelatedPages } from '@/components/seo/RelatedPages'
@@ -14,11 +15,7 @@ export const metadata: Metadata = {
   ],
   alternates: {
     canonical: 'https://www.focusworkspace.app/vi/phong-hoc-online',
-    languages: {
-      'en': 'https://www.focusworkspace.app/online-study-room',
-      'vi': 'https://www.focusworkspace.app/vi/phong-hoc-online',
-      'x-default': 'https://www.focusworkspace.app/online-study-room',
-    },
+    languages: STUDY_ROOM_HREFLANG,
   },
   openGraph: {
     title: 'Phòng Học Online Miễn Phí — Nhạc Lofi & Pomodoro | LofiSpace',

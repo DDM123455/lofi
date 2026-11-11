@@ -4,14 +4,14 @@ import { JsonLd, FaqJsonLd, BreadcrumbJsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumb } from '@/components/seo/Breadcrumb'
 
 export const metadata: Metadata = {
-  title: 'Best Website for Studying — Free Study Room with Lofi',
+  title: 'Lofi Study Website — Free Focus Website for Studying',
   description:
-    'LofiSpace is the best free website for studying online. Lofi music, ambient sounds, Pomodoro timer, and 15+ study scenes — all in one tab. No sign-up.',
+    'A free lofi website for studying: study ambience scenes, lofi music, rain and café sounds plus a Pomodoro timer, all in one focus website. No sign-up.',
   keywords: [
     'website for studying', 'best website for studying', 'study website',
     'online study room', 'free study website', 'study tool online',
     'study with lofi music', 'focus website', 'productivity website for students',
-    'study app online', 'lofi study website', 'website to help study',
+    'study app online', 'lofi study website', 'lofi website for studying', 'study ambience website', 'website to help study',
     'free online study room', 'study tools for students', 'study environment online',
   ],
   alternates: {

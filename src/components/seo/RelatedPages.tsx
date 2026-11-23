@@ -38,6 +38,7 @@ const ALL_STUDY_ROOMS: RelatedPage[] = [
   { href: '/notion-pomodoro-widget', emoji: '📝', title: 'Notion Pomodoro Widget', description: 'A real timer embedded in Notion' },
   { href: '/lofi-timer-for-studying', emoji: '📚', title: 'Lofi Study Timer',  description: 'Study timer with task-linked Pomodoros' },
   { href: '/ambient-focus-timer',  emoji: '🌿', title: 'Ambient Focus Timer',  description: 'Layered ambient sound + Pomodoro' },
+  { href: '/timers',               emoji: '⏲️', title: 'Online Timers',        description: 'Countdown timers from 1 minute to 2 hours' },
 ]
 
 interface Props {

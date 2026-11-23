@@ -17,6 +17,7 @@ const PAGES: [string, string, string][] = [
   ['/study-with-me', 'Study with me online', 'Study-with-me style sessions without a webcam.'],
   ['/website-for-studying', 'Lofi website for studying', 'Why a lofi focus website helps studying, with features.'],
   ['/pomodoro-timer', 'Pomodoro timer', 'Free online Pomodoro timer with lofi music and custom lengths.'],
+  ['/timers', 'Online timers', 'Free countdown timers from 1 minute to 2 hours (/7-minute-timer, /25-minute-timer, /45-minute-timer…) with alarm, fullscreen and optional lofi/rain sounds.'],
   ['/ambient-sounds', 'Ambient sounds', 'Mix rain, café, fireplace, forest, ocean and city sounds for focus.'],
   ['/rain-sounds', 'Rain sounds', 'Rain sounds for studying and sleep.'],
   ['/notion-widget', 'Notion widget', 'Embed the lofi workspace and Pomodoro timer in Notion.'],

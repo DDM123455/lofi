@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { BLOG_POSTS, BLOG_CATEGORIES } from '@/lib/blogPosts'
 import { STUDY_ROOM_LOCALES } from '@/lib/studyRoomLocales'
 import { BG_PRESETS } from '@/lib/backgrounds'
+import { TIMER_MINUTES, POPULAR_TIMERS, timerUrl } from '@/lib/timers'
 
 const BASE = 'https://www.focusworkspace.app'
 const NOINDEX_MAIN_ROUTES = new Set(['/dashboard'])
@@ -125,6 +126,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/good-things`,                 lastModified: D('2026-11-01'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vi/dieu-tot-van-den`,         lastModified: D('2026-11-01'), changeFrequency: 'monthly', priority: 0.8 },
     { url: `${BASE}/vi/ve-nha`,                   lastModified: D('2026-09-25'), changeFrequency: 'monthly', priority: 0.8 },
+    // "N minute timer" cluster (2026-11-17): hub + one prerendered page per length
+    { url: `${BASE}/timers`,                      lastModified: D('2026-11-17'), changeFrequency: 'monthly', priority: 0.85 },
+    ...TIMER_MINUTES.map(m => ({ url: timerUrl(m), lastModified: D('2026-11-17'), changeFrequency: 'monthly' as const, priority: POPULAR_TIMERS.includes(m) ? 0.8 : 0.7 })),
     // Blog index
     { url: `${BASE}/blog`,                        lastModified: D('2026-06-30'), changeFrequency: 'weekly',  priority: 0.8 },
   ]

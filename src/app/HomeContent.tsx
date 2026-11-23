@@ -64,6 +64,9 @@ export function HomeContent() {
               </Link>
             </div>
             <p className="mt-6 text-sm text-white/25">{t.home_cta_tagline}</p>
+            <p className="mt-3 text-sm">
+              <Link href="/timers" className="text-white/45 underline-offset-4 hover:text-white hover:underline">⏱️ Online timers</Link>
+            </p>
           </div>
         </section>
 

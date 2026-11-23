@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   const title = `${cat.label} — LofiSpace Blog`
   const description = `Every LofiSpace article about ${cat.label.toLowerCase()}: guides, tips, and how-tos for studying, focusing, and building a better workspace.`
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: url },
     openGraph: { title, description, url, type: 'website' },

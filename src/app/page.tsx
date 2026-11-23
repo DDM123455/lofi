@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { JsonLd, WebsiteJsonLd, FaqJsonLd, OrganizationJsonLd } from '@/components/seo/JsonLd'
 import { HomeContent } from './HomeContent'
+import { BLOG_POSTS, toBlogCard } from '@/lib/blogPosts'
 
 export const metadata: Metadata = {
   // Use absolute to prevent the root layout template from appending "| LofiSpace" again
@@ -51,7 +52,7 @@ export default function HomePage() {
         keywords={['online study room', 'focus workspace', 'lofi music', 'pomodoro timer', 'ambient sounds']}
       />
       <FaqJsonLd items={FAQ_EN} />
-      <HomeContent />
+      <HomeContent latestPosts={BLOG_POSTS.slice(0, 3).map(toBlogCard)} />
     </>
   )
 }

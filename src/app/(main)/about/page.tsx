@@ -5,7 +5,7 @@ import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { AUTHOR_NAME, AUTHOR_TITLE } from '@/components/seo/AuthorBio'
 
 export const metadata: Metadata = {
-  title: 'About LofiSpace — Free Focus Workspace',
+  title: { absolute: 'About LofiSpace — Free Focus Workspace' },
   description: 'Why we built LofiSpace: a free, no-account online study room combining lofi music, ambient sounds, a Pomodoro timer, and gamified focus tracking.',
   alternates: { canonical: 'https://www.focusworkspace.app/about' },
   openGraph: {

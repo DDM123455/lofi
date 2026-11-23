@@ -6,7 +6,7 @@ import { Breadcrumb } from '@/components/seo/Breadcrumb'
 const URL = 'https://www.focusworkspace.app/terms'
 
 export const metadata: Metadata = {
-  title: 'Terms of Use — LofiSpace',
+  title: 'Terms of Use',
   description:
     'The terms that apply when you use LofiSpace, a free browser-based focus workspace with lofi music, ambient sounds and a Pomodoro timer.',
   alternates: { canonical: URL },

@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import type { BlogPost } from '@/lib/blogPosts'
+import type { BlogPostCard } from '@/lib/blogPosts'
 
 interface Props {
-  posts: BlogPost[]
+  posts: BlogPostCard[]
 }
 
 export function BlogPostGrid({ posts }: Props) {

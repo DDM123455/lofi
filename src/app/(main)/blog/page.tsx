@@ -1,13 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { BLOG_POSTS } from '@/lib/blogPosts'
+import { BLOG_POSTS, BLOG_CATEGORIES, toBlogCard } from '@/lib/blogPosts'
 import { AdBanner } from '@/components/ads/AdBanner'
 import { BreadcrumbJsonLd, ItemListJsonLd } from '@/components/seo/JsonLd'
 import { Breadcrumb } from '@/components/seo/Breadcrumb'
 import { BlogFilter } from './BlogFilter'
 
 export const metadata: Metadata = {
-  title: 'Study Tips & Lofi Advice Blog — LofiSpace',
+  title: 'Study Tips & Lofi Advice Blog',
   description: 'LofiSpace blog: how to study better, set up your workspace, use the Pomodoro technique, and find the best focus music for studying.',
   keywords: ['study tips', 'productivity blog', 'lofi music guide', 'pomodoro technique', 'ambient sound tips', 'focus workspace', 'study with me'],
   alternates: {
@@ -73,7 +73,7 @@ export default function BlogPage() {
       </div>
 
       {/* Client component handles category filter + post grid */}
-      <BlogFilter posts={BLOG_POSTS} />
+      <BlogFilter posts={BLOG_POSTS.map(toBlogCard)} categories={BLOG_CATEGORIES.map(c => c.label)} />
 
       {/* AdSense — Bottom */}
       <div className="mt-12">

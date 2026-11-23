@@ -1,15 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import type { BlogPost } from '@/lib/blogPosts'
-import { BLOG_CATEGORIES } from '@/lib/blogPosts'
+import type { BlogPostCard } from '@/lib/blogPosts'
 import { BlogPostGrid } from './BlogPostGrid'
 
 interface Props {
-  posts: BlogPost[]
+  posts: BlogPostCard[]
+  categories: string[]
 }
 
-export function BlogFilter({ posts }: Props) {
+export function BlogFilter({ posts, categories }: Props) {
   const [active, setActive] = useState('All')
 
   const filtered = active === 'All' ? posts : posts.filter(p => p.category === active)
@@ -18,7 +18,7 @@ export function BlogFilter({ posts }: Props) {
     <>
       {/* Category filter */}
       <div className="mb-8 flex flex-wrap gap-2">
-        {['All', ...BLOG_CATEGORIES.map(c => c.label)].map(cat => (
+        {['All', ...categories].map(cat => (
           <button
             key={cat}
             onClick={() => setActive(cat)}

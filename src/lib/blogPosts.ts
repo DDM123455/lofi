@@ -22,6 +22,15 @@ export interface BlogPost {
   cta?: 'workspace' | 'come-home'
 }
 
+/** The fields a listing card needs — pass these (not full posts) into client components so
+ *  post bodies never end up in the browser bundle or RSC payload. */
+export type BlogPostCard = Pick<BlogPost, 'slug' | 'title' | 'excerpt' | 'category' | 'readTime' | 'publishedAt' | 'coverGradient' | 'emoji'>
+
+export function toBlogCard(p: BlogPost): BlogPostCard {
+  const { slug, title, excerpt, category, readTime, publishedAt, coverGradient, emoji } = p
+  return { slug, title, excerpt, category, readTime, publishedAt, coverGradient, emoji }
+}
+
 const CORE_POSTS: BlogPost[] = [
   {
     slug: 'lofi-widget-notion-embed',

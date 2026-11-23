@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { BLOG_POSTS } from '@/lib/blogPosts'
+import type { BlogPostCard } from '@/lib/blogPosts'
 
 const ROOM_HREFS = [
   '/online-study-room',
@@ -22,7 +22,7 @@ const ROOM_COLORS = [
   'from-violet-800 to-indigo-900',
 ]
 
-export function HomeContent() {
+export function HomeContent({ latestPosts }: { latestPosts: BlogPostCard[] }) {
   const { t } = useLanguage()
 
   return (
@@ -159,7 +159,7 @@ export function HomeContent() {
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {BLOG_POSTS.slice(0, 3).map(post => (
+              {latestPosts.map(post => (
                 <Link
                   key={post.slug}
                   href={`/blog/${post.slug}`}

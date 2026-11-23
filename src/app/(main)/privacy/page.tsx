@@ -6,7 +6,7 @@ import { Breadcrumb } from '@/components/seo/Breadcrumb'
 const URL = 'https://www.focusworkspace.app/privacy'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — LofiSpace',
+  title: 'Privacy Policy',
   description:
     'How LofiSpace handles data: no accounts, settings stored locally in your browser, and the third-party services (Google AdSense, Analytics, YouTube) used on the site.',
   alternates: { canonical: URL },

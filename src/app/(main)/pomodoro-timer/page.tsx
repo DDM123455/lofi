@@ -251,6 +251,17 @@ export default function PomodoroTimerPage() {
 
         <PomodoroCompare exclude="/pomodoro-timer" />
 
+        <section className="mt-16 rounded-2xl border border-white/8 bg-white/[0.03] p-6 text-center">
+          <h2 className="text-xl font-bold text-white">Just need a simple countdown?</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-white/55">
+            One session, one alarm, no setup: open a standalone timer with fullscreen and optional rain or lofi sounds.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <Link href="/25-minute-timer" className="rounded-full bg-red-600 px-6 py-2.5 font-semibold text-white hover:bg-red-500">25 minute timer</Link>
+            <Link href="/timers" className="rounded-full border border-white/15 px-6 py-2.5 font-semibold text-white/75 hover:text-white">All online timers</Link>
+          </div>
+        </section>
+
         <RelatedPages exclude="/pomodoro-timer" />
       </div>
     </>

@@ -9,6 +9,8 @@ interface SoftwareAppProps {
   operatingSystem?: string
   offers?: { price: string; priceCurrency: string }
   keywords?: string[]
+  /** Overrides the default workspace feature list (e.g. for the timer pages). */
+  featureList?: string[]
 }
 
 export function JsonLd({
@@ -20,6 +22,7 @@ export function JsonLd({
   operatingSystem = 'Web',
   offers = { price: '0', priceCurrency: 'USD' },
   keywords = [],
+  featureList,
 }: SoftwareAppProps) {
   const schema = {
     '@context': 'https://schema.org',
@@ -39,7 +42,7 @@ export function JsonLd({
       name: 'LofiSpace',
       url: BASE,
     },
-    featureList: [
+    featureList: (featureList ?? [
       'Lofi music player',
       'Ambient sounds mixer',
       'Pomodoro timer',
@@ -48,7 +51,7 @@ export function JsonLd({
       'XP & achievement system',
       'Weather widget',
       'Animated backgrounds',
-    ].join(', '),
+    ]).join(', '),
   }
 
   return (

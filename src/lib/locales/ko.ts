@@ -103,6 +103,13 @@ const ko: Translations = {
   wx_clear: '지우기',
   wx_location_fallback: '내 위치',
   wmo_fallback: '특이 기상',
+  a11y_close: '닫기',
+  a11y_add: '추가',
+  a11y_decrease: '줄이기',
+  a11y_increase: '늘리기',
+  a11y_prev_month: '이전 달',
+  a11y_next_month: '다음 달',
+  a11y_delete: '삭제',
 
   pet_focused: '⌨️ 집중 중',
   pet_break: '☕ 휴식 중',

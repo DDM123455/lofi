@@ -665,6 +665,13 @@ export function EmbedClient() {
     const t=new Date();setCalSelected(`${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`)
   },[])
   useEffect(()=>{ loadYtApi().catch(()=>{/* retried on first play */}) },[])
+  // The workspace UI is translated (12 languages) — keep <html lang> in step so screen
+  // readers use the right voice. Restored on unmount: the landing pages are English.
+  useEffect(()=>{
+    const prev=document.documentElement.lang
+    document.documentElement.lang=lang
+    return ()=>{ document.documentElement.lang=prev||'en' }
+  },[lang])
   // Show onboarding tip on first visit, auto-dismiss after 6s
   useEffect(()=>{
     if(localStorage.getItem('lofispace-onboarded'))return
@@ -1457,7 +1464,7 @@ export function EmbedClient() {
               <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPomCfg(v=>!v)} title={t.pom_timer_settings} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:showPomCfg?accentSoft:'transparent',color:showPomCfg?accent:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 3.6 15a1.65 1.65 0 0 0-1.51-1H2a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 3.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 8 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.36.14.7.35 1 .61l.06.06A2 2 0 0 1 22 12z"/></svg>
               </button>
-              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPom(false)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+              <button aria-label={t.a11y_close} onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowPom(false)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
             </div>
@@ -1473,9 +1480,9 @@ export function EmbedClient() {
                 <div key={label} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
                   <span style={{fontSize:10.5,color:'var(--dim)',lineHeight:1.3,flex:1}}>{label}</span>
                   <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
-                    <button onClick={()=>set(val-step)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>−</button>
+                    <button aria-label={`${t.a11y_decrease}: ${label}`} onClick={()=>set(val-step)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>−</button>
                     <span style={{fontSize:12,fontWeight:700,minWidth:20,textAlign:'center'}}>{val}</span>
-                    <button onClick={()=>set(val+step)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>+</button>
+                    <button aria-label={`${t.a11y_increase}: ${label}`} onClick={()=>set(val+step)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>+</button>
                   </div>
                 </div>
               ))}
@@ -1488,9 +1495,9 @@ export function EmbedClient() {
               <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,borderTop:'1px solid var(--border)',paddingTop:9}}>
                 <span style={{fontSize:10.5,color:'var(--dim)'}}>{t.pom_goal}</span>
                 <div style={{display:'flex',alignItems:'center',gap:6,flexShrink:0}}>
-                  <button onClick={()=>setDailyGoal(dailyGoalPomodoros-1)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>−</button>
+                  <button aria-label={t.a11y_decrease} onClick={()=>setDailyGoal(dailyGoalPomodoros-1)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>−</button>
                   <span style={{fontSize:12,fontWeight:700,minWidth:20,textAlign:'center'}}>{dailyGoalPomodoros}</span>
-                  <button onClick={()=>setDailyGoal(dailyGoalPomodoros+1)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>+</button>
+                  <button aria-label={t.a11y_increase} onClick={()=>setDailyGoal(dailyGoalPomodoros+1)} style={{width:22,height:22,borderRadius:7,border:'1px solid var(--border)',background:'var(--panel2)',color:'var(--text)',cursor:'pointer',fontSize:14,lineHeight:1}}>+</button>
                 </div>
               </div>
             </div>
@@ -1624,7 +1631,7 @@ export function EmbedClient() {
             </div>
             <div style={{display:'flex',alignItems:'center',gap:8}}>
               <span style={{fontSize:12,fontWeight:600,color:accent}}>{doneTodos}/{todos.length}</span>
-              <button onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowNote(false)} style={{display:'flex',width:24,height:24,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+              <button aria-label={t.a11y_close} onPointerDown={e=>e.stopPropagation()} onClick={()=>setShowNote(false)} style={{display:'flex',width:24,height:24,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
               </button>
             </div>
@@ -1659,7 +1666,7 @@ export function EmbedClient() {
               style={{flex:1,minWidth:0,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
             <input value={todoEstInput} onChange={e=>setTodoEstInput(e.target.value.replace(/\D/g,'').slice(0,2))} onKeyDown={e=>{if(e.key==='Enter')addTodo()}} onFocus={focusScroll} placeholder={t.todo_estimate_placeholder} inputMode="numeric" title={t.todo_estimate_placeholder}
               style={{width:36,flexShrink:0,padding:'9px 6px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',textAlign:'center',fontFamily:'inherit'}}/>
-            <button onClick={addTodo} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
+            <button aria-label={t.a11y_add} onClick={addTodo} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </button>
           </div>
@@ -1683,7 +1690,7 @@ export function EmbedClient() {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
               </button>
             </div>
-            <button onClick={()=>setPanel(false)} style={{display:'flex',width:30,height:30,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:9,cursor:'pointer'}}>
+            <button aria-label={t.a11y_close} onClick={()=>setPanel(false)} style={{display:'flex',width:30,height:30,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:9,cursor:'pointer'}}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
@@ -1756,12 +1763,12 @@ export function EmbedClient() {
                     const vol=ambVols[s.id]??50
                     return(
                       <div key={s.id} style={{display:'flex',alignItems:'center',gap:12}}>
-                        <button onClick={()=>toggleAmbient(s.id)} style={{display:'flex',width:38,height:38,flexShrink:0,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:11,fontSize:17,cursor:'pointer',transition:'all .16s ease',background:on?accentSoft:'var(--input)',filter:on?'none':'grayscale(.6)',opacity:on?1:.7}}>{s.icon}</button>
+                        <button aria-label={t.ambient[s.id]||s.label} aria-pressed={on} onClick={()=>toggleAmbient(s.id)} style={{display:'flex',width:38,height:38,flexShrink:0,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:11,fontSize:17,cursor:'pointer',transition:'all .16s ease',background:on?accentSoft:'var(--input)',filter:on?'none':'grayscale(.6)',opacity:on?1:.7}}>{s.icon}</button>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13.5,fontWeight:500,marginBottom:5,color:on?'var(--text)':'var(--dim)'}}>{t.ambient[s.id]||s.label}</div>
-                          <input type="range" min="0" max="100" value={vol} onChange={e=>handleAmbVol(s.id,+e.target.value)} disabled={!on} style={{width:'100%',height:4,cursor:'pointer',opacity:on?1:.4,pointerEvents:on?'auto':'none'}}/>
+                          <input aria-label={t.ambient[s.id]||s.label} type="range" min="0" max="100" value={vol} onChange={e=>handleAmbVol(s.id,+e.target.value)} disabled={!on} style={{width:'100%',height:4,cursor:'pointer',opacity:on?1:.4,pointerEvents:on?'auto':'none'}}/>
                         </div>
-                        <button onClick={()=>toggleAmbient(s.id)} style={{display:'flex',flexShrink:0,width:40,height:23,padding:2,border:'none',borderRadius:999,cursor:'pointer',transition:'all .18s ease',justifyContent:on?'flex-end':'flex-start',background:on?accent:'var(--track)'}}>
+                        <button role="switch" aria-checked={on} aria-label={t.ambient[s.id]||s.label} onClick={()=>toggleAmbient(s.id)} style={{display:'flex',flexShrink:0,width:40,height:23,padding:2,border:'none',borderRadius:999,cursor:'pointer',transition:'all .18s ease',justifyContent:on?'flex-end':'flex-start',background:on?accent:'var(--track)'}}>
                           <span style={{width:19,height:19,borderRadius:'50%',background:'#fff',boxShadow:'0 1px 3px rgba(0,0,0,.3)'}}/>
                         </button>
                       </div>
@@ -1819,7 +1826,7 @@ export function EmbedClient() {
                       <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:8}}>{t.widgets_music_vol}</div>
                       <div style={{display:'flex',alignItems:'center',gap:10}}>
                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
-                        <input type="range" min="0" max="100" value={lofiVol} onChange={e=>handleLofiVol(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                        <input aria-label={t.widgets_music_vol} type="range" min="0" max="100" value={lofiVol} onChange={e=>handleLofiVol(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
                         <span style={{fontSize:12,fontWeight:600,color:'var(--dim)',width:34,textAlign:'right'}}>{lofiVol}%</span>
                       </div>
                     </div>
@@ -1947,7 +1954,7 @@ export function EmbedClient() {
 
           {/* Footer player */}
           <div style={{display:'flex',alignItems:'center',gap:13,padding:'13px 16px',borderTop:'1px solid var(--border)',background:'var(--panel2)'}}>
-            <button onClick={togglePlay} style={{display:'flex',width:42,height:42,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
+            <button aria-label={playing?t.pom_pause:t.music_play_btn} onClick={togglePlay} style={{display:'flex',width:42,height:42,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
               {started&&playing
                 ?<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
                 :<svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}
@@ -1958,7 +1965,7 @@ export function EmbedClient() {
             </div>
             <div style={{flex:1,display:'flex',alignItems:'center',gap:9}}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--dim)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>
-              <input type="range" min="0" max="100" value={lofiVol} onChange={e=>handleLofiVol(+e.target.value)} style={{flex:1,height:4,cursor:'pointer'}}/>
+              <input aria-label={t.widgets_music_vol} type="range" min="0" max="100" value={lofiVol} onChange={e=>handleLofiVol(+e.target.value)} style={{flex:1,height:4,cursor:'pointer'}}/>
               <span style={{fontSize:12,fontWeight:600,color:'var(--dim)',width:34,textAlign:'right'}}>{lofiVol}%</span>
             </div>
           </div>
@@ -2045,7 +2052,7 @@ export function EmbedClient() {
         <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:9,width:'min(320px,calc(100vw - 24px))',padding:16,...glassPanel,borderRadius:20,boxShadow:'0 22px 60px rgba(0,0,0,.42)'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
             <span style={{fontSize:13,fontWeight:700}}>{t.music_custom_yt}</span>
-            <button onClick={()=>setOpenPopover(null)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
+            <button aria-label={t.a11y_close} onClick={()=>setOpenPopover(null)} style={{display:'flex',width:24,height:24,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:7,cursor:'pointer'}}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
@@ -2078,7 +2085,7 @@ export function EmbedClient() {
         <div onClick={e=>e.stopPropagation()} style={{position:'fixed',left:'50%',bottom:118,transform:'translateX(-50%)',zIndex:9,width:'min(472px,calc(100vw - 24px))',...glassPanel,borderRadius:22,boxShadow:'0 22px 60px rgba(0,0,0,.42)',overflow:'hidden'}}>
           <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--border)'}}>
             <span style={{fontSize:13,fontWeight:700}}>{t.tab_scene}</span>
-            <button onClick={()=>setOpenPopover(null)} style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:8,cursor:'pointer'}}>
+            <button aria-label={t.a11y_close} onClick={()=>setOpenPopover(null)} style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:8,cursor:'pointer'}}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
@@ -2131,7 +2138,7 @@ export function EmbedClient() {
                 <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_dark_title}</div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
                   <span style={{fontSize:11}}>☀️</span>
-                  <input type="range" min="0" max="90" value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                  <input aria-label={t.scene_dark_title} type="range" min="0" max="90" value={bgOpacity} onChange={e=>setBgOpacity(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
                   <span style={{fontSize:11}}>🌑</span>
                   <span style={{fontSize:10,color:'var(--dim2)',minWidth:28,textAlign:'right'}}>{bgOpacity}%</span>
                 </div>
@@ -2139,7 +2146,7 @@ export function EmbedClient() {
               <div>
                 <div style={{fontSize:10,fontWeight:600,letterSpacing:1.2,textTransform:'uppercase',color:'var(--dim2)',marginBottom:6}}>{t.scene_blur_title}</div>
                 <div style={{display:'flex',alignItems:'center',gap:8}}>
-                  <input type="range" min="0" max="20" value={bgBlur} onChange={e=>setBgBlur(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
+                  <input aria-label={t.scene_blur_title} type="range" min="0" max="20" value={bgBlur} onChange={e=>setBgBlur(+e.target.value)} style={{flex:1,cursor:'pointer'}}/>
                   <span style={{fontSize:10,color:'var(--dim2)',minWidth:36,textAlign:'right'}}>{bgBlur}px</span>
                 </div>
               </div>
@@ -2211,13 +2218,13 @@ export function EmbedClient() {
                     <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
                       <span style={{fontFamily:"'Space Grotesk',sans-serif",fontWeight:700,fontSize:19}}>{monthNames[m]}, {y}</span>
                       <div style={{display:'flex',gap:6}}>
-                        <button onClick={()=>setCalMonth(cm=>{const nm=cm.m-1;return nm<0?{y:cm.y-1,m:11}:{y:cm.y,m:nm}})}
+                        <button aria-label={t.a11y_prev_month} onClick={()=>setCalMonth(cm=>{const nm=cm.m-1;return nm<0?{y:cm.y-1,m:11}:{y:cm.y,m:nm}})}
                           style={{display:'flex',width:32,height:32,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:9,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
                         </button>
                         <button onClick={()=>{const t=new Date();setCalMonth({y:t.getFullYear(),m:t.getMonth()});setCalSelected(`${t.getFullYear()}-${t.getMonth()}-${t.getDate()}`)}}
                           style={{padding:'0 12px',height:32,border:'1px solid var(--border)',borderRadius:9,background:'var(--input)',color:'var(--text)',cursor:'pointer',fontSize:12,fontWeight:600}}>{t.cal_today}</button>
-                        <button onClick={()=>setCalMonth(cm=>{const nm=cm.m+1;return nm>11?{y:cm.y+1,m:0}:{y:cm.y,m:nm}})}
+                        <button aria-label={t.a11y_next_month} onClick={()=>setCalMonth(cm=>{const nm=cm.m+1;return nm>11?{y:cm.y+1,m:0}:{y:cm.y,m:nm}})}
                           style={{display:'flex',width:32,height:32,alignItems:'center',justifyContent:'center',border:'1px solid var(--border)',borderRadius:9,background:'var(--input)',color:'var(--text)',cursor:'pointer'}}>
                           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
                         </button>
@@ -2240,7 +2247,7 @@ export function EmbedClient() {
                     {(()=>{const p=calSelected.split('-').map(Number);const d=new Date(p[0],p[1],p[2]);if(isNaN(d.getTime()))return'—';return d.toLocaleDateString(localeOf(lang),{month:'short',day:'numeric'})})()}
                   </div>
                 </div>
-                <button onClick={()=>setShowCal(false)} style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:8,cursor:'pointer'}}>
+                <button aria-label={t.a11y_close} onClick={()=>setShowCal(false)} style={{display:'flex',width:28,height:28,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim)',borderRadius:8,cursor:'pointer'}}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 </button>
               </div>
@@ -2250,7 +2257,7 @@ export function EmbedClient() {
                   <div key={dn.id} style={{display:'flex',alignItems:'flex-start',gap:9,padding:'9px 10px',marginBottom:6,borderRadius:11,background:'var(--input)',border:'1px solid var(--border)'}}>
                     <span style={{flexShrink:0,width:6,height:6,marginTop:6,borderRadius:'50%',background:accent}}/>
                     <span style={{flex:1,fontSize:13,lineHeight:1.4,wordBreak:'break-word'}}>{dn.text}</span>
-                    <button onClick={()=>delCalNote(calSelected,dn.id)} style={{display:'flex',width:20,height:20,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer'}}>
+                    <button aria-label={t.a11y_delete} onClick={()=>delCalNote(calSelected,dn.id)} style={{display:'flex',width:20,height:20,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',background:'transparent',color:'var(--dim2)',borderRadius:6,cursor:'pointer'}}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
                     </button>
                   </div>
@@ -2259,7 +2266,7 @@ export function EmbedClient() {
               <div style={{display:'flex',gap:8,padding:12,borderTop:'1px solid var(--border)'}}>
                 <input value={calInput} onChange={e=>setCalInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')addCalNote()}} onFocus={focusScroll} placeholder={t.cal_placeholder}
                   style={{flex:1,padding:'9px 11px',border:'1px solid var(--border)',background:'var(--input)',color:'var(--text)',borderRadius:10,fontSize:13,outline:'none',fontFamily:'inherit'}}/>
-                <button onClick={addCalNote} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
+                <button aria-label={t.a11y_add} onClick={addCalNote} style={{display:'flex',width:36,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:10,background:accent,color:'#16121f',cursor:'pointer'}}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
               </div>
@@ -2286,7 +2293,7 @@ export function EmbedClient() {
 
         {/* Play/Pause */}
         <Tip label={t.tip_playpause}>
-        <button onClick={togglePlay} style={{display:'flex',width:mob?40:48,height:mob?40:48,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
+        <button aria-label={playing?t.pom_pause:t.music_play_btn} onClick={togglePlay} style={{display:'flex',width:mob?40:48,height:mob?40:48,flexShrink:0,alignItems:'center',justifyContent:'center',border:'none',borderRadius:'50%',background:accent,color:'#16121f',cursor:'pointer',boxShadow:`0 6px 18px ${accentGlow}`}}>
           {started&&playing
             ?<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
             :<svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg>}

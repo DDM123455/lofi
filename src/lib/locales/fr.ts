@@ -103,6 +103,13 @@ const fr: Translations = {
   wx_clear: 'Effacer',
   wx_location_fallback: 'Votre position',
   wmo_fallback: 'Météo particulière',
+  a11y_close: 'Fermer',
+  a11y_add: 'Ajouter',
+  a11y_decrease: 'Diminuer',
+  a11y_increase: 'Augmenter',
+  a11y_prev_month: 'Mois précédent',
+  a11y_next_month: 'Mois suivant',
+  a11y_delete: 'Supprimer',
 
   pet_focused: '⌨️ concentré',
   pet_break: '☕ en pause',

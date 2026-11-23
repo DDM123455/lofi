@@ -166,6 +166,13 @@ export interface Translations {
   wx_clear: string
   wx_location_fallback: string
   wmo_fallback: string
+  a11y_close: string
+  a11y_add: string
+  a11y_decrease: string
+  a11y_increase: string
+  a11y_prev_month: string
+  a11y_next_month: string
+  a11y_delete: string
 
   // Pet subtab
   pet_focused: string
@@ -373,6 +380,13 @@ export const TRANSLATIONS: Record<'en' | 'vi', Translations> = {
     wx_clear: 'Clear',
     wx_location_fallback: 'Your location',
     wmo_fallback: 'Special weather',
+    a11y_close: 'Close',
+    a11y_add: 'Add',
+    a11y_decrease: 'Decrease',
+    a11y_increase: 'Increase',
+    a11y_prev_month: 'Previous month',
+    a11y_next_month: 'Next month',
+    a11y_delete: 'Delete',
 
     pet_focused: '⌨️ focused',
     pet_break: '☕ on break',
@@ -602,6 +616,13 @@ export const TRANSLATIONS: Record<'en' | 'vi', Translations> = {
     wx_clear: 'Xóa',
     wx_location_fallback: 'Vị trí của bạn',
     wmo_fallback: 'Thời tiết đặc biệt',
+    a11y_close: 'Đóng',
+    a11y_add: 'Thêm',
+    a11y_decrease: 'Giảm',
+    a11y_increase: 'Tăng',
+    a11y_prev_month: 'Tháng trước',
+    a11y_next_month: 'Tháng sau',
+    a11y_delete: 'Xoá',
 
     pet_focused: '⌨️ đang tập trung',
     pet_break: '☕ đang nghỉ',

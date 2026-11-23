@@ -103,6 +103,13 @@ const id: Translations = {
   wx_clear: 'Hapus',
   wx_location_fallback: 'Lokasimu',
   wmo_fallback: 'Cuaca khusus',
+  a11y_close: 'Tutup',
+  a11y_add: 'Tambah',
+  a11y_decrease: 'Kurangi',
+  a11y_increase: 'Tambahkan',
+  a11y_prev_month: 'Bulan sebelumnya',
+  a11y_next_month: 'Bulan berikutnya',
+  a11y_delete: 'Hapus',
 
   pet_focused: '⌨️ sedang fokus',
   pet_break: '☕ sedang istirahat',

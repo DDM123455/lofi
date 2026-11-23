@@ -103,6 +103,13 @@ const th: Translations = {
   wx_clear: 'ล้าง',
   wx_location_fallback: 'ตำแหน่งของคุณ',
   wmo_fallback: 'สภาพอากาศพิเศษ',
+  a11y_close: 'ปิด',
+  a11y_add: 'เพิ่ม',
+  a11y_decrease: 'ลด',
+  a11y_increase: 'เพิ่มขึ้น',
+  a11y_prev_month: 'เดือนก่อนหน้า',
+  a11y_next_month: 'เดือนถัดไป',
+  a11y_delete: 'ลบ',
 
   pet_focused: '⌨️ กำลังโฟกัส',
   pet_break: '☕ กำลังพัก',

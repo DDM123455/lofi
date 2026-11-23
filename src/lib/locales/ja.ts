@@ -103,6 +103,13 @@ const ja: Translations = {
   wx_clear: '消去',
   wx_location_fallback: '現在地',
   wmo_fallback: '特殊な天気',
+  a11y_close: '閉じる',
+  a11y_add: '追加',
+  a11y_decrease: '減らす',
+  a11y_increase: '増やす',
+  a11y_prev_month: '前の月',
+  a11y_next_month: '次の月',
+  a11y_delete: '削除',
 
   pet_focused: '⌨️ 集中中',
   pet_break: '☕ 休憩中',

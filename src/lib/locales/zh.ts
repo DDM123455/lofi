@@ -103,6 +103,13 @@ const zh: Translations = {
   wx_clear: '清除',
   wx_location_fallback: '你的位置',
   wmo_fallback: '特殊天气',
+  a11y_close: '关闭',
+  a11y_add: '添加',
+  a11y_decrease: '减少',
+  a11y_increase: '增加',
+  a11y_prev_month: '上个月',
+  a11y_next_month: '下个月',
+  a11y_delete: '删除',
 
   pet_focused: '⌨️ 专注中',
   pet_break: '☕ 休息中',

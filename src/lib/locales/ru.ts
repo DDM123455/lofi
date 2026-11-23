@@ -103,6 +103,13 @@ const ru: Translations = {
   wx_clear: 'Убрать',
   wx_location_fallback: 'Ваше местоположение',
   wmo_fallback: 'Особая погода',
+  a11y_close: 'Закрыть',
+  a11y_add: 'Добавить',
+  a11y_decrease: 'Уменьшить',
+  a11y_increase: 'Увеличить',
+  a11y_prev_month: 'Предыдущий месяц',
+  a11y_next_month: 'Следующий месяц',
+  a11y_delete: 'Удалить',
 
   pet_focused: '⌨️ сосредоточен',
   pet_break: '☕ на перерыве',
